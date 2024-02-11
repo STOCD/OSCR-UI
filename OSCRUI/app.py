@@ -101,13 +101,13 @@ class OSCRUI():
         """
         self.settings['log_path'] = format_path(self.app_dir)
         try:
-            stored_settings = fetch_json(os.path.abspath(f'{self.app_dir}/{self.config['settings_path']}'))
+            stored_settings = fetch_json(os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
             self.settings = copy.copy(self.config['default_settings'])
             self.settings.update(stored_settings)
         except (FileNotFoundError, json.JSONDecodeError):
             self.settings = copy.copy(self.config['default_settings'])
         finally:
-            store_json(self.settings, os.path.abspath(f'{self.app_dir}/{self.config['settings_path']}'))
+            store_json(self.settings, os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
         
     def init_config(self):
         """
