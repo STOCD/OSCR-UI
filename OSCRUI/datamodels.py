@@ -18,13 +18,16 @@ class TableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
             cell = self._data[index.row()][current_col]
-            if isinstance(cell, (float, int)) and current_col != 12:
-                disp = f'{cell:,.2f}'
-                if index.column() in (3, 5, 6, 7, 8, 10, 11):
-                    disp += '%'
-            else:
-                disp = cell
-            return disp
+            column = index.column()
+            if column == 0:
+                return f'{cell:.1f}s'
+            elif column in (1, 2, 7, 10, 13, 14, 15):
+                return f'{cell:,.2f}'
+            elif column in (3, 4, 5, 6, 8, 11, 12):
+                return f'{cell:,.2f}%'
+            elif column in (9, 16, 17, 18, 19, 20, 21, 22):
+                return str(cell)
+            return cell
         
         if role == Qt.ItemDataRole.FontRole:
             return self._cell_font
