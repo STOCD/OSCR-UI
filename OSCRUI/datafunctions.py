@@ -3,8 +3,9 @@ import os
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
-from .OSCR import OSCR
+from .OSCR import OSCR, TREE_HEADER
 
+from .datamodels import TreeModel, TreeSortingProxy
 from .displayer import create_overview
 from .iofunctions import store_json
 from .widgetbuilder import show_warning
@@ -61,16 +62,22 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         self.current_combats.setCurrentRow(0)
         self.current_combat_id = 0
         self.current_combat_path = path
+        analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(0))
+        analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
+        analysis_thread.start()
 
     # subsequent run / click on older combat
     elif isinstance(combat_id, int) and combat_id != self.current_combat_id:
         if combat_id == -1: return
         get_data(self, combat_id)
         self.current_combat_id = combat_id
+        analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(combat_id))
+        analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
+        analysis_thread.start()
 
     create_overview(self)
 
-    self.widgets['main_menu_buttons'][1].setDisabled(True)
+    #self.widgets['main_menu_buttons'][1].setDisabled(True)
     # reset tabber
     self.widgets['main_tabber'].setCurrentIndex(0)
     self.widgets['overview_tabber'].setCurrentIndex(0)
@@ -93,23 +100,14 @@ def get_data(self, combat: int | None = None, path: str | None = None):
     else:
         self.parser1.shallow_combat_analysis(combat)
 
-def get_analysis_data(self, path, id=None):
+def analysis_data_slot(self, item_tuple: tuple):
     """
-    Starts new process using the multiprcessing module to retrieve full combat data.
-    Populates the Analysis table. Don't use this in the main thread as it blocks execution.
+    Inserts the data retrieved from the parser into the respective tables
 
     Parameters:
-    - :param path: path to combat log file
-    - :param id: id of older combat (0 -> oldest combat in the file; len(...) - 1 -> latest combat)
+    - :param item_tuple: tuple containing only the root item of the data model
     """
-    receiver, sender = Pipe()
-    analysis_process = Process(target=analysis_parser, args=(path, sender, id))
-    analysis_process.start()
-    data = receiver.recv() # waits for the pipe to receive data from the process
-    self.main_data = data
-    """with open('new_data.json', 'w') as f:
-        json.dump(data, f)"""
-    self.populate_analysis()
+    populate_analysis(self, *item_tuple)
     self.widgets['main_menu_buttons'][1].setDisabled(False)
 
 def analysis_parser(path, pipe, id=None):
@@ -130,10 +128,18 @@ def analysis_parser(path, pipe, id=None):
         uiD, dmgI, healI, uiID, _, _, _, _, _, npcdmg, npcdps = parser.readPreviousCombatFull(id)
     pipe.send(uiD)
 
-def populate_analysis(self):
+def populate_analysis(self, damage_out_item):
     """
     Populates the Analysis' treeview table.
     """
+    damage_out_table = self.widgets['analysis_table_dout']
+    damage_out_model = TreeModel(damage_out_item, self.theme_font('tree_table_header'),
+                self.theme_font('tree_table'),
+                self.theme_font('', self.theme['tree_table']['::item']['font']))
+    #sort_proxy = TreeSortingProxy()
+    #sort_proxy.setSourceModel(damage_out_model)
+    damage_out_table.setModel(damage_out_model)
+    damage_out_table.expand(damage_out_model.index(0, 0, damage_out_model.createIndex(0, 0, damage_out_model._root)))
     """table = self.widgets['analysis_table_dout']
     model = TreeModel(DAMAGE_HEADER, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
@@ -201,3 +207,14 @@ def update_shown_columns_heal(self):
             hout_table.hideColumn(i+1)
             hin_table.hideColumn(i+1)
         store_json(self.settings, self.config['settings_path'])
+        
+def resize_tree_table(tree):
+    """
+    Resizes the columns of the given tree table to fit its contents
+
+    Parameters:
+    - :param tree: QTreeView -> tree to be resized
+    """
+    for col in range(tree.header().count()):
+        width = max(tree.sizeHintForColumn(col), tree.header().sectionSizeHint(col)) + 5
+        tree.header().resizeSection(col, width)

@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2a110'
+    version = '2024.2a170'
 
     # holds the style of the app
     theme = {
@@ -390,7 +390,7 @@ class Launcher():
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'border': 'none'
+                'border': 'none',
             },
             '::section:hover': {
                 'border-width': '@bw',

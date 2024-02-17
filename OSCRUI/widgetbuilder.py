@@ -194,6 +194,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.header().setMinimumSectionSize(1)
     table.header().setSectionsClickable(True)
     table.header().setStretchLastSection(False)
+    table.header().setSortIndicatorShown(False)
     table.expanded.connect(lambda: resize_tree_table(table))
     table.collapsed.connect(lambda: resize_tree_table(table))
     return table
