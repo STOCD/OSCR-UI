@@ -12,6 +12,7 @@ from .iofunctions import load_icon_series, get_asset_path, store_json, fetch_jso
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
+from .OSCR import TREE_HEADER
 
 signal(SIGINT, SIG_DFL)
 
@@ -454,13 +455,13 @@ class OSCRUI():
         dmg_hider_frame = self.create_frame(col_1_frame, style_override=
                 {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
         dmg_hider_frame.setSizePolicy(SMINMAX)
-        # for i, head in enumerate(DAMAGE_HEADER[1:]):
-        #     bt = create_button(self, head, 'toggle_button', dmg_hider_frame)
-        #     bt.setCheckable(True)
-        #     bt.setSizePolicy(SMINMAX)
-        #     bt.setChecked(self.settings['dmg_columns'][i])
-        #     bt.clicked.connect(lambda state, i=i: set_variable(self.settings['dmg_columns'], i, state))
-        #     dmg_hider_layout.addWidget(bt, stretch=1)
+        for i, head in enumerate(TREE_HEADER[1:]):
+            bt = self.create_button(head, 'toggle_button', dmg_hider_frame)
+            bt.setCheckable(True)
+            bt.setSizePolicy(SMINMAX)
+            bt.setChecked(self.settings['dmg_columns'][i])
+            bt.clicked.connect(lambda state, i=i: self.set_variable(self.settings['dmg_columns'], i, state))
+            dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_hider_frame.setLayout(dmg_hider_layout)
         col_1.addWidget(dmg_hider_frame, alignment=ATOP)
         apply_button = self.create_button('Apply', 'button', col_1_frame, {'margin-top':15})
@@ -526,7 +527,7 @@ class OSCRUI():
             if path != '':
                 entry.setText(format_path(path))
 
-    def set_variable(var_to_be_set, index, value):
+    def set_variable(self, var_to_be_set, index, value):
         """
         Assigns value at index to variable
         """

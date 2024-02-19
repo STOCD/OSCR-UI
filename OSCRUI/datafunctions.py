@@ -1,7 +1,7 @@
 from multiprocessing import Pipe, Process
 import os
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
 from .OSCR import OSCR, TREE_HEADER
 
@@ -110,24 +110,6 @@ def analysis_data_slot(self, item_tuple: tuple):
     populate_analysis(self, *item_tuple)
     self.widgets['main_menu_buttons'][1].setDisabled(False)
 
-def analysis_parser(path, pipe, id=None):
-    """
-    Retrieves combat analysis data from parser. Used in different process.
-
-    Parameters:
-    - :param path: path of the combat log to be analyzed
-    - :param pipe: pipe to transmit results back through
-    - :param id: older combat id (optional)
-    """
-    parser = OSCR.parser()
-    if id is None:
-        parser.readCombatShallow(path)
-        uiD, dmgI, healI, uiID, _, _, _, _, _, npcdmg, npcdps = parser.readCombatFull(path)
-    elif isinstance(id, int):
-        parser.readCombatShallow(path)
-        uiD, dmgI, healI, uiID, _, _, _, _, _, npcdmg, npcdps = parser.readPreviousCombatFull(id)
-    pipe.send(uiD)
-
 def populate_analysis(self, damage_out_item):
     """
     Populates the Analysis' treeview table.
@@ -136,10 +118,10 @@ def populate_analysis(self, damage_out_item):
     damage_out_model = TreeModel(damage_out_item, self.theme_font('tree_table_header'),
                 self.theme_font('tree_table'),
                 self.theme_font('', self.theme['tree_table']['::item']['font']))
-    #sort_proxy = TreeSortingProxy()
-    #sort_proxy.setSourceModel(damage_out_model)
     damage_out_table.setModel(damage_out_model)
     damage_out_table.expand(damage_out_model.index(0, 0, damage_out_model.createIndex(0, 0, damage_out_model._root)))
+    damage_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
+    update_shown_columns_dmg(self)
     """table = self.widgets['analysis_table_dout']
     model = TreeModel(DAMAGE_HEADER, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
@@ -175,7 +157,7 @@ def populate_analysis(self, damage_out_item):
     hout_table.setModel(hout_model)
     hout_table.expand(hout_model.index(0, 0))
     resize_tree_table(hout_table)
-    self.update_shown_columns_dmg()
+    
     self.update_shown_columns_heal()"""
 
 def update_shown_columns_dmg(self):
@@ -183,20 +165,21 @@ def update_shown_columns_dmg(self):
     Hides / shows columns of the dmg analysis table according to self.settings['dmg_columns']
     """
     dout_table = self.widgets['analysis_table_dout']
-    dtaken_table = self.widgets['analysis_table_dtaken']
+    #dtaken_table = self.widgets['analysis_table_dtaken']
     for i, state in enumerate(self.settings['dmg_columns']):
         if state:
             dout_table.showColumn(i+1)
-            dtaken_table.showColumn(i+1)
+            #dtaken_table.showColumn(i+1)
         else:
             dout_table.hideColumn(i+1)
-            dtaken_table.hideColumn(i+1)
+            #dtaken_table.hideColumn(i+1)
     store_json(self.settings, self.config['settings_path'])
 
 def update_shown_columns_heal(self):
     """
     Hides / shows columns of the heals analysis table according to self.settings['dmg_columns']
     """
+    return
     hout_table = self.widgets['analysis_table_hout']
     hin_table = self.widgets['analysis_table_hin']
     for i, state in enumerate(self.settings['heal_columns']):

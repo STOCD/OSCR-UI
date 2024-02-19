@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
 from PyQt6.QtGui import QFont
 import sys
-from .OSCR import TABLE_HEADER
+from .OSCR import TABLE_HEADER, TreeItem
 
 from .widgetbuilder import AVCENTER, ARIGHT, ACENTER, ALEFT
 
@@ -104,9 +104,26 @@ class TreeModel(QAbstractItemModel):
         """
         super().__init__()
         self._root = root_item
+        self._root_index = self.createIndex(0, 0, self._root)
         self._header_font = header_font
         self._name_font = name_font
         self._cell_font = cell_font
+
+    def sort(self, column: int, order: Qt.SortOrder):
+        if order == Qt.SortOrder.AscendingOrder:
+            descending = True
+        else:
+            descending = False
+        self.layoutAboutToBeChanged.emit()
+        self.recursive_sort(self._root._children[0], column, descending)
+        self.recursive_sort(self._root._children[1], column, descending)
+        self.layoutChanged.emit()
+    
+    def recursive_sort(self, item: TreeItem, column: int, desc):
+        if item.child_count > 0:
+            for child in item._children:
+                self.recursive_sort(child, column, desc)
+            item._children.sort(key=lambda row: row.get_data(column), reverse=desc)
 
     def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex | None:
         if not self.hasIndex(row, column, parent):
@@ -158,7 +175,7 @@ class TreeModel(QAbstractItemModel):
             elif column in (1, 2, 4, 13, 14, 15, 16, 17, 18):
                 return f'{data:,.2f}'
             elif column in (8, 9, 10, 11, 12, 20, 21):
-                return f'{data:,}'
+                return f'{data:,.0f}'
             elif column == 19 and data:
                 return f'{data}s'
         elif role == Qt.ItemDataRole.FontRole:
