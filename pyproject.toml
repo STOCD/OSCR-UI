@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "OSCR-UI"
+dependencies = [
+  "PyQt6>=6.6.1",
+  "pyqtgraph>=0.13.3",
+  "numpy>=1.26.4",
+  "STO-OSCR>=2024.2b190",
+  "OSCR-django-client>=2024.2b190",
+]
+requires-python = ">=3.10"
+authors = []
+maintainers = []
+description = " Frontend for the OSCR parser."
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = []
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+gui = []
+cli = []
+
+[project.urls]
+Homepage = "https://github.com/STOCD/OSCR-UI"
+Repository = "https://github.com/STOCD/OSCR-UI.git"
+"Bug Tracker" = "https://github.com/STOCD/OSCR-UI/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[project.scripts]
+oscr = "main:main"
+
+[tool.hatch.version]
+path = "main.py"
+pattern = "\\s*version = '(?P<version>.*)'"
