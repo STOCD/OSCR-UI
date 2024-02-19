@@ -8,22 +8,25 @@ from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidge
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt6.QtCore import QSize
 
+from OSCR import TREE_HEADER
+
 from .iofunctions import load_icon_series, get_asset_path, store_json, fetch_json, load_icon
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
-from .OSCR import TREE_HEADER
+from .backend import OSCRClient
 
 signal(SIGINT, SIG_DFL)
 
 class OSCRUI():
 
     from .datafunctions import init_parser
-    from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal
+    from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal, copy_summary_callback
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button
+    from .backend import upload_callback, create_ladder_layout, update_ladder_index, download_and_view_combat
 
     app_dir = None
 
@@ -72,6 +75,7 @@ class OSCRUI():
         self.init_config()
         self.init_parser()
         self.cache_assets()
+        self.backend = OSCRClient()
         self.setup_main_layout()
 
     def run(self) -> int:
@@ -193,6 +197,7 @@ class OSCRUI():
         self.setup_main_tabber(center)
         self.setup_overview_frame()
         self.setup_analysis_frame()
+        self.setup_league_standings_frame()
         self.setup_settings_frame()
 
     def setup_left_sidebar(self, frame:QFrame):
@@ -258,7 +263,7 @@ class OSCRUI():
         """
         o_frame = self.create_frame(None, 'frame')
         a_frame = self.create_frame(None, 'frame')
-        l_frame = self.create_frame(None, 'frame', {'background': 'pink'})
+        l_frame = self.create_frame(None, 'frame')
         s_frame = self.create_frame(None, 'frame')
 
         main_tabber = QTabWidget(frame)
@@ -315,7 +320,9 @@ class OSCRUI():
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
             'DPS Bar': {'callback': lambda: o_tabber.setCurrentIndex(0), 'align':ACENTER},
             'DPS Graph': {'callback': lambda: o_tabber.setCurrentIndex(1), 'align':ACENTER},
-            'Damage Graph': {'callback': lambda: o_tabber.setCurrentIndex(2), 'align':ACENTER}
+            'Damage Graph': {'callback': lambda: o_tabber.setCurrentIndex(2), 'align':ACENTER},
+            'Copy Summary': {'callback': self.copy_summary_callback, 'align':ACENTER},
+            'Upload Result': {'callback': self.upload_callback, 'align':ACENTER},
         }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
@@ -382,6 +389,16 @@ class OSCRUI():
             tab.setLayout(tab_layout)
         
         a_frame.setLayout(layout)
+
+    def setup_league_standings_frame(self):
+        """
+        Sets up the frame housing the detailed analysis table and graph
+        """
+        l_frame = self.widgets['main_tab_frames'][2]
+
+        layout = self.create_ladder_layout()
+
+        l_frame.setLayout(layout)
 
     def create_master_layout(self, parent) -> tuple[QVBoxLayout, QFrame]:
         """
