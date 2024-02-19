@@ -3,7 +3,7 @@ import os
 
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
-from .OSCR import OSCR, TREE_HEADER
+from OSCR import OSCR, TREE_HEADER
 
 from .datamodels import TreeModel, TreeSortingProxy
 from .displayer import create_overview

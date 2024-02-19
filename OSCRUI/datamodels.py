@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
 from PyQt6.QtGui import QFont
 import sys
-from .OSCR import TABLE_HEADER, TreeItem
+from OSCR import TABLE_HEADER, TreeItem
 
 from .widgetbuilder import AVCENTER, ARIGHT, ACENTER, ALEFT
 

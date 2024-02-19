@@ -8,11 +8,12 @@ from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidge
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt6.QtCore import QSize
 
+from OSCR import TREE_HEADER
+
 from .iofunctions import load_icon_series, get_asset_path, store_json, fetch_json, load_icon
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
-from .OSCR import TREE_HEADER
 
 signal(SIGINT, SIG_DFL)
 
