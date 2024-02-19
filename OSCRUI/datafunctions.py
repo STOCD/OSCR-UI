@@ -90,7 +90,7 @@ def copy_summary_callback(self):
     if not self.parser1.active_combat:
         return
 
-    parts = [f"OSCR - {self.parser1.active_combat.map} {self.parser1.active_combat.difficulty} ( (DPS):"]
+    parts = [f"OSCR - {self.parser1.active_combat.map} {self.parser1.active_combat.difficulty} (DPS):"]
     inner = []
     for _, player in self.parser1.active_combat.player_dict.items():
         inner.append(f"{player.handle} {player.DPS:,.0f}")

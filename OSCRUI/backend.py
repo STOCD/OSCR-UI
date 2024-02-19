@@ -62,13 +62,11 @@ def create_ladder_layout(self):
     )
 
     res = self.backend.ladders()
-    if res is None:
-        return
-
-    for ladder in res.results:
-        key = f"{ladder.metric} - {ladder.name} ({ladder.difficulty})"
-        self.ladders[key] = ladder
-        self.ladder_combo.addItem(key)
+    if res is not None:
+        for ladder in res.results:
+            key = f"{ladder.metric} - {ladder.name} ({ladder.difficulty})"
+            self.ladders[key] = ladder
+            self.ladder_combo.addItem(key)
 
     layout.addWidget(self.ladder_combo)
     layout.addWidget(results_widget)
@@ -97,52 +95,50 @@ def update_ladder_index(self, index):
     if index >= 1:
         ladder = self.ladders[self.ladder_combo.currentText()]
         res = self.backend.ladder_entries(ladder.id)
-        if res is None:
-            return
+        if res is not None:
+            for idx, entry in enumerate(res.results):
+                row_rank = QStandardItem()
+                row_rank.setText(f"{int(idx + 1)}")
+                row_rank.setEditable(False)
 
-        for idx, entry in enumerate(res.results):
-            row_rank = QStandardItem()
-            row_rank.setText(f"{int(idx + 1)}")
-            row_rank.setEditable(False)
+                row_date = QStandardItem()
+                row_date.setText(entry.var_date)
+                row_date.setEditable(False)
 
-            row_date = QStandardItem()
-            row_date.setText(entry.var_date)
-            row_date.setEditable(False)
+                row_name = QStandardItem(entry.data["name"])
+                row_name.setEditable(False)
 
-            row_name = QStandardItem(entry.data["name"])
-            row_name.setEditable(False)
+                row_handle = QStandardItem(entry.data["handle"])
+                row_handle.setEditable(False)
 
-            row_handle = QStandardItem(entry.data["handle"])
-            row_handle.setEditable(False)
+                row_damage = QStandardItem()
+                row_damage.setText(f"{int(entry.data['total_damage']):,}")
+                row_damage.setEditable(False)
 
-            row_damage = QStandardItem()
-            row_damage.setText(f"{int(entry.data['total_damage']):,}")
-            row_damage.setEditable(False)
+                row_dps = QStandardItem()
+                row_dps.setText(f"{int(entry.data['DPS']):,}")
+                row_dps.setEditable(False)
 
-            row_dps = QStandardItem()
-            row_dps.setText(f"{int(entry.data['DPS']):,}")
-            row_dps.setEditable(False)
+                row_deaths = QStandardItem()
+                row_deaths.setText(f"{int(entry.data['deaths']):,}")
+                row_deaths.setEditable(False)
 
-            row_deaths = QStandardItem()
-            row_deaths.setText(f"{int(entry.data['deaths']):,}")
-            row_deaths.setEditable(False)
+                row_time = QStandardItem()
+                row_time.setText(f"{int(entry.data['combat_time']):,}")
+                row_time.setEditable(False)
 
-            row_time = QStandardItem()
-            row_time.setText(f"{int(entry.data['combat_time']):,}")
-            row_time.setEditable(False)
-
-            self.ladder_results_model.appendRow(
-                [
-                    row_rank,
-                    row_date,
-                    row_name,
-                    row_handle,
-                    row_dps,
-                    row_damage,
-                    row_deaths,
-                    row_time,
-                ]
-            )
+                self.ladder_results_model.appendRow(
+                    [
+                        row_rank,
+                        row_date,
+                        row_name,
+                        row_handle,
+                        row_dps,
+                        row_damage,
+                        row_deaths,
+                        row_time,
+                    ]
+                )
 
         # HACK
         self.ladder_results_view.resizeColumnToContents(0)
@@ -201,7 +197,7 @@ class OSCRClient:
                 lines.append(entry.detail)
             reply.setText("\n".join(lines))
         except OSCR_django_client.exceptions.ServiceException as e:
-            reply.setText(e)
+            reply.setText(str(e))
 
         reply.exec()
 
@@ -212,14 +208,22 @@ class OSCRClient:
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
-            reply.setText(e)
+            reply.setText(str(e))
             reply.exec()
 
         return None
 
     def ladders(self):
         """Fetch the list of ladders"""
-        return self.api_ladder.ladder_list()
+        try:
+            return self.api_ladder.ladder_list()
+        except OSCR_django_client.exceptions.ServiceException as e:
+            reply = QMessageBox()
+            reply.setWindowTitle("Open Source Combatlog Reader")
+            reply.setText(str(e))
+            reply.exec()
+
+        return None
 
     def ladder_entries(self, id, page=1):
         """Fetch the nth page of ladder entries"""
@@ -233,7 +237,7 @@ class OSCRClient:
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
-            reply.setText(e)
+            reply.setText(str(e))
             reply.exec()
 
         return None
