@@ -90,17 +90,20 @@ def copy_summary_callback(self):
     if not self.parser1.active_combat:
         return
 
-    parts = [f"OSCR - {self.parser1.active_combat.map} {self.parser1.active_combat.difficulty} (DPS):"]
-    inner = []
+    parts = [
+        "OSCR",
+        f"{self.parser1.active_combat.map}",
+        f"{self.parser1.active_combat.difficulty}",
+        "DPS",
+    ]
     players = sorted(
         self.parser1.active_combat.player_dict.items(),
         reverse=True,
         key=lambda player: player[1].DPS,
     )
     for player in players:
-        inner.append(f"{player[1].handle} {player[1].DPS:,.0f}")
-    parts.append(", ".join(inner))
-    summary = " ".join(parts)
+        parts.append(f"{player[1].handle} {player[1].DPS:,.0f}")
+    summary = " | ".join(parts)
 
     self.app.clipboard().setText(summary)
 
