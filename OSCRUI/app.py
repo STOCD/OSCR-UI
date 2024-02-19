@@ -14,6 +14,7 @@ from .iofunctions import load_icon_series, get_asset_path, store_json, fetch_jso
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
+from .backend import OSCRClient
 
 signal(SIGINT, SIG_DFL)
 
@@ -25,6 +26,7 @@ class OSCRUI():
     from .style import get_style_class, create_style_sheet, theme_font
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button
+    from .backend import upload_callback
 
     app_dir = None
 
@@ -74,6 +76,7 @@ class OSCRUI():
         self.init_parser()
         self.cache_assets()
         self.setup_main_layout()
+        self.backend = OSCRClient()
 
     def run(self) -> int:
         """
@@ -317,7 +320,8 @@ class OSCRUI():
             'DPS Bar': {'callback': lambda: o_tabber.setCurrentIndex(0), 'align':ACENTER},
             'DPS Graph': {'callback': lambda: o_tabber.setCurrentIndex(1), 'align':ACENTER},
             'Damage Graph': {'callback': lambda: o_tabber.setCurrentIndex(2), 'align':ACENTER},
-            'Copy Summary': {'callback': self.copy_summary_callback, 'align':ARIGHT},
+            'Copy Summary': {'callback': self.copy_summary_callback, 'align':ACENTER},
+            'Upload Result': {'callback': self.upload_callback, 'align':ACENTER},
         }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
