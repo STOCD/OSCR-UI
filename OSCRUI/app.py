@@ -26,7 +26,7 @@ class OSCRUI():
     from .style import get_style_class, create_style_sheet, theme_font
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button
-    from .backend import upload_callback
+    from .backend import upload_callback, create_ladder_layout, update_ladder_index, download_and_view_combat
 
     app_dir = None
 
@@ -75,8 +75,8 @@ class OSCRUI():
         self.init_config()
         self.init_parser()
         self.cache_assets()
-        self.setup_main_layout()
         self.backend = OSCRClient()
+        self.setup_main_layout()
 
     def run(self) -> int:
         """
@@ -197,6 +197,7 @@ class OSCRUI():
         self.setup_main_tabber(center)
         self.setup_overview_frame()
         self.setup_analysis_frame()
+        self.setup_league_standings_frame()
         self.setup_settings_frame()
 
     def setup_left_sidebar(self, frame:QFrame):
@@ -262,7 +263,7 @@ class OSCRUI():
         """
         o_frame = self.create_frame(None, 'frame')
         a_frame = self.create_frame(None, 'frame')
-        l_frame = self.create_frame(None, 'frame', {'background': 'pink'})
+        l_frame = self.create_frame(None, 'frame')
         s_frame = self.create_frame(None, 'frame')
 
         main_tabber = QTabWidget(frame)
@@ -388,6 +389,16 @@ class OSCRUI():
             tab.setLayout(tab_layout)
         
         a_frame.setLayout(layout)
+
+    def setup_league_standings_frame(self):
+        """
+        Sets up the frame housing the detailed analysis table and graph
+        """
+        l_frame = self.widgets['main_tab_frames'][2]
+
+        layout = self.create_ladder_layout()
+
+        l_frame.setLayout(layout)
 
     def create_master_layout(self, parent) -> tuple[QVBoxLayout, QFrame]:
         """

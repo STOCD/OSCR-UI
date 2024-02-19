@@ -9,7 +9,7 @@ dependencies = [
   "pyqtgraph>=0.13.3",
   "numpy>=1.26.4",
   "STO-OSCR>=2024.2b190",
-  "OSCR-django-client>=2024.2b190",
+  "OSCR-django-client>=2024.2b191",
 ]
 requires-python = ">=3.10"
 authors = []
