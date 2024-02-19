@@ -47,7 +47,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     else:
         return
     
-    # initial run / click on the Analyze button
+    # initial run / click on the Analyze buttonQGuiApplication
     if combat_id is None:
         if not path or not os.path.isfile(path):
             show_warning(self, 'Invalid Logfile', 'The Logfile you are trying to open does not exist.')
@@ -81,6 +81,24 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     # reset tabber
     self.widgets['main_tabber'].setCurrentIndex(0)
     self.widgets['overview_tabber'].setCurrentIndex(0)
+
+def copy_summary_callback(self):
+    """
+    Callback to set the combat summary of the active combat to the user's clippboard
+    """
+
+    if not self.parser1.active_combat:
+        return
+
+    parts = [f"OSCR - {self.parser1.active_combat.map} {self.parser1.active_combat.difficulty} ( (DPS):"]
+    inner = []
+    for _, player in self.parser1.active_combat.player_dict.items():
+        inner.append(f"{player.handle} {player.DPS:,.0f}")
+    parts.append(", ".join(inner))
+    summary = " ".join(parts)
+
+    self.app.clipboard().setText(summary)
+
 
 def get_data(self, combat: int | None = None, path: str | None = None):
     """Interface between OSCRUI and OSCR. 

@@ -20,7 +20,7 @@ signal(SIGINT, SIG_DFL)
 class OSCRUI():
 
     from .datafunctions import init_parser
-    from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal
+    from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal, copy_summary_callback
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
@@ -316,7 +316,8 @@ class OSCRUI():
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
             'DPS Bar': {'callback': lambda: o_tabber.setCurrentIndex(0), 'align':ACENTER},
             'DPS Graph': {'callback': lambda: o_tabber.setCurrentIndex(1), 'align':ACENTER},
-            'Damage Graph': {'callback': lambda: o_tabber.setCurrentIndex(2), 'align':ACENTER}
+            'Damage Graph': {'callback': lambda: o_tabber.setCurrentIndex(2), 'align':ACENTER},
+            'Copy Summary': {'callback': self.copy_summary_callback, 'align':ARIGHT},
         }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
