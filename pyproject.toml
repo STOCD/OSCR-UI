@@ -7,7 +7,7 @@ name = "OSCR-UI"
 dependencies = [
   "PyQt6>=6.6.1",
   "pyqtgraph>=0.13.3",
-  "numpy>=1.26.4",
+  "numpy>=1.26.1",
   "STO-OSCR>=2024.2b190",
   "OSCR-django-client>=2024.2b191",
 ]

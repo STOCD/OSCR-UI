@@ -175,7 +175,7 @@ class OSCRClient:
 
         # TODO: This is a test domain and not for production.
         if not address:
-            self.address = "https://kraust-oscr.koyeb.app"
+            self.address = "https://oscr-server.vercel.app"
             # self.address = "http://127.0.0.1:8000"
 
         self.api_client = OSCR_django_client.api_client.ApiClient()
