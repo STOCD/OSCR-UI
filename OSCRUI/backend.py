@@ -1,5 +1,6 @@
 """Backend inteface to the OSCR web server"""
 
+import gzip
 import tempfile
 
 import OSCR_django_client
@@ -10,7 +11,7 @@ from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QMessageBox,
                              QPushButton, QTreeView, QVBoxLayout, QWidget)
 
 from .style import get_style_class
-from .widgetbuilder import RFIXED, SMINMIN, SMPIXEL
+from .widgetbuilder import SMINMIN, SMPIXEL
 
 
 def create_ladder_layout(self):
@@ -162,10 +163,20 @@ def upload_callback(self):
     Helper function to grab the current combat and upload it to the backend.
     """
 
+    if (
+        self.parser1.active_combat is None
+        or self.parser1.active_combat.log_data is None
+    ):
+        raise Exception("No data to upload")
+
     with tempfile.NamedTemporaryFile() as file:
-        for line in self.parser1.active_combat.log_data:
-            file.write(logline_to_str(line).encode())
-            file.flush()
+        data = gzip.compress(
+            "".join(
+                [logline_to_str(line) for line in self.parser1.active_combat.log_data]
+            ).encode()
+        )
+        file.write(data)
+        file.flush()
         self.backend.upload(file.name)
 
 

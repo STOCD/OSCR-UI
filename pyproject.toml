@@ -5,10 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "OSCR-UI"
 dependencies = [
-  "PyQt6>=6.6.1",
+  "PyQt6>=6.6.0",
   "pyqtgraph>=0.13.3",
   "numpy>=1.26.1",
-  "STO-OSCR>=2024.2b190",
+  "STO-OSCR>=2024.2b201",
   "OSCR-django-client>=2024.2b191",
 ]
 requires-python = ">=3.10"
