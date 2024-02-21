@@ -19,10 +19,10 @@ def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)') -
     Example: "Logfile (*.log);;Any File (*.*)"
     """
     if default_path is None:
-        default_path = self.settings['base_path']
+        default_path = self.settings.value('base_path')
     default_path = os.path.abspath(default_path)
     if not os.path.exists(default_path):
-        default_path = self.settings['base_path']
+        default_path = self.settings.value('base_path')
     f = QFileDialog.getOpenFileName(self.window, 'Open Log', default_path, types)[0]
     if os.path.exists(f):
         return f

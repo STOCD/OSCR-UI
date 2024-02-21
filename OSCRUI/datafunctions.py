@@ -52,9 +52,8 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         if not path or not os.path.isfile(path):
             show_warning(self, 'Invalid Logfile', 'The Logfile you are trying to open does not exist.')
             return
-        if path != self.settings['log_path']:
-            self.settings['log_path'] = path
-            store_json(self.settings, self.config['settings_path'])
+        if path != self.settings.value('log_path'):
+            self.settings.setValue('log_path', path)
 
         get_data(self, combat=None, path=path)
         self.current_combats.clear()
@@ -192,14 +191,14 @@ def update_shown_columns_dmg(self):
     """
     dout_table = self.widgets['analysis_table_dout']
     #dtaken_table = self.widgets['analysis_table_dtaken']
-    for i, state in enumerate(self.settings['dmg_columns']):
+    for i in range(self.settings.value('dmg_columns_length', type=int)):
+        state = self.settings.value(f'dmg_columns|{i}')
         if state:
             dout_table.showColumn(i+1)
             #dtaken_table.showColumn(i+1)
         else:
             dout_table.hideColumn(i+1)
             #dtaken_table.hideColumn(i+1)
-    store_json(self.settings, self.config['settings_path'])
 
 def update_shown_columns_heal(self):
     """

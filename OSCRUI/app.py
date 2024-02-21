@@ -6,7 +6,7 @@ import os
 
 from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, QSettings, QByteArray, QRect, QPoint, Qt
 
 from OSCR import TREE_HEADER
 
@@ -16,6 +16,7 @@ from .widgets import BannerLabel, FlipButton
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
 from .backend import OSCRClient
 
+# only for developing; allows to terminate the qt event loop with keyboard interrupt
 signal(SIGINT, SIG_DFL)
 
 class OSCRUI():
@@ -32,7 +33,7 @@ class OSCRUI():
 
     config = {} # see main.py for contents
 
-    settings = {} # see main.py for defaults
+    settings: QSettings # see main.py for defaults
 
     # stores widgets that need to be accessed from outside their creating function
     widgets = {
@@ -70,13 +71,14 @@ class OSCRUI():
         self.args = args
         self.app_dir = path
         self.config = config
-        self.app, self.window = self.create_main_window()
         self.init_settings()
+        self.app, self.window = self.create_main_window()
         self.init_config()
         self.init_parser()
         self.cache_assets()
         self.backend = OSCRClient()
         self.setup_main_layout()
+        self.window.show()
 
     def run(self) -> int:
         """
@@ -104,15 +106,25 @@ class OSCRUI():
         """
         Prepares settings. Loads stored settings. Saves current settings for next startup.
         """
-        self.settings['log_path'] = format_path(self.app_dir)
-        try:
-            stored_settings = fetch_json(os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
-            self.settings = copy.copy(self.config['default_settings'])
-            self.settings.update(stored_settings)
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.settings = copy.copy(self.config['default_settings'])
-        finally:
-            store_json(self.settings, os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
+        settings_path = os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}')
+        self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
+        for setting, value in self.config['default_settings'].items():
+            if not self.settings.value(setting, False) or not value or value is None:
+                self.settings.setValue(setting, value)
+        if not self.settings.value('log_path', ''):
+            self.settings.setValue('log_path', format_path(self.app_dir))
+        # if self.settings.value('geometry', defaultValue=None) is None:
+        #     self.settings.setValue('geometry', QByteArray())
+        self.settings.sync()
+        # self.settings['log_path'] = format_path(self.app_dir)
+        # try:
+        #     stored_settings = fetch_json(os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
+        #     self.settings = copy.copy(self.config['default_settings'])
+        #     self.settings.update(stored_settings)
+        # except (FileNotFoundError, json.JSONDecodeError):
+        #     self.settings = copy.copy(self.config['default_settings'])
+        # finally:
+        #     store_json(self.settings, os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
         
     def init_config(self):
         """
@@ -130,6 +142,15 @@ class OSCRUI():
         self.current_combat_id = -1
         self.current_combat_path = ''
 
+    def main_window_close_callback(self, event):
+        """
+        Executed when application is closed.
+        """
+        window_geometry = self.window.saveGeometry()
+        self.settings.setValue('geometry', window_geometry)
+        self.settings.sync()
+        event.accept()
+
     
     # -------------------------------------------------------------------------------------------------------
     # GUI functions below
@@ -146,8 +167,9 @@ class OSCRUI():
         window = QWidget()
         window.setWindowIcon(load_icon('oscr_icon_small.png', self.app_dir))
         window.setWindowTitle('Open Source Combatlog Reader')
-        window.setGeometry(*self.get_relative_geometry(app))
-        window.showMaximized()
+        window.setMinimumSize(*self.config['minimum_window_size'])
+        window.restoreGeometry(self.settings.value('geometry', type=QByteArray))        
+        window.closeEvent = self.main_window_close_callback
         return app, window
 
     def setup_main_layout(self):
@@ -216,7 +238,7 @@ class OSCRUI():
         head = self.create_label('STO Combatlog:', 'label', frame)
         left_layout.addWidget(head, alignment=ALEFT)
 
-        self.entry = QLineEdit(self.settings['log_path'], frame)
+        self.entry = QLineEdit(self.settings.value('log_path', ''), frame)
         self.entry.setFixedWidth(self.config['sidebar_item_width'])
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
         self.entry.setSizePolicy(SMAXMAX)
@@ -245,7 +267,7 @@ class OSCRUI():
         self.current_combats = QListWidget(background_frame)
         self.current_combats.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
         self.current_combats.setFont(self.theme_font('listbox'))
-        self.current_combats.setSizePolicy(SMAXMIN)
+        #self.current_combats.setSizePolicy(SMAXMIN)
         self.current_combats.setFixedWidth(self.config['sidebar_item_width'])
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
@@ -476,8 +498,8 @@ class OSCRUI():
             bt = self.create_button(head, 'toggle_button', dmg_hider_frame)
             bt.setCheckable(True)
             bt.setSizePolicy(SMINMAX)
-            bt.setChecked(self.settings['dmg_columns'][i])
-            bt.clicked.connect(lambda state, i=i: self.set_variable(self.settings['dmg_columns'], i, state))
+            bt.setChecked(self.settings.value(f'dmg_columns|{i}', type=bool))
+            bt.clicked.connect(lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
             dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_hider_frame.setLayout(dmg_hider_layout)
         col_1.addWidget(dmg_hider_frame, alignment=ATOP)
@@ -510,26 +532,26 @@ class OSCRUI():
 
         settings_frame.setLayout(settings_layout)
 
-    def get_relative_geometry(self, app:QApplication, pos=(0.1, 0.1), size=(0.8, 0.8)):
-        """
-        Returns tuple containing x and y positions as well as width and height of a window
-        in given order, relative to the current screen. All values are given in pixels.
+    # def get_relative_geometry(self, app:QApplication, pos=(0.1, 0.1), size=(0.8, 0.8)):
+    #     """
+    #     Returns tuple containing x and y positions as well as width and height of a window
+    #     in given order, relative to the current screen. All values are given in pixels.
 
-        Parameters:
-        - :param pos: (tuple of two floats) -> relative position of the top left corner
-        - :param size: (tuple of two floats) -> relative size of the window
+    #     Parameters:
+    #     - :param pos: (tuple of two floats) -> relative position of the top left corner
+    #     - :param size: (tuple of two floats) -> relative size of the window
 
-        :return: tuple of four int -> (x position..., y position..., width..., height...) ... of the window
-        """
-        rel_x, rel_y = pos
-        rel_size_x, rel_size_y = size
-        rect = app.primaryScreen().availableGeometry()
-        _, _, width, height = rect.getRect()
-        pos_x = int(rel_x * width)
-        pos_y = int(rel_y * height)
-        width = int(rel_size_x * width)
-        height = int(rel_size_y * height)
-        return (pos_x, pos_y, width, height)
+    #     :return: tuple of four int -> (x position..., y position..., width..., height...) ... of the window
+    #     """
+    #     rel_x, rel_y = pos
+    #     rel_size_x, rel_size_y = size
+    #     rect = app.primaryScreen().availableGeometry()
+    #     _, _, width, height = rect.getRect()
+    #     pos_x = int(rel_x * width)
+    #     pos_y = int(rel_y * height)
+    #     width = int(rel_size_x * width)
+    #     height = int(rel_size_y * height)
+    #     return (pos_x, pos_y, width, height)
 
     def browse_log(self, entry:QLineEdit):
         """
