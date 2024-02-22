@@ -70,8 +70,7 @@ class OSCRUI():
         self.theme = theme
         self.args = args
         self.app_dir = path
-        self.config = config
-        self.init_settings()
+        self.init_settings(config)
         self.app, self.window = self.create_main_window()
         self.init_config()
         self.init_parser()
@@ -102,43 +101,20 @@ class OSCRUI():
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
-    def init_settings(self):
+    def init_settings(self, defaults):
         """
         Prepares settings. Loads stored settings. Saves current settings for next startup.
         """
-        settings_path = os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}')
-        self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
-        for setting, value in self.config['default_settings'].items():
-            if not self.settings.value(setting, False) or not value or value is None:
+
+        self.settings = QSettings("OSCR", "OSCR-UI")
+        for setting, value in defaults.items():
+            if self.settings.value(setting, None) is None:
                 self.settings.setValue(setting, value)
-        if not self.settings.value('log_path', ''):
-            self.settings.setValue('log_path', format_path(self.app_dir))
-        # if self.settings.value('geometry', defaultValue=None) is None:
-        #     self.settings.setValue('geometry', QByteArray())
-        self.settings.sync()
-        # self.settings['log_path'] = format_path(self.app_dir)
-        # try:
-        #     stored_settings = fetch_json(os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
-        #     self.settings = copy.copy(self.config['default_settings'])
-        #     self.settings.update(stored_settings)
-        # except (FileNotFoundError, json.JSONDecodeError):
-        #     self.settings = copy.copy(self.config['default_settings'])
-        # finally:
-        #     store_json(self.settings, os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}'))
-        
+
     def init_config(self):
         """
         Prepares config.
         """
-        self.config['default_settings']['log_path'] = format_path(
-                self.config['default_settings']['log_path'])
-        _, _, screen_width, _ = self.app.primaryScreen().availableGeometry().getRect()
-        self.config['sidebar_item_width'] = int(self.theme['s.c']['sidebar_item_width'] * screen_width)
-        style_path = rf"{self.app_dir}/{self.config['plot_stylesheet_path']}"
-        self.config['plot_stylesheet_path'] = os.path.normpath(os.path.abspath(style_path))
-        settings_path = rf"{self.app_dir}/{self.config['settings_path']}"
-        self.config['settings_path'] = os.path.normpath(os.path.abspath(settings_path))
-        self.config['parser1_lock'] = Lock()
         self.current_combat_id = -1
         self.current_combat_path = ''
 
@@ -148,8 +124,14 @@ class OSCRUI():
         """
         window_geometry = self.window.saveGeometry()
         self.settings.setValue('geometry', window_geometry)
-        self.settings.sync()
         event.accept()
+
+    def main_window_resize_callback(self, event):
+        """
+        Executed when application is resized.
+        """
+        self.entry.setFixedWidth(self.sidebar_item_width())
+        self.current_combats.setFixedWidth(self.sidebar_item_width())
 
     
     # -------------------------------------------------------------------------------------------------------
@@ -167,9 +149,14 @@ class OSCRUI():
         window = QWidget()
         window.setWindowIcon(load_icon('oscr_icon_small.png', self.app_dir))
         window.setWindowTitle('Open Source Combatlog Reader')
-        window.setMinimumSize(*self.config['minimum_window_size'])
-        window.restoreGeometry(self.settings.value('geometry', type=QByteArray))        
+        window.setMinimumSize(
+            int(self.settings.value("minimum_item_width")),
+            int(self.settings.value("minimum_item_height")),
+        )
+        if self.settings.value('geometry'):
+            window.restoreGeometry(self.settings.value('geometry'))
         window.closeEvent = self.main_window_close_callback
+        window.resizeEvent = self.main_window_resize_callback
         return app, window
 
     def setup_main_layout(self):
@@ -222,6 +209,12 @@ class OSCRUI():
         self.setup_league_standings_frame()
         self.setup_settings_frame()
 
+    def sidebar_item_width(self):
+        """
+        Return the sidebar item width as a fraction of the whole window size.
+        """
+        return int(self.theme['s.c']['sidebar_item_width'] * self.window.width())
+
     def setup_left_sidebar(self, frame:QFrame):
         """
         Sets up the sidebar used to select parses and combats
@@ -239,11 +232,13 @@ class OSCRUI():
         left_layout.addWidget(head, alignment=ALEFT)
 
         self.entry = QLineEdit(self.settings.value('log_path', ''), frame)
-        self.entry.setFixedWidth(self.config['sidebar_item_width'])
+
+        self.entry.setFixedWidth(self.sidebar_item_width())
+
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
         self.entry.setSizePolicy(SMAXMAX)
         left_layout.addWidget(self.entry)
-        
+
         button_frame = self.create_frame(frame, 'medium_frame')
         button_frame.setSizePolicy(SMINMAX)
         entry_button_config = {
@@ -268,7 +263,7 @@ class OSCRUI():
         self.current_combats.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
         self.current_combats.setFont(self.theme_font('listbox'))
         #self.current_combats.setSizePolicy(SMAXMIN)
-        self.current_combats.setFixedWidth(self.config['sidebar_item_width'])
+        self.current_combats.setFixedWidth(self.sidebar_item_width())
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
         

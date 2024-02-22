@@ -4,7 +4,7 @@ from multiprocessing import set_start_method, freeze_support
 
 from OSCRUI import OSCRUI
 
-class Launcher():
+class Launcher:
 
     version = '2024.2a170'
 
@@ -426,36 +426,40 @@ class Launcher():
         },
         # other style decisions
         's.c': {
-            'sidebar_item_width': 0.15,
+            'sidebar_item_width': 0.20,
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
         }
     }
 
-    config = {
-        'sidebar_item_width': 0,
-        'plot_stylesheet_path': r'/src/ui/oscr_default.mplstyle',
-        'settings_path': r'/.OSCR_settings.json',
-        'parser1_lock': None,
-        'default_settings': {
-            'log_path': '',
+    @staticmethod
+    def base_path():
+        """ initialize the base path"""
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(os.path.dirname(__file__))
+        return base_path
+
+    @staticmethod
+    def default_config():
+        """Return the default configuration"""
+        return {
+            'minimum_item_width': 1280,
+            'minimum_item_height': 720,
+            'plot_stylesheet_path': r'/src/ui/oscr_default.mplstyle',
+            'log_path': Launcher.base_path(),
             'dmg_columns': [True]*16,
             'heal_columns': [True]*8
         }
-    }
 
     def __init__(self):
-        try:
-            self.base_path = sys._MEIPASS
-        except Exception:
-            self.base_path = os.path.abspath(os.path.dirname(__file__))
-        sys.path.append(self.base_path)
-        self.config['default_settings']['log_path'] = self.base_path
+        sys.path.append(Launcher.base_path())
         self.args = {}
 
     def launch(self):
-        exit_code = OSCRUI(self.version, self.theme, self.args, self.base_path, self.config).run()
+        exit_code = OSCRUI(self.version, self.theme, self.args, Launcher.base_path(), Launcher.default_config()).run()
         sys.exit(exit_code)
 
 def main():
