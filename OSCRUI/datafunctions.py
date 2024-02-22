@@ -21,7 +21,6 @@ class CustomThread(QThread):
         super().__init__(parent)
 
     def run(self):
-        self.setPriority(QThread.Priority.IdlePriority)
         r = self._func()
         self.result.emit((r,))
 
@@ -63,7 +62,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         self.current_combat_path = path
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(0))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
-        analysis_thread.start()
+        analysis_thread.start(QThread.Priority.IdlePriority)
 
     # subsequent run / click on older combat
     elif isinstance(combat_id, int) and combat_id != self.current_combat_id:
@@ -72,7 +71,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         self.current_combat_id = combat_id
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(combat_id))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
-        analysis_thread.start()
+        analysis_thread.start(QThread.Priority.IdlePriority)
 
     create_overview(self)
 
