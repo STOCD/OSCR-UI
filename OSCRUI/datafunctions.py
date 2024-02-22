@@ -3,11 +3,10 @@ import os
 
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
-from OSCR import OSCR, TREE_HEADER
+from OSCR import OSCR
 
-from .datamodels import TreeModel, TreeSortingProxy
+from .datamodels import DamageTreeModel, HealTreeModel
 from .displayer import create_overview
-from .iofunctions import store_json
 from .widgetbuilder import show_warning
 
 
@@ -22,6 +21,7 @@ class CustomThread(QThread):
         super().__init__(parent)
 
     def run(self):
+        self.setPriority(QThread.Priority.IdlePriority)
         r = self._func()
         self.result.emit((r,))
 
@@ -76,7 +76,6 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
 
     create_overview(self)
 
-    #self.widgets['main_menu_buttons'][1].setDisabled(True)
     # reset tabber
     self.widgets['main_tabber'].setCurrentIndex(0)
     self.widgets['overview_tabber'].setCurrentIndex(0)
@@ -135,90 +134,84 @@ def analysis_data_slot(self, item_tuple: tuple):
     populate_analysis(self, *item_tuple)
     self.widgets['main_menu_buttons'][1].setDisabled(False)
 
-def populate_analysis(self, damage_out_item):
+def populate_analysis(self, root_items: tuple):
     """
     Populates the Analysis' treeview table.
     """
+    damage_out_item, damage_in_item, heal_out_item, heal_in_item = root_items
+
     damage_out_table = self.widgets['analysis_table_dout']
-    damage_out_model = TreeModel(damage_out_item, self.theme_font('tree_table_header'),
-                self.theme_font('tree_table'),
-                self.theme_font('', self.theme['tree_table']['::item']['font']))
+    damage_out_model = DamageTreeModel(damage_out_item, self.theme_font('tree_table_header'),
+            self.theme_font('tree_table'),
+            self.theme_font('', self.theme['tree_table']['::item']['font']))
     damage_out_table.setModel(damage_out_model)
-    damage_out_table.expand(damage_out_model.index(0, 0, damage_out_model.createIndex(0, 0, damage_out_model._root)))
+    damage_out_table.expand(damage_out_model.index(0, 0, 
+            damage_out_model.createIndex(0, 0, damage_out_model._root)))
     damage_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
-    update_shown_columns_dmg(self)
-    """table = self.widgets['analysis_table_dout']
-    model = TreeModel(DAMAGE_HEADER, self.theme_font('tree_table_header'),
-            self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']))
-    model.populate_dout(self.main_data, 1)
-    table.setModel(model)
-    table.expand(model.index(0, 0))
-    resize_tree_table(table)
 
-    dtaken_table = self.widgets['analysis_table_dtaken']
-    dtaken_model = TreeModel(DAMAGE_HEADER, self.theme_font('tree_table_header'),
+    damage_in_table = self.widgets['analysis_table_dtaken']
+    damage_in_model = DamageTreeModel(damage_in_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
-    dtaken_model.populate_in(self.main_data, 3)
-    dtaken_table.setModel(dtaken_model)
-    dtaken_table.expand(dtaken_model.index(0, 0))
-    resize_tree_table(dtaken_table)
+    damage_in_table.setModel(damage_in_model)
+    damage_in_table.expand(damage_in_model.index(0, 0, 
+            damage_in_model.createIndex(0, 0, damage_in_model._root)))
+    damage_in_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
 
-    hin_table = self.widgets['analysis_table_hin']
-    hin_model = TreeModel(HEAL_HEADER, self.theme_font('tree_table_header'),
+    heal_out_table = self.widgets['analysis_table_hout']
+    heal_out_model = HealTreeModel(heal_out_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
-    hin_model.populate_in(self.main_data, 6)
-    hin_table.setModel(hin_model)
-    hin_table.expand(hin_model.index(0, 0))
-    resize_tree_table(hin_table)
+    heal_out_table.setModel(heal_out_model)
+    heal_out_table.expand(heal_out_model.index(0, 0, 
+            damage_in_model.createIndex(0, 0, heal_out_model._root)))
+    heal_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
 
-    hout_table = self.widgets['analysis_table_hout']
-    hout_model = TreeModel(HEAL_HEADER, self.theme_font('tree_table_header'),
+    heal_in_table = self.widgets['analysis_table_hin']
+    heal_in_model = HealTreeModel(heal_in_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
-    hout_model.populate_dout(self.main_data, 4)
-    hout_table.setModel(hout_model)
-    hout_table.expand(hout_model.index(0, 0))
-    resize_tree_table(hout_table)
+    heal_in_table.setModel(heal_in_model)
+    heal_in_table.expand(heal_in_model.index(0, 0, 
+            damage_in_model.createIndex(0, 0, heal_in_model._root)))
+    heal_in_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
     
-    self.update_shown_columns_heal()"""
+    update_shown_columns_dmg(self)
+    update_shown_columns_heal(self)
 
 def update_shown_columns_dmg(self):
     """
-    Hides / shows columns of the dmg analysis table according to self.settings['dmg_columns']
+    Hides / shows columns of the dmg analysis tables.
     """
     dout_table = self.widgets['analysis_table_dout']
-    #dtaken_table = self.widgets['analysis_table_dtaken']
+    dtaken_table = self.widgets['analysis_table_dtaken']
     for i in range(self.settings.value('dmg_columns_length', type=int)):
         state = self.settings.value(f'dmg_columns|{i}')
         if state:
             dout_table.showColumn(i+1)
-            #dtaken_table.showColumn(i+1)
+            dtaken_table.showColumn(i+1)
         else:
             dout_table.hideColumn(i+1)
-            #dtaken_table.hideColumn(i+1)
+            dtaken_table.hideColumn(i+1)
 
 def update_shown_columns_heal(self):
     """
-    Hides / shows columns of the heals analysis table according to self.settings['dmg_columns']
+    Hides / shows columns of the heal analysis tables.
     """
-    return
     hout_table = self.widgets['analysis_table_hout']
     hin_table = self.widgets['analysis_table_hin']
-    for i, state in enumerate(self.settings['heal_columns']):
+    for i in range(self.settings.value('heal_columns_length', type=int)):
+        state = self.settings.value(f'heal_columns|{i}')
         if state:
             hout_table.showColumn(i+1)
             hin_table.showColumn(i+1)
         else:
             hout_table.hideColumn(i+1)
             hin_table.hideColumn(i+1)
-        store_json(self.settings, self.config['settings_path'])
         
 def resize_tree_table(tree):
     """
-    Resizes the columns of the given tree table to fit its contents
+    Resizes the columns of the given tree table to fit its contents.
 
     Parameters:
     - :param tree: QTreeView -> tree to be resized

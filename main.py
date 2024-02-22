@@ -1,12 +1,11 @@
 import sys
 import os
-from multiprocessing import set_start_method, freeze_support
 
 from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2a170'
+    version = '2024.2a221'
 
     # holds the style of the app
     theme = {
@@ -426,42 +425,79 @@ class Launcher():
         },
         # other style decisions
         's.c': {
-            'sidebar_item_width': 0.15,
+            'sidebar_item_width': 0.2,
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
         }
     }
 
-    config = {
-        'sidebar_item_width': 0,
-        'plot_stylesheet_path': r'/src/ui/oscr_default.mplstyle',
-        'settings_path': r'/.OSCR_settings.json',
-        'parser1_lock': None,
-        'default_settings': {
-            'log_path': '',
-            'dmg_columns': [True]*16,
-            'heal_columns': [True]*8
-        }
-    }
-
-    def __init__(self):
+    @staticmethod
+    def base_path() -> str:
+        """initialize the base path"""
         try:
-            self.base_path = sys._MEIPASS
+            base_path = sys._MEIPASS
         except Exception:
-            self.base_path = os.path.abspath(os.path.dirname(__file__))
-        sys.path.append(self.base_path)
-        self.config['default_settings']['log_path'] = self.base_path
-        self.args = {}
+            base_path = os.path.abspath(os.path.dirname(__file__))
+        return base_path
 
-    def launch(self):
-        exit_code = OSCRUI(self.version, self.theme, self.args, self.base_path, self.config).run()
+    @staticmethod
+    def app_config() -> dict:
+        config = {
+            'minimum_window_width': 1280,
+            'minimum_window_height': 720,
+            'settings_path': r'/.OSCR_settings.ini',
+            'default_settings': {
+                'log_path': '',
+                'geometry': None,
+                'dmg_columns|0': True,
+                'dmg_columns|1': True,
+                'dmg_columns|2': True,
+                'dmg_columns|3': True,
+                'dmg_columns|4': True,
+                'dmg_columns|5': True,
+                'dmg_columns|6': True,
+                'dmg_columns|7': True,
+                'dmg_columns|8': True,
+                'dmg_columns|9': True,
+                'dmg_columns|10': True,
+                'dmg_columns|11': True,
+                'dmg_columns|12': True,
+                'dmg_columns|13': True,
+                'dmg_columns|14': True,
+                'dmg_columns|15': True,
+                'dmg_columns|16': True,
+                'dmg_columns|17': True,
+                'dmg_columns|18': True,
+                'dmg_columns|19': True,
+                'dmg_columns|20': True,
+                'dmg_columns_length': 21,
+                'heal_columns|0': True,
+                'heal_columns|1': True,
+                'heal_columns|2': True,
+                'heal_columns|3': True,
+                'heal_columns|4': True,
+                'heal_columns|5': True,
+                'heal_columns|6': True,
+                'heal_columns|7': True,
+                'heal_columns|8': True,
+                'heal_columns|9': True,
+                'heal_columns|10': True,
+                'heal_columns|11': True,
+                'heal_columns|12': True,
+                'heal_columns_length' : 13
+            }
+        }
+        return config
+
+    @staticmethod
+    def launch():
+        args = {}
+        exit_code = OSCRUI(version=Launcher.version, theme=Launcher.theme, args=args, 
+                path=Launcher.base_path(), config=Launcher.app_config()
+                ).run()
         sys.exit(exit_code)
 
-def main():
-    set_start_method('spawn')
-    freeze_support()
-    Launcher().launch()
 
 if __name__ == '__main__':
-    main()
+    Launcher.launch()

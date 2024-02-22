@@ -1,6 +1,5 @@
 from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
 from PyQt6.QtGui import QFont
-import sys
 from OSCR import TABLE_HEADER, TreeItem
 
 from .widgetbuilder import AVCENTER, ARIGHT, ACENTER, ALEFT
@@ -85,7 +84,7 @@ class TreeModel(QAbstractItemModel):
     """
     Data model for the analysis table
     """
-    def __init__(self, root_item, header_font, name_font, cell_font):
+    def __init__(self, root_item, header_font: QFont, name_font: QFont, cell_font: QFont):
         """
         Initializes Tree Model with data in root item.
 
@@ -101,6 +100,9 @@ class TreeModel(QAbstractItemModel):
             - property "column_count" containing the number of columns the items data row
 
         The item may already contain childen.
+        - :param header_font: font used for the header
+        - :param name_font: font used for the first column
+        - :param cell_font: font used for the second to last column
         """
         super().__init__()
         self._root = root_item
@@ -158,6 +160,25 @@ class TreeModel(QAbstractItemModel):
             return parent.internalPointer().column_count
         return self._root.column_count
     
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+        if not index.isValid():
+            return Qt.ItemFlag.NoItemFlags
+        return super().flags(index)
+    
+    def headerData(self, section, orientation, role) -> str:
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self._root.data[section]
+        elif role == Qt.ItemDataRole.FontRole:
+            return self._header_font
+        elif role == Qt.ItemDataRole.TextAlignmentRole:
+            return ACENTER
+        return None
+
+
+class DamageTreeModel(TreeModel):
+    """
+    Tree Model subclass for the damage tables
+    """
     def data(self, index: QModelIndex, role: int) -> str:
         if not index.isValid():
             return ''
@@ -176,7 +197,7 @@ class TreeModel(QAbstractItemModel):
                 return f'{data:,.2f}'
             elif column in (8, 9, 10, 11, 12, 20, 21):
                 return f'{data:,.0f}'
-            elif column == 19 and data:
+            elif column == 19:
                 return f'{data}s'
         elif role == Qt.ItemDataRole.FontRole:
             if column == 0:
@@ -190,17 +211,40 @@ class TreeModel(QAbstractItemModel):
         elif role == -13:
             return index.internalPointer().get_data(column)
         return None
-    
-    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+
+class HealTreeModel(TreeModel):
+    """
+    Tree Model subclass for the heal tables
+    """
+    def data(self, index: QModelIndex, role: int) -> str:
         if not index.isValid():
-            return Qt.ItemFlag.NoItemFlags
-        return super().flags(index)
-    
-    def headerData(self, section, orientation, role) -> str:
+            return ''
+        column = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
-            return self._root.data[section]
+            data = index.internalPointer().get_data(column)
+            if data == '':
+                return ''
+            if column == 0:
+                if isinstance(data, tuple):
+                    return ''.join(data)
+                return data
+            elif column == 8:
+                return f'{data * 100:,.2f}%'
+            elif column in (1, 2, 3, 4, 5, 6, 7, 17, 18):
+                return f'{data:,.2f}'
+            elif column in (9, 10, 12, 13):
+                return f'{data:,.0f}'
+            elif column == 11:
+                return f'{data}s'
         elif role == Qt.ItemDataRole.FontRole:
-            return self._header_font
+            if column == 0:
+                return self._name_font
+            return self._cell_font
         elif role == Qt.ItemDataRole.TextAlignmentRole:
-            return ACENTER
+            if column != 0:
+                return AVCENTER + ARIGHT
+            else:
+                return AVCENTER + ALEFT
+        elif role == -13:
+            return index.internalPointer().get_data(column)
         return None
