@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QPushButton
+from PyQt6.QtWidgets import QWidget, QPushButton, QTabWidget, QFrame, QTreeView, QComboBox, QTableView
 from PyQt6.QtGui import QIcon, QPixmap, QPainter
 from PyQt6.QtCore import QRect, pyqtSlot
 from pyqtgraph import AxisItem
@@ -123,3 +123,27 @@ class CustomPlotAxis(AxisItem):
             else:
                 strings.append(f'{tick:.0f}{self._unit}')
         return strings
+    
+class WidgetStorage():
+    """
+    Class to store widgets.
+    """
+    def __init__(self):
+        self.main_menu_buttons: list[QPushButton] = list()
+        self.main_tabber: QTabWidget
+        self.main_tab_frames: list[QFrame] = list()
+
+        self.overview_menu_buttons: list[QPushButton] = list()
+        self.overview_tabber: QTabWidget
+        self.overview_tab_frames: list[QFrame] = list()
+        
+        self.analysis_menu_buttons: list[QPushButton] = list()
+        self.analysis_tabber: QTabWidget
+        self.analysis_tab_frames: list[QFrame] = list()
+        self.analysis_table_dout: QTreeView
+        self.analysis_table_dtaken: QTreeView
+        self.analysis_table_hout: QTreeView
+        self.analysis_table_hin: QTreeView
+
+        self.ladder_map: QComboBox
+        self.ladder_table: QTableView

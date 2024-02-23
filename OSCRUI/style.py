@@ -33,7 +33,8 @@ def get_style(self, widget, override:dict={}) -> str:
 def get_style_class(self, class_name:str, widget, override={}) -> str:
     """
     Returns style sheet according to default style of widget with override style. Style only applies to
-    class_name. Sub-controls and pseudo-states defined in self.theme and override are correctly handled.
+    class_name. Sub-controls, pseudo-states and descendant selectors (marked with "~") defined in self.theme 
+    and override are correctly handled.
 
     Parameters:
     - :param class_name: str -> name of the widget to be styled
@@ -57,6 +58,8 @@ def get_style_class(self, class_name:str, widget, override={}) -> str:
     for k, v in style.items():
         if k.startswith(':'):
             main += f''' {class_name}{k} {{{get_css(self, v)}}}'''
+        elif k.startswith('~'):
+            main += f' {get_style_class(self, f"{class_name} {k[1:]}", None, v)}'
     return main
 
 def merge_style(self, s1:dict, s2:dict) -> dict:
@@ -88,7 +91,7 @@ def get_css(self, style: dict) -> str:
             v = self.theme['defaults'][val[1:]]
         else:
             v = val
-        if key.startswith(':') or key == 'font':
+        if key.startswith(':') or key.startswith('~') or key == 'font':
             continue
         elif isinstance(v, int):
             css += f'{key}:{v}px;'

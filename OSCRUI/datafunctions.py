@@ -76,8 +76,8 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     create_overview(self)
 
     # reset tabber
-    self.widgets['main_tabber'].setCurrentIndex(0)
-    self.widgets['overview_tabber'].setCurrentIndex(0)
+    self.widgets.main_tabber.setCurrentIndex(0)
+    self.widgets.overview_tabber.setCurrentIndex(0)
 
 def copy_summary_callback(self):
     """
@@ -131,7 +131,7 @@ def analysis_data_slot(self, item_tuple: tuple):
     - :param item_tuple: tuple containing only the root item of the data model
     """
     populate_analysis(self, *item_tuple)
-    self.widgets['main_menu_buttons'][1].setDisabled(False)
+    self.widgets.main_menu_buttons[1].setDisabled(False)
 
 def populate_analysis(self, root_items: tuple):
     """
@@ -139,7 +139,7 @@ def populate_analysis(self, root_items: tuple):
     """
     damage_out_item, damage_in_item, heal_out_item, heal_in_item = root_items
 
-    damage_out_table = self.widgets['analysis_table_dout']
+    damage_out_table = self.widgets.analysis_table_dout
     damage_out_model = DamageTreeModel(damage_out_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
@@ -148,7 +148,7 @@ def populate_analysis(self, root_items: tuple):
             damage_out_model.createIndex(0, 0, damage_out_model._root)))
     damage_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
 
-    damage_in_table = self.widgets['analysis_table_dtaken']
+    damage_in_table = self.widgets.analysis_table_dtaken
     damage_in_model = DamageTreeModel(damage_in_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
@@ -157,7 +157,7 @@ def populate_analysis(self, root_items: tuple):
             damage_in_model.createIndex(0, 0, damage_in_model._root)))
     damage_in_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
 
-    heal_out_table = self.widgets['analysis_table_hout']
+    heal_out_table = self.widgets.analysis_table_hout
     heal_out_model = HealTreeModel(heal_out_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
@@ -166,7 +166,7 @@ def populate_analysis(self, root_items: tuple):
             damage_in_model.createIndex(0, 0, heal_out_model._root)))
     heal_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
 
-    heal_in_table = self.widgets['analysis_table_hin']
+    heal_in_table = self.widgets.analysis_table_hin
     heal_in_model = HealTreeModel(heal_in_item, self.theme_font('tree_table_header'),
             self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
@@ -182,8 +182,8 @@ def update_shown_columns_dmg(self):
     """
     Hides / shows columns of the dmg analysis tables.
     """
-    dout_table = self.widgets['analysis_table_dout']
-    dtaken_table = self.widgets['analysis_table_dtaken']
+    dout_table = self.widgets.analysis_table_dout
+    dtaken_table = self.widgets.analysis_table_dtaken
     for i in range(self.settings.value('dmg_columns_length', type=int)):
         state = self.settings.value(f'dmg_columns|{i}')
         if state:
@@ -197,8 +197,8 @@ def update_shown_columns_heal(self):
     """
     Hides / shows columns of the heal analysis tables.
     """
-    hout_table = self.widgets['analysis_table_hout']
-    hin_table = self.widgets['analysis_table_hin']
+    hout_table = self.widgets.analysis_table_hout
+    hin_table = self.widgets.analysis_table_hin
     for i in range(self.settings.value('heal_columns_length', type=int)):
         state = self.settings.value(f'heal_columns|{i}')
         if state:

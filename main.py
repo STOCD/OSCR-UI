@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2a222'
+    version = '2024.2a230'
 
     # holds the style of the app
     theme = {
@@ -64,8 +64,10 @@ class Launcher():
             'mfg': '#bbbbbb', # medium foreground
             'bc': '#888888', # border color
             'bw': 1, # border width
+            'br': 2, # border radius
             'sep': 2, # seperator -> width of major seperating lines
             'margin': 10, # default margin between widgets
+            'csp': 5, # child spacing -> content margin
             'isp': 15, # item spacing
         },
         # dark frame
@@ -98,7 +100,7 @@ class Launcher():
             'color': '@fg',
             'text-decoration': 'none',
             'border': 'none',
-            'border-radius': 2,
+            'border-radius': '@br',
             'margin': (3, 10, 3, 10),
             'padding': (2, 5, 0, 5),
             'font': ('Overpass', 15, 'medium'),
@@ -168,7 +170,7 @@ class Launcher():
             'border-width': '@bw',
             'border-style': 'solid',
             'border-color': '@bc',
-            'border-radius': 2,
+            'border-radius': '@br',
             'font': ('Overpass', 12, 'normal'),
             ':focus': { # cursor is inside the line
                 'border-color': '@oscr'
@@ -181,7 +183,7 @@ class Launcher():
             'border-width': '@bw',
             'border-style': 'solid',
             'border-color': '@bc',
-            'border-radius': 2,
+            'border-radius': '@br',
             'font': ('Overpass', 10, 'normal'),
             'outline': '0', # removes dotted line around clicked item
             '::item': {
@@ -194,7 +196,7 @@ class Launcher():
                 'border-width': '@bw',
                 'border-style': 'solid',
                 'border-color': '@oscr',
-                'border-radius': 2,
+                'border-radius': '@br',
             },
             # selected but not the last click of the user
             '::item:selected:!active': {
@@ -230,7 +232,7 @@ class Launcher():
             'border-style': 'solid',
             'border-color': '@bc',
             'border-width': '@bw',
-            'border-radius': 2,
+            'border-radius': '@br',
             'margin': (3, 3, 3, 3),
             'padding': (2, 5, 0, 5),
             'font': ('Overpass', 15, 'medium'),
@@ -308,13 +310,13 @@ class Launcher():
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'padding': (0, -8, -3, 6), # don't ask
+                'padding': (0, 0, 0, 0), #(0, -8, -3, 6), # don't ask
                 'border': 'none',
                 'margin': 0
             },
             '::section:hover': {
                 'background-color': '@loscr'
-            }
+            },
         },
         # index of the table (vertical header); ::section refers to the individual buttons
         'table_index': {
@@ -396,6 +398,42 @@ class Launcher():
                 'border-style': 'solid',
                 'border-color': '@oscr',
             },
+        },
+        # combo box
+        'combobox': {
+            'border-style': 'solid',
+            'border-width': '@bw',
+            'border-color': '@bc',
+            'border-radius': '@br',
+            'background-color': '@bg',
+            'padding': (2, 5, 0, 5),
+            'color': '@fg',
+            'font': ('Overpass', 12, 'normal'),
+            '::down-arrow': {
+                'image': 'url(assets/fat-arrow-down.svg)',
+                'width': '@margin',
+            },
+            '::drop-down': {
+                'border-style': 'none',
+                'padding': (2, 2, 2, 2)
+            },
+            '~QAbstractItemView': {
+                'background-color': '@mbg',
+                'border-style': 'solid',
+                'border-color': '@bc',
+                'border-width': '@bw',
+                'border-radius': '@br',
+                'color': '@fg',
+                'outline': '0',
+                '::item': {
+                    'border-width': '@bw',
+                    'border-style': 'solid',
+                    'border-color': '@mbg',
+                },
+                '::item:hover': {
+                    'border-color': '@oscr',
+                },
+            }
         },
         # frame of the plot widgets
         'plot_widget': {

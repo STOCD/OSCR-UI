@@ -1,12 +1,13 @@
+from typing import Callable, Iterable
 
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableView, QFrame, QLabel
 from pyqtgraph import PlotWidget, BarGraphItem, setConfigOptions, mkBrush, mkPen
 import numpy as np
-from typing import Callable, Iterable
 
-from .datamodels import TableModel, SortingProxy
-from .widgetbuilder import SMPIXEL, RFIXED, SMINMIN, AVCENTER, ACENTER, create_frame, create_label
+from OSCR import TABLE_HEADER
+
+from .datamodels import OverviewTableModel, SortingProxy
+from .widgetbuilder import SMINMIN, AVCENTER, ACENTER, create_frame, create_label, style_table
 from .widgets import CustomPlotAxis
 from .style import get_style_class, get_style, theme_font
 
@@ -59,7 +60,7 @@ def create_overview(self):
     creates the main Parse Overview including graphs and table
     """
     # clear graph frames
-    for frame in self.widgets['overview_tab_frames']:
+    for frame in self.widgets.overview_tab_frames:
         if frame.layout():
             QWidget().setLayout(frame.layout())
 
@@ -67,13 +68,13 @@ def create_overview(self):
     current_table = self.parser1.active_combat.table
 
     line_layout = create_line_graph(self, DPS_graph_data, time_data)
-    self.widgets['overview_tab_frames'][1].setLayout(line_layout)
+    self.widgets.overview_tab_frames[1].setLayout(line_layout)
 
     group_bar_layout = create_grouped_bar_plot(self, DMG_graph_data, time_data)
-    self.widgets['overview_tab_frames'][2].setLayout(group_bar_layout)
+    self.widgets.overview_tab_frames[2].setLayout(group_bar_layout)
 
     bar_layout = create_horizontal_bar_graph(self, current_table)
-    self.widgets['overview_tab_frames'][0].setLayout(bar_layout)
+    self.widgets.overview_tab_frames[0].setLayout(bar_layout)
 
     tbl = create_overview_table(self)
     bar_layout.addWidget(tbl, stretch=4)
@@ -229,25 +230,16 @@ def create_overview_table(self) -> QTableView:
 
     :return: Overview Table
     """
-    model = TableModel(self.parser1.active_combat.table,
-            header_font=self.theme_font('table_header'), cell_font=self.theme_font('table'))
+    table_data = self.parser1.active_combat.table
+    table_cell_data = tuple(tuple(line[2:]) for line in table_data)
+    table_index = tuple(line[0] + line[1] for line in table_data)
+    model = OverviewTableModel(table_cell_data, TABLE_HEADER, table_index, 
+            self.theme_font('table_header'), self.theme_font('table'))
     sort = SortingProxy()
     sort.setSourceModel(model)
-    table = QTableView(self.widgets['overview_tab_frames'][0])
-    table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
-    table.setShowGrid(self.theme['s.c']['table_gridline'])
-    table.setSortingEnabled(True)
+    table = QTableView(self.widgets.overview_tab_frames[0])
     table.setModel(sort)
-    table.setStyleSheet(get_style_class(self, 'QTableView', 'table'))
-    table.setHorizontalScrollMode(SMPIXEL)
-    table.setVerticalScrollMode(SMPIXEL)
-    table.horizontalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_header'))
-    table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_index'))
-    table.resizeColumnsToContents()
+    style_table(self, table)
     for col in range(len(model._header)):
         table.horizontalHeader().resizeSection(col, table.horizontalHeader().sectionSize(col) + 5)
-    table.resizeRowsToContents()
-    table.horizontalHeader().setSectionResizeMode(RFIXED)
-    table.verticalHeader().setSectionResizeMode(RFIXED)
-    table.setSizePolicy(SMINMIN)
     return table

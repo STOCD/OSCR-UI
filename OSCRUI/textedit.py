@@ -76,3 +76,16 @@ def format_data(el, integer=False) -> str:
         return el
     else:
         return str(el)
+    
+def format_datetime_str(datetime: str) -> str:
+    """
+    Formats datetime string into datetime to be displayed.
+
+    Parameters:
+    - :param datetime: datetime string; for example "2022-02-23T14:00:27.100000Z"
+
+    :return: formated datetime -> "2022-02-23 14:00:27"
+    """
+    parts = datetime[:-1].split(':')
+    seconds = int(float(parts[-1]))
+    return f'{parts[0].replace('T', ' ')}:{parts[1]}:{seconds:02d}'

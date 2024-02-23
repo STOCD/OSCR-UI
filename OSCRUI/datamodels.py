@@ -1,18 +1,62 @@
+from typing import Iterable
+
 from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
 from PyQt6.QtGui import QFont
-from OSCR import TABLE_HEADER, TreeItem
+from OSCR import TreeItem
 
 from .widgetbuilder import AVCENTER, ARIGHT, ACENTER, ALEFT
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data, header_font: QFont, cell_font: QFont):
+    def __init__(self, data, header: Iterable, index: Iterable, header_font: QFont, cell_font: QFont):
+        """
+        Creates table model from supplied data.
+
+        Parameters:
+        - :param data: data to be displayed without index or header; two-dimensional iterable
+        - :param header: column headings
+        - :param index: row index
+        - :param header_font: font to style the column headings with
+        - :param cell_font: font to style the cells with
+        """
         super().__init__()
-        self._data = tuple(line[2:] for line in data)
-        self._header = TABLE_HEADER
-        self._index = tuple(f'{line[0]}{line[1]}' for line in data)
+        self._data = data
+        self._header = tuple(header)
+        self._index = list(index)
         self._header_font = header_font
         self._cell_font = cell_font
-    
+
+    def rowCount(self, index):
+        return len(self._data)
+
+    def columnCount(self, index):
+        try:
+            return len(self._data[0]) # all columns must have the same length
+        except IndexError:
+            return 0
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return self._header[section]
+
+            if orientation == Qt.Orientation.Vertical:
+                return self._index[section]
+
+        if role == Qt.ItemDataRole.FontRole:
+            return self._header_font
+
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return ACENTER
+
+            if orientation == Qt.Orientation.Vertical:
+                return AVCENTER + ARIGHT
+            
+class OverviewTableModel(TableModel):
+    """
+    Model for overview table
+    """
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
@@ -33,32 +77,38 @@ class TableModel(QAbstractTableModel):
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return AVCENTER + ARIGHT
-
-    def rowCount(self, index):
-        return len(self._data)
-
-    def columnCount(self, index):
-        return len(self._data[0]) # all columns must have the same length
-
-    def headerData(self, section, orientation, role):
-        # section is the index of the column/row.
+        
+class LeagueTableModel(TableModel):
+    """
+    Model for league table
+    """
+    def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
-            if orientation == Qt.Orientation.Horizontal:
-                return self._header[section]
-                #return TABLE_HEADER_CONVERSION[self._header[section]]
-
-            if orientation == Qt.Orientation.Vertical:
-                return self._index[section]
-
+            current_col = index.column()
+            cell = self._data[index.row()][current_col]
+            column = index.column()
+            if column == 5:
+                return f'{cell:.1f}s'
+            elif column in (2, 3, 7):
+                return f'{cell:,.2f}'
+            elif column == 8:
+                return f'{cell:,.2f}%'
+            elif column == 4:
+                return str(cell)
+            return cell
+        
         if role == Qt.ItemDataRole.FontRole:
-            return self._header_font
+            return self._cell_font
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            if orientation == Qt.Orientation.Horizontal:
-                return ACENTER
-
-            if orientation == Qt.Orientation.Vertical:
-                return AVCENTER + ARIGHT
+            if index.column() == 1:
+                return AVCENTER + ALEFT
+            return AVCENTER + ARIGHT
+    
+    def headerData(self, section, orientation, role):
+        if role == Qt.ItemDataRole.FontRole and orientation == Qt.Orientation.Vertical:
+            return self._cell_font
+        return super().headerData(section, orientation, role)
 
 class SortingProxy(QSortFilterProxyModel):
     def __init__(self):
@@ -67,18 +117,7 @@ class SortingProxy(QSortFilterProxyModel):
     def lessThan(self, left, right):
         l = self.sourceModel()._data[left.row()][left.column()]
         r = self.sourceModel()._data[right.row()][right.column()]
-        return l < r
-    
-class TreeSortingProxy(QSortFilterProxyModel):
-    def __init__(self):
-        super().__init__()
-
-    def lessThan(self, left, right):
-        l = self.sourceModel().data(left, -13)
-        r = self.sourceModel().data(right, -13)
-        if l is None and r is None:
-            return True
-        return l < r
+        return l > r # inverted operator to make descending sort come up first
     
 class TreeModel(QAbstractItemModel):
     """

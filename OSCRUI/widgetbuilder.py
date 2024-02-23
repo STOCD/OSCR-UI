@@ -1,12 +1,11 @@
 from types import FunctionType, BuiltinFunctionType, MethodType
 
-from PyQt6.QtWidgets import QPushButton, QFrame, QLabel, QTreeView, QHeaderView
-from PyQt6.QtWidgets import QSizePolicy, QAbstractItemView, QMessageBox
+from PyQt6.QtWidgets import QPushButton, QFrame, QLabel, QTreeView, QHeaderView, QTableView
+from PyQt6.QtWidgets import QSizePolicy, QAbstractItemView, QMessageBox, QComboBox
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, QSize
 
 from .style import get_style_class, get_style, merge_style, theme_font
-from .iofunctions import load_icon
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -20,6 +19,7 @@ ARIGHT = Qt.AlignmentFlag.AlignRight
 ALEFT = Qt.AlignmentFlag.AlignLeft
 ACENTER = Qt.AlignmentFlag.AlignCenter
 AVCENTER = Qt.AlignmentFlag.AlignVCenter
+AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
 RFIXED = QHeaderView.ResizeMode.Fixed
 
@@ -157,6 +157,26 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
     if ret: return layout, button_list
     else: return layout
 
+def create_combo_box(self, parent, style:str = 'combobox', style_override: dict = {}) -> QComboBox:
+    """
+    Creates a combobox with given style and returns it.
+
+    Parameters:
+    - :param parent: parent of the combo box
+    - :param style: key for self.theme -> default style
+    - :param style_override: style dict to override default style
+
+    :return: styled QCombobox
+    """
+    combo_box = QComboBox(parent)
+    combo_box.setStyleSheet(get_style_class(self, 'QComboBox', style, style_override))
+    if 'font' in style_override:
+        combo_box.setFont(theme_font(self, style, style_override['font']))
+    else:
+        combo_box.setFont(theme_font(self, style))
+    combo_box.setSizePolicy(SMINMAX)
+    return combo_box
+
 def resize_tree_table(tree: QTreeView):
     """
     Resizes the columns of the given tree table to fit its contents
@@ -198,6 +218,28 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.expanded.connect(lambda: resize_tree_table(table))
     table.collapsed.connect(lambda: resize_tree_table(table))
     return table
+
+def style_table(self, table: QTableView):
+    """
+    Styles the given table.
+
+    Parameters:
+    - :param table: table to be styled
+    """
+    table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
+    table.setShowGrid(self.theme['s.c']['table_gridline'])
+    table.setSortingEnabled(True)
+    table.setStyleSheet(get_style_class(self, 'QTableView', 'table'))
+    table.setHorizontalScrollMode(SMPIXEL)
+    table.setVerticalScrollMode(SMPIXEL)
+    table.horizontalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_header'))
+    table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_index'))
+    table.resizeColumnsToContents()
+    table.resizeRowsToContents()
+    table.horizontalHeader().setSortIndicatorShown(False)
+    table.horizontalHeader().setSectionResizeMode(RFIXED)
+    table.verticalHeader().setSectionResizeMode(RFIXED)
+    table.setSizePolicy(SMINMIN)
 
 def show_warning(self, title: str, message: str):
     """

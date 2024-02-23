@@ -4,17 +4,17 @@ import json
 from multiprocessing import Lock
 import os
 
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt6.QtCore import QSize, QSettings, QByteArray, QRect, QPoint, Qt
+from PyQt6.QtCore import QSize, QSettings
 
 from OSCR import TREE_HEADER, HEAL_TREE_HEADER
 
 from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
-from .widgets import BannerLabel, FlipButton
-from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
-from .backend import OSCRClient
+from .widgets import BannerLabel, FlipButton, WidgetStorage
+from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER, AHCENTER
+from .leagueconnector import OSCRClient
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 signal(SIGINT, SIG_DFL)
@@ -26,8 +26,8 @@ class OSCRUI():
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
-    from .widgetbuilder import create_analysis_table, create_button
-    from .backend import upload_callback, create_ladder_layout, update_ladder_index, download_and_view_combat
+    from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
+    from .leagueconnector import upload_callback, update_ladder_index, establish_league_connection
 
     app_dir = None
 
@@ -36,24 +36,9 @@ class OSCRUI():
     settings: QSettings # see main.py for defaults
 
     # stores widgets that need to be accessed from outside their creating function
-    widgets = {
-        'main_menu_buttons': [],
-        'main_tabber': None,
-        'main_tab_frames': [],
+    widgets: WidgetStorage
 
-        'overview_menu_buttons': [],
-        'overview_tabber': None,
-        'overview_tab_frames': [],
-        'overview_graphs': [],
-
-        'analysis_menu_buttons': [],
-        'analysis_tabber': None,
-        'analysis_tab_frames': [],
-        'analysis_table_dout': None,
-        'analysis_table_dtaken': None,
-        'analysis_table_hout': None,
-        'analysis_table_hin': None,
-    }
+    league_api: OSCRClient
 
     def __init__(self, version, theme, args, path, config) -> None:
         """
@@ -71,12 +56,13 @@ class OSCRUI():
         self.args = args
         self.app_dir = path
         self.config = config
+        self.widgets = WidgetStorage()
+        self.league_api = None
         self.init_settings()
         self.app, self.window = self.create_main_window()
         self.init_config()
         self.init_parser()
         self.cache_assets()
-        self.backend = OSCRClient()
         self.setup_main_layout()
         self.window.show()
 
@@ -297,27 +283,28 @@ class OSCRUI():
         layout.addWidget(main_tabber)
         frame.setLayout(layout)
 
-        self.widgets['main_menu_buttons'][0].clicked.connect(lambda: main_tabber.setCurrentIndex(0))
-        self.widgets['main_menu_buttons'][1].clicked.connect(lambda: main_tabber.setCurrentIndex(1))
-        self.widgets['main_menu_buttons'][2].clicked.connect(lambda: main_tabber.setCurrentIndex(2))
-        self.widgets['main_menu_buttons'][3].clicked.connect(lambda: main_tabber.setCurrentIndex(3))
-        self.widgets['main_tab_frames'].append(o_frame)
-        self.widgets['main_tab_frames'].append(a_frame)
-        self.widgets['main_tab_frames'].append(l_frame)
-        self.widgets['main_tab_frames'].append(s_frame)
-        self.widgets['main_tabber'] = main_tabber
+        self.widgets.main_menu_buttons[0].clicked.connect(lambda: main_tabber.setCurrentIndex(0))
+        self.widgets.main_menu_buttons[1].clicked.connect(lambda: main_tabber.setCurrentIndex(1))
+        self.widgets.main_menu_buttons[2].clicked.connect(lambda: main_tabber.setCurrentIndex(2))
+        self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.establish_league_connection(True))
+        self.widgets.main_menu_buttons[3].clicked.connect(lambda: main_tabber.setCurrentIndex(3))
+        self.widgets.main_tab_frames.append(o_frame)
+        self.widgets.main_tab_frames.append(a_frame)
+        self.widgets.main_tab_frames.append(l_frame)
+        self.widgets.main_tab_frames.append(s_frame)
+        self.widgets.main_tabber = main_tabber
 
     def setup_overview_frame(self):
         """
         Sets up the frame housing the combatlog overview
         """
-        o_frame = self.widgets['main_tab_frames'][0]
+        o_frame = self.widgets.main_tab_frames[0]
         bar_frame = self.create_frame(None, 'frame')
         dps_graph_frame = self.create_frame(None, 'frame')
         dmg_graph_frame = self.create_frame(None, 'frame')
-        self.widgets['overview_tab_frames'].append(bar_frame)
-        self.widgets['overview_tab_frames'].append(dps_graph_frame)
-        self.widgets['overview_tab_frames'].append(dmg_graph_frame)
+        self.widgets.overview_tab_frames.append(bar_frame)
+        self.widgets.overview_tab_frames.append(dps_graph_frame)
+        self.widgets.overview_tab_frames.append(dmg_graph_frame)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -343,21 +330,21 @@ class OSCRUI():
         }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
-        self.widgets['overview_menu_buttons'] = buttons
+        self.widgets.overview_menu_buttons = buttons
         switch_frame.setLayout(switcher)
         o_frame.setLayout(layout)
-        self.widgets['overview_tabber'] = o_tabber
+        self.widgets.overview_tabber = o_tabber
 
     def setup_analysis_frame(self):
         """
         Sets up the frame housing the detailed analysis table and graph
         """
-        a_frame = self.widgets['main_tab_frames'][1]
+        a_frame = self.widgets.main_tab_frames[1]
         dout_frame = self.create_frame(None, 'frame')
         dtaken_frame = self.create_frame(None, 'frame')
         hout_frame = self.create_frame(None, 'frame')
         hin_frame = self.create_frame(None, 'frame')
-        self.widgets['analysis_tab_frames'].extend((dout_frame, dtaken_frame, hout_frame, hin_frame))
+        self.widgets.analysis_tab_frames.extend((dout_frame, dtaken_frame, hout_frame, hin_frame))
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -372,7 +359,7 @@ class OSCRUI():
         a_tabber.addTab(dtaken_frame, 'DTAKEN')
         a_tabber.addTab(hout_frame, 'HOUT')
         a_tabber.addTab(hin_frame, 'HIN')
-        self.widgets['analysis_tabber'] = a_tabber
+        self.widgets.analysis_tabber = a_tabber
         layout.addWidget(a_tabber)
 
         switch_style = {
@@ -384,7 +371,7 @@ class OSCRUI():
         }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
-        self.widgets['analysis_menu_buttons'] = buttons
+        self.widgets.analysis_menu_buttons = buttons
         switch_frame.setLayout(switcher)
 
         tabs = (
@@ -402,7 +389,7 @@ class OSCRUI():
 
             tree = self.create_analysis_table(tab, 'tree_table')
             tab_layout.addWidget(tree)
-            self.widgets[name] = tree
+            setattr(self.widgets, name, tree)
             tab.setLayout(tab_layout)
         
         a_frame.setLayout(layout)
@@ -411,10 +398,31 @@ class OSCRUI():
         """
         Sets up the frame housing the detailed analysis table and graph
         """
-        l_frame = self.widgets['main_tab_frames'][2]
+        l_frame = self.widgets.main_tab_frames[2]
+        layout = QVBoxLayout()
+        margin = self.theme['defaults']['margin']
+        layout.setContentsMargins(0, 0, 0, margin)
+        layout.setSpacing(0)
 
-        layout = self.create_ladder_layout()
+        spacing = self.theme['defaults']['isp']
+        control_frame = self.create_frame(l_frame)
+        control_frame_layout = QHBoxLayout()
+        control_frame_layout.setContentsMargins(margin, margin, margin, margin)
+        control_frame_layout.setSpacing(spacing)
 
+        map_selector = self.create_combo_box(control_frame)
+        map_selector.addItem("Select a League")
+        self.widgets.ladder_map = map_selector
+        map_selector.currentIndexChanged.connect(lambda new_index: self.update_ladder_index(new_index))
+        control_frame_layout.addWidget(map_selector)
+        control_frame.setLayout(control_frame_layout)
+
+        ladder_table = QTableView(l_frame)
+        self.style_table(ladder_table)
+        self.widgets.ladder_table = ladder_table
+
+        layout.addWidget(control_frame, alignment=AHCENTER)
+        layout.addWidget(ladder_table)
         l_frame.setLayout(layout)
 
     def create_master_layout(self, parent) -> tuple[QVBoxLayout, QFrame]:
@@ -452,7 +460,7 @@ class OSCRUI():
         bt_lay, buttons = self.create_button_series(menu_frame, menu_button_style, 
                 style='menu_button', seperator='•', ret=True)
         menu_frame.setLayout(bt_lay)
-        self.widgets['main_menu_buttons'] = buttons
+        self.widgets.main_menu_buttons = buttons
 
         w = self.theme['app']['frame_thickness']
         main_frame = self.create_frame(bg_frame, 'frame', {'margin':(0, w, w, w)})
@@ -466,7 +474,7 @@ class OSCRUI():
         """
         Populates the settings frame.
         """
-        settings_frame = self.widgets['main_tab_frames'][3]
+        settings_frame = self.widgets.main_tab_frames[3]
         settings_layout = QHBoxLayout()
         settings_layout.setContentsMargins(0, 0, 0, 0)
         settings_layout.setSpacing(0)
