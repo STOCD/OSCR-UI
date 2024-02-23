@@ -8,7 +8,7 @@ dependencies = [
   "PyQt6>=6.6.0",
   "pyqtgraph>=0.13.3",
   "numpy>=1.26.1",
-  "STO-OSCR>=2024.2b201",
+  "STO-OSCR>=2024.2b221",
   "OSCR-django-client>=2024.2b191",
 ]
 requires-python = ">=3.10"
@@ -37,7 +37,7 @@ Repository = "https://github.com/STOCD/OSCR-UI.git"
 packages = ["."]
 
 [project.scripts]
-oscr = "main:main"
+oscr = "main:Launcher.launch"
 
 [tool.hatch.version]
 path = "main.py"

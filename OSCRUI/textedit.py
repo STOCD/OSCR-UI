@@ -88,4 +88,4 @@ def format_datetime_str(datetime: str) -> str:
     """
     parts = datetime[:-1].split(':')
     seconds = int(float(parts[-1]))
-    return f'{parts[0].replace('T', ' ')}:{parts[1]}:{seconds:02d}'
+    return f'{parts[0].replace("T", " ")}:{parts[1]}:{seconds:02d}'
