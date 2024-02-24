@@ -1,16 +1,50 @@
 # OSCR-UI
+
+[![PyPI version](https://badge.fury.io/py/OSCR-UI.svg)](https://badge.fury.io/py/OSCR-UI)
+
 User Interface for the OSCR parser. 
 
-## Connection to OSCR
-Currently the parser source code files will be placed in the `/OSCRUI/OSCR/` folder to simplify development. At some point in the future the parser will be made available as package on PyPI and added as requirement to this project.
+# Windows Users
 
-## Installation
+For Windows users we have pre-compiled standalone binaries available on the [Releases](https://github.com/STOCD/OSCR-UI/releases) page.
+# Installation
+
+## PyPI
+
+```bash
+python3 -m pip install OSCR-UI
+```
+
+## Github
+
+```bash
+python3 -m pip install git+https://github.com/STOCD/OSCR-UI.git
+```
+
+# Running
+
+```bash
+oscr
+```
+
+# Development
+
 *It is recommended to use a python virtual environment to house this app.*
 
-This app requires Python 3.
+```bash
+# Clone the repository
+git clone https://github.com/STOCD/OSCR-UI.git
+cd OSCR-UI
 
-Clone the repository. Download the contents of [this folder](https://github.com/STOCD/OSCR/tree/main/OSCR) and place them into the `/OSCRUI/OSCR/` folder.
-Install requirements with: `python -m pip install -r requirements.txt`
-Run the app with: `python main.py`
+# Set up the virtual environment
+virtualenv venv
 
-On Linux use `python3` instead of `python`.
+# Windows
+.\venv\Scripts\activate
+
+# Linux
+source ./venv/bin/activate
+
+# Install OSCR + Requirements.
+python3 -m pip install .
+```
