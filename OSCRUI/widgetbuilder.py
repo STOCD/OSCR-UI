@@ -1,12 +1,11 @@
-from types import BuiltinFunctionType, FunctionType, MethodType
+from types import FunctionType, BuiltinFunctionType, MethodType
 
-from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFrame,
-                               QHBoxLayout, QHeaderView, QLabel, QMessageBox,
-                               QPushButton, QSizePolicy, QTableView, QTreeView,
-                               QVBoxLayout)
+from PySide6.QtWidgets import QPushButton, QFrame, QLabel, QTreeView, QHeaderView, QTableView
+from PySide6.QtWidgets import QSizePolicy, QAbstractItemView, QMessageBox, QComboBox
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt, QSize
 
-from .style import get_style, get_style_class, merge_style, theme_font
+from .style import get_style_class, get_style, merge_style, theme_font
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -26,8 +25,7 @@ RFIXED = QHeaderView.ResizeMode.Fixed
 
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
-
-def create_button(self, text, style: str = "", parent=None, style_override={}):
+def create_button(self, text, style:str='', parent=None, style_override={}):
     """
     Creates a button according to style with parent.
 
@@ -40,16 +38,15 @@ def create_button(self, text, style: str = "", parent=None, style_override={}):
     :return: configured QPushButton
     """
     button = QPushButton(text, parent)
-    button.setStyleSheet(get_style_class(self, "QPushButton", style, style_override))
-    if "font" in style_override:
-        button.setFont(theme_font(self, style, style_override["font"]))
+    button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
+    if 'font' in style_override:
+        button.setFont(theme_font(self, style, style_override['font']))
     else:
         button.setFont(theme_font(self, style))
     button.setSizePolicy(SMAXMAX)
     return button
 
-
-def create_icon_button(self, icon, style: str = "", parent=None, style_override={}):
+def create_icon_button(self, icon, style:str='', parent=None, style_override={}):
     """
     Creates a button showing an icon according to style with parent.
 
@@ -61,16 +58,15 @@ def create_icon_button(self, icon, style: str = "", parent=None, style_override=
 
     :return: configured QPushButton
     """
-    button = QPushButton("", parent)
+    button = QPushButton('', parent)
     button.setIcon(icon)
-    button.setStyleSheet(get_style_class(self, "QPushButton", style, style_override))
-    icon_size = self.theme["s.c"]["button_icon_size"]
+    button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
+    icon_size = self.theme['s.c']['button_icon_size']
     button.setIconSize(QSize(icon_size, icon_size))
     button.setSizePolicy(SMAXMAX)
     return button
 
-
-def create_frame(self, parent=None, style="frame", style_override={}) -> QFrame:
+def create_frame(self, parent=None, style='frame', style_override={}) -> QFrame:
     """
     Creates a frame with default styling and parent
 
@@ -85,8 +81,7 @@ def create_frame(self, parent=None, style="frame", style_override={}) -> QFrame:
     frame.setSizePolicy(SMAXMAX)
     return frame
 
-
-def create_label(self, text, style: str = "", parent=None, style_override={}):
+def create_label(self, text, style:str='', parent=None, style_override={}):
     """
     Creates a label according to style with parent.
 
@@ -102,22 +97,13 @@ def create_label(self, text, style: str = "", parent=None, style_override={}):
     label.setText(text)
     label.setStyleSheet(get_style(self, style, style_override))
     label.setSizePolicy(SMAXMAX)
-    if "font" in style_override:
-        label.setFont(theme_font(self, style, style_override["font"]))
+    if 'font' in style_override:
+        label.setFont(theme_font(self, style, style_override['font']))
     else:
         label.setFont(theme_font(self, style))
     return label
-
-
-def create_button_series(
-    self,
-    parent,
-    buttons: dict,
-    style,
-    shape: str = "row",
-    seperator: str = "",
-    ret=False,
-):
+    
+def create_button_series(self, parent, buttons:dict, style, shape:str='row', seperator:str='', ret=False):
     """
     Creates a row / column of buttons.
 
@@ -130,58 +116,48 @@ def create_button_series(
 
     :return: populated QVBoxlayout / QHBoxlayout
     """
-    if "default" in buttons:
-        defaults = merge_style(self, self.theme[style], buttons.pop("default"))
+    if 'default' in buttons:
+        defaults = merge_style(self, self.theme[style], buttons.pop('default'))
     else:
         defaults = self.theme[style]
 
-    if shape == "column":
+    if shape == 'column':
         layout = QVBoxLayout()
     else:
-        shape = "row"
+        shape = 'row'
         layout = QHBoxLayout()
-
+    
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(0)
 
     button_list = []
-
-    if seperator != "":
-        sep_style = {
-            "color": defaults["color"],
-            "margin": 0,
-            "padding": 0,
-            "background": "rgba(0,0,0,0)",
-        }
-
+    
+    if seperator != '':
+        sep_style = {'color':defaults['color'],'margin':0, 'padding':0, 'background':'rgba(0,0,0,0)'}
+    
     for i, (name, detail) in enumerate(buttons.items()):
-        if "style" in detail:
-            button_style = merge_style(self, defaults, detail["style"])
+        if 'style' in detail:
+            button_style = merge_style(self, defaults, detail['style'])
         else:
             button_style = defaults
         bt = self.create_button(name, style, parent, button_style)
-        if "callback" in detail and isinstance(detail["callback"], CALLABLE):
-            bt.clicked.connect(detail["callback"])
-        stretch = detail["stretch"] if "stretch" in detail else 0
-        if "align" in detail:
-            layout.addWidget(bt, stretch, detail["align"])
+        if 'callback' in detail and isinstance(detail['callback'], CALLABLE):
+            bt.clicked.connect(detail['callback'])
+        stretch = detail['stretch'] if 'stretch' in detail else 0
+        if 'align' in detail:
+            layout.addWidget(bt, stretch, detail['align'])
         else:
             layout.addWidget(bt, stretch)
         button_list.append(bt)
-        if seperator != "" and i < (len(buttons) - 1):
-            sep_label = self.create_label(seperator, "label", parent, sep_style)
+        if seperator != '' and i < (len(buttons) - 1):
+            sep_label = self.create_label(seperator, 'label', parent, sep_style)
             sep_label.setSizePolicy(SMAXMIN)
             layout.addWidget(sep_label)
+    
+    if ret: return layout, button_list
+    else: return layout
 
-    if ret:
-        return layout, button_list
-    else:
-        return layout
-
-
-def create_combo_box(
-    self, parent, style: str = "combobox", style_override: dict = {}
-) -> QComboBox:
+def create_combo_box(self, parent, style:str = 'combobox', style_override: dict = {}) -> QComboBox:
     """
     Creates a combobox with given style and returns it.
 
@@ -193,14 +169,13 @@ def create_combo_box(
     :return: styled QCombobox
     """
     combo_box = QComboBox(parent)
-    combo_box.setStyleSheet(get_style_class(self, "QComboBox", style, style_override))
-    if "font" in style_override:
-        combo_box.setFont(theme_font(self, style, style_override["font"]))
+    combo_box.setStyleSheet(get_style_class(self, 'QComboBox', style, style_override))
+    if 'font' in style_override:
+        combo_box.setFont(theme_font(self, style, style_override['font']))
     else:
         combo_box.setFont(theme_font(self, style))
     combo_box.setSizePolicy(SMINMAX)
     return combo_box
-
 
 def resize_tree_table(tree: QTreeView):
     """
@@ -212,8 +187,7 @@ def resize_tree_table(tree: QTreeView):
     for col in range(tree.header().count()):
         width = max(tree.sizeHintForColumn(col), tree.header().sectionSizeHint(col)) + 5
         tree.header().resizeSection(col, width)
-
-
+        
 def create_analysis_table(self, parent, widget) -> QTreeView:
     """
     Creates and returns a QTreeView with parent, styled according to widget.
@@ -225,7 +199,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     :return: configured QTreeView
     """
     table = QTreeView(parent)
-    table.setStyleSheet(get_style_class(self, "QTreeView", widget))
+    table.setStyleSheet(get_style_class(self, 'QTreeView', widget))
     table.setSizePolicy(SMINMIN)
     table.setAlternatingRowColors(True)
     table.setHorizontalScrollMode(SMPIXEL)
@@ -234,11 +208,9 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
     table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-    table.header().setStyleSheet(
-        get_style_class(self, "QHeaderView", "tree_table_header")
-    )
+    table.header().setStyleSheet(get_style_class(self, 'QHeaderView', 'tree_table_header'))
     table.header().setSectionResizeMode(RFIXED)
-    # table.header().setSectionsMovable(False)
+    #table.header().setSectionsMovable(False)
     table.header().setMinimumSectionSize(1)
     table.header().setSectionsClickable(True)
     table.header().setStretchLastSection(False)
@@ -247,7 +219,6 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.collapsed.connect(lambda: resize_tree_table(table))
     return table
 
-
 def style_table(self, table: QTableView):
     """
     Styles the given table.
@@ -255,25 +226,20 @@ def style_table(self, table: QTableView):
     Parameters:
     - :param table: table to be styled
     """
-    table.setAlternatingRowColors(self.theme["s.c"]["table_alternate"])
-    table.setShowGrid(self.theme["s.c"]["table_gridline"])
+    table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
+    table.setShowGrid(self.theme['s.c']['table_gridline'])
     table.setSortingEnabled(True)
-    table.setStyleSheet(get_style_class(self, "QTableView", "table"))
+    table.setStyleSheet(get_style_class(self, 'QTableView', 'table'))
     table.setHorizontalScrollMode(SMPIXEL)
     table.setVerticalScrollMode(SMPIXEL)
-    table.horizontalHeader().setStyleSheet(
-        get_style_class(self, "QHeaderView", "table_header")
-    )
-    table.verticalHeader().setStyleSheet(
-        get_style_class(self, "QHeaderView", "table_index")
-    )
+    table.horizontalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_header'))
+    table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_index'))
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
     table.horizontalHeader().setSortIndicatorShown(False)
     table.horizontalHeader().setSectionResizeMode(RFIXED)
     table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
-
 
 def show_warning(self, title: str, message: str):
     """
@@ -284,9 +250,9 @@ def show_warning(self, title: str, message: str):
     - :param message: message to be displayed
     """
     error = QMessageBox()
-    error.setIcon(QMessageBox.Icon.Warning),
+    error.setIcon(QMessageBox.Icon.Warning), 
     error.setText(message)
     error.setWindowTitle(title)
     error.setStandardButtons(QMessageBox.StandardButton.Ok)
-    error.setWindowIcon(self.icons["oscr"])
+    error.setWindowIcon(self.icons['oscr'])
     error.exec()
