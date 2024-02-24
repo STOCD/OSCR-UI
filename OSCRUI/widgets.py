@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QPushButton, QTabWidget, QFrame, QTreeView, QComboBox, QTableView
-from PyQt6.QtGui import QIcon, QPixmap, QPainter
-from PyQt6.QtCore import QRect, pyqtSlot
+from PySide6.QtWidgets import QWidget, QPushButton, QTabWidget, QFrame, QTreeView, QComboBox, QTableView
+from PySide6.QtGui import QIcon, QPixmap, QPainter
+from PySide6.QtCore import QRect, Slot
 from pyqtgraph import AxisItem
 
 from .widgetbuilder import SMINMIN
@@ -21,7 +21,7 @@ class FlipButton(QPushButton):
         self._l_icon = None
         self.clicked.connect(self.flip)
 
-    @pyqtSlot()
+    @Slot()
     def flip(self):
         if self._r:
             self._r_function()

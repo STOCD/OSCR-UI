@@ -1,7 +1,7 @@
 from typing import Iterable
 
-from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
-from PyQt6.QtGui import QFont
+from PySide6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
+from PySide6.QtGui import QFont
 from OSCR import TreeItem
 
 from .widgetbuilder import AVCENTER, ARIGHT, ACENTER, ALEFT

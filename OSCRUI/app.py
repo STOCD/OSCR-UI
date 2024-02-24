@@ -4,9 +4,9 @@ import json
 from multiprocessing import Lock
 import os
 
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt6.QtCore import QSize, QSettings
+from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
+from PySide6.QtCore import QSize, QSettings
 
 from OSCR import TREE_HEADER, HEAL_TREE_HEADER
 

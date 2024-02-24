@@ -3,8 +3,8 @@ import os
 import re
 import sys
 
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtGui import QIcon
+from PySide6.QtWidgets import QFileDialog
+from PySide6.QtGui import QIcon
 
 # object methods
 

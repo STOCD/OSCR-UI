@@ -1,6 +1,6 @@
 import copy
 
-from PyQt6.QtGui import QFont
+from PySide6.QtGui import QFont
 
 WEIGHT_CONVERSION = {
         'normal': QFont.Weight.Normal,

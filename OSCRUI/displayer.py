@@ -1,6 +1,6 @@
 from typing import Callable, Iterable
 
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableView, QFrame, QLabel
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableView, QFrame, QLabel
 from pyqtgraph import PlotWidget, BarGraphItem, setConfigOptions, mkBrush, mkPen
 import numpy as np
 
