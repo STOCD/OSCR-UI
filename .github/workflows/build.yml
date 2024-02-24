@@ -19,7 +19,7 @@ jobs:
 
     - run: pip install .
     - run: pip install nuitka==2.0
-    - run: python -m nuitka main.py --onefile --enable-plugin=pyqt6 --noinclude-qt-translations --disable-console --output-dir=dist --output-filename=OSCR --assume-yes-for-downloads
+    - run: python -m nuitka main.py --onefile --enable-plugin=pyside6 --noinclude-qt-translations --disable-console --output-dir=dist --output-filename=OSCR --assume-yes-for-downloads
     - uses: actions/upload-artifact@v2
       with:
         name: build_binary
