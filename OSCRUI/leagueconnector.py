@@ -7,8 +7,8 @@ import os
 import OSCR_django_client
 from OSCR.utilities import logline_to_str
 from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
-from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QMessageBox,
+from PySide6.QtGui import QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QMessageBox,
                              QPushButton, QTreeView, QVBoxLayout, QWidget)
 
 from .datamodels import LeagueTableModel, SortingProxy

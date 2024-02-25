@@ -1,9 +1,9 @@
 from types import FunctionType, BuiltinFunctionType, MethodType
 
-from PyQt6.QtWidgets import QPushButton, QFrame, QLabel, QTreeView, QHeaderView, QTableView
-from PyQt6.QtWidgets import QSizePolicy, QAbstractItemView, QMessageBox, QComboBox
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout
-from PyQt6.QtCore import Qt, QSize
+from PySide6.QtWidgets import QPushButton, QFrame, QLabel, QTreeView, QHeaderView, QTableView
+from PySide6.QtWidgets import QSizePolicy, QAbstractItemView, QMessageBox, QComboBox
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt, QSize
 
 from .style import get_style_class, get_style, merge_style, theme_font
 

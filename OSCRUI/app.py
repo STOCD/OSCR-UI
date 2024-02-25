@@ -4,11 +4,12 @@ import json
 from multiprocessing import Lock
 import os
 
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt6.QtCore import QSize, QSettings
+from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
+from PySide6.QtCore import QSize, QSettings
 
 from OSCR import TREE_HEADER, HEAL_TREE_HEADER
+from OSCR.utilities import logline_to_str
 
 from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
@@ -84,7 +85,9 @@ class OSCRUI():
             'collapse-left': 'collapse-left.svg',
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
-            'refresh': 'refresh-cw.svg'
+            'refresh': 'refresh-cw.svg',
+            'save': 'save-cw.svg',
+            'truncate': 'truncate-cw.svg',
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -211,11 +214,17 @@ class OSCRUI():
         Parameters:
         - :param frame: QFrame -> parent frame of the sidebar
         """
-        left_layout = QVBoxLayout()
         m = self.theme['defaults']['margin']
+
+        left_layout = QVBoxLayout()
         left_layout.setContentsMargins(m, m, m, m)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
+
+        left_button_layout = QHBoxLayout()
+        left_button_layout.setContentsMargins(m, m, m, m)
+        left_button_layout.setSpacing(0)
+        left_button_layout.setAlignment(ATOP)
 
         head = self.create_label('STO Combatlog:', 'label', frame)
         left_layout.addWidget(head, alignment=ALEFT)
@@ -230,14 +239,22 @@ class OSCRUI():
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
             'Browse ...': {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
-            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text()), 'align': ARIGHT}
+            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text()), 'align': ARIGHT},
         }
         entry_buttons = self.create_button_series(button_frame, entry_button_config, 'button')
         button_frame.setLayout(entry_buttons)
         left_layout.addWidget(button_frame)
 
+        save_button = self.create_icon_button(self.icons['save'], 'icon_button', frame)
+        left_button_layout.addWidget(save_button, alignment=ALEFT)
+
+        truncate_button = self.create_icon_button(self.icons['truncate'], 'icon_button', frame)
+        left_button_layout.addWidget(truncate_button, alignment=ALEFT)
+
         refresh_button = self.create_icon_button(self.icons['refresh'], 'icon_button', frame)
-        left_layout.addWidget(refresh_button, alignment=ARIGHT)
+        left_button_layout.addWidget(refresh_button, alignment=ARIGHT)
+
+        left_layout.addLayout(left_button_layout)
 
         background_frame = self.create_frame(frame, 'light_frame', 
                 {'border-radius': self.theme['listbox']['border-radius']})
@@ -254,6 +271,8 @@ class OSCRUI():
         left_layout.addWidget(background_frame, stretch=1)
         
         refresh_button.clicked.connect(lambda: self.analyze_log_callback(self.current_combats.currentRow()))
+        save_button.clicked.connect(lambda: self.save_log(self.entry))
+        truncate_button.clicked.connect(lambda: self.truncate_log(self.entry))
 
         frame.setLayout(left_layout)
 
@@ -547,6 +566,36 @@ class OSCRUI():
             path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
             if path != '':
                 entry.setText(format_path(path))
+
+    def save_log(self, entry:QLineEdit):
+        """
+        Callback for save button.
+
+        Parameters:
+        - :param entry: QLineEdit -> path entry line widget
+        """
+        if self.parser1 and self.parser1.active_combat:
+            current_path = entry.text()
+            if current_path != '':
+                path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)', save=True)
+                if path != '':
+                    with open(path, "w") as file:
+                        for line in self.parser1.active_combat.log_data:
+                            file.write(logline_to_str(line))
+
+    def truncate_log(self, entry:QLineEdit):
+        """
+        Callback for truncate button.
+
+        Parameters:
+        - :param entry: QLineEdit -> path entry line widget
+        """
+        if self.parser1 and self.parser1.active_combat:
+            current_path = entry.text()
+            with open(current_path, "w") as file:
+                for line in self.parser1.active_combat.log_data:
+                    file.write(logline_to_str(line))
+            self.analyze_log_callback(path=self.entry.text())
 
     def set_variable(self, var_to_be_set, index, value):
         """

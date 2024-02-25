@@ -1,7 +1,7 @@
 from multiprocessing import Pipe, Process
 import os
 
-from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PySide6.QtCore import QThread, Signal, Qt
 
 from OSCR import OSCR
 
@@ -14,7 +14,7 @@ class CustomThread(QThread):
     """
     Subclass of QThread able to execute an arbitrary function in a seperate thread.
     """
-    result = pyqtSignal(tuple)
+    result = Signal(tuple)
 
     def __init__(self, parent, func) -> None:
         self._func = func

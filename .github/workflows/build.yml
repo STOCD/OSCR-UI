@@ -1,0 +1,45 @@
+name: Build Python Distribution
+
+on: push
+
+jobs:
+  build_binary:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+
+    - run: pip install .
+    - run: pip install nuitka==2.0
+    - run: python -m nuitka main.py --onefile --enable-plugin=pyside6 --noinclude-qt-translations --disable-console --output-dir=dist --output-filename=OSCR --assume-yes-for-downloads
+    - uses: actions/upload-artifact@v2
+      with:
+        name: build_binary
+        path: dist/OSCR*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ build_binary ]
+    name: Create release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v3
+        with:
+          name: build_binary
+          path: dist
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: dist/OSCR*

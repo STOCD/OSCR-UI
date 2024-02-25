@@ -3,12 +3,12 @@ import os
 import re
 import sys
 
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtGui import QIcon
+from PySide6.QtWidgets import QFileDialog
+from PySide6.QtGui import QIcon
 
 # object methods
 
-def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)') -> str:
+def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', save=False) -> str:
     """
     Opens file dialog prompting the user to select a file.
 
@@ -23,11 +23,13 @@ def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)') -
     default_path = os.path.abspath(default_path)
     if not os.path.exists(default_path):
         default_path = self.settings.value('base_path')
-    f = QFileDialog.getOpenFileName(self.window, 'Open Log', default_path, types)[0]
-    if os.path.exists(f):
-        return f
+    if save:
+        f = QFileDialog.getSaveFileName(self.window, 'Save Log', default_path, types)[0]
     else:
-        return ''
+        f = QFileDialog.getOpenFileName(self.window, 'Open Log', default_path, types)[0]
+        if not os.path.exists(f):
+            return ''
+    return f
     
 # static functions
     
