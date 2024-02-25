@@ -287,3 +287,4 @@ class HealTreeModel(TreeModel):
         elif role == -13:
             return index.internalPointer().get_data(column)
         return None
+    

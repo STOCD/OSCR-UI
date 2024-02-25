@@ -1,6 +1,4 @@
-import copy
 from signal import signal, SIGINT, SIG_DFL
-import json
 from multiprocessing import Lock
 import os
 
@@ -13,7 +11,7 @@ from OSCR.utilities import logline_to_str
 
 from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
-from .widgets import BannerLabel, FlipButton, WidgetStorage
+from .widgets import BannerLabel, FlipButton, WidgetStorage, AnalysisPlot
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER, AHCENTER
 from .leagueconnector import OSCRClient
 
@@ -24,8 +22,9 @@ class OSCRUI():
 
     from .datafunctions import init_parser, copy_summary_callback
     from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal
+    from .displayer import create_legend_item
     from .iofunctions import browse_path
-    from .style import get_style_class, create_style_sheet, theme_font
+    from .style import get_style_class, create_style_sheet, theme_font, get_style
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
     from .leagueconnector import upload_callback, update_ladder_index, establish_league_connection
@@ -85,9 +84,9 @@ class OSCRUI():
             'collapse-left': 'collapse-left.svg',
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
-            'refresh': 'refresh-cw.svg',
             'save': 'save-cw.svg',
             'truncate': 'truncate-cw.svg',
+            'refresh': 'refresh-cw.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -215,12 +214,10 @@ class OSCRUI():
         - :param frame: QFrame -> parent frame of the sidebar
         """
         m = self.theme['defaults']['margin']
-
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(m, m, m, m)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
-
         left_button_layout = QHBoxLayout()
         left_button_layout.setContentsMargins(m, m, m, m)
         left_button_layout.setSpacing(0)
@@ -239,7 +236,8 @@ class OSCRUI():
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
             'Browse ...': {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
-            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text()), 'align': ARIGHT},
+            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text()), 
+                    'align': ARIGHT}
         }
         entry_buttons = self.create_button_series(button_frame, entry_button_config, 'button')
         button_frame.setLayout(entry_buttons)
@@ -247,14 +245,11 @@ class OSCRUI():
 
         save_button = self.create_icon_button(self.icons['save'], 'icon_button', frame)
         left_button_layout.addWidget(save_button, alignment=ALEFT)
-
-        truncate_button = self.create_icon_button(self.icons['truncate'], 'icon_button', frame)
-        left_button_layout.addWidget(truncate_button, alignment=ALEFT)
-
-        refresh_button = self.create_icon_button(self.icons['refresh'], 'icon_button', frame)
-        left_button_layout.addWidget(refresh_button, alignment=ARIGHT)
-
+        truncate_button = self.create_icon_button(self.icons['truncate'])
+        left_button_layout.addWidget(truncate_button, alignment=ARIGHT)
         left_layout.addLayout(left_button_layout)
+        refresh_button = self.create_icon_button(self.icons['refresh'], 'icon_button', frame)
+        left_layout.addWidget(refresh_button, alignment=ARIGHT)
 
         background_frame = self.create_frame(frame, 'light_frame', 
                 {'border-radius': self.theme['listbox']['border-radius']})
@@ -394,24 +389,76 @@ class OSCRUI():
         switch_frame.setLayout(switcher)
 
         tabs = (
-            (dout_frame, 'analysis_table_dout'), 
-            (dtaken_frame, 'analysis_table_dtaken'),
-            (hout_frame, 'analysis_table_hout'),
-            (hin_frame, 'analysis_table_hin')
+            (dout_frame, 'analysis_table_dout', 'analysis_plot_dout'), 
+            (dtaken_frame, 'analysis_table_dtaken', 'analysis_plot_dtaken'),
+            (hout_frame, 'analysis_table_hout', 'analysis_plot_hout'),
+            (hin_frame, 'analysis_table_hin', 'analysis_plot_hin')
         )
-        for tab, name in tabs:
+        for tab, table_name, plot_name in tabs:
             tab_layout = QVBoxLayout()
             tab_layout.setContentsMargins(0, 0, 0, 0)
             tab_layout.setSpacing(0)
 
-            #graph
+            # graph
+            plot_frame = self.create_frame(tab, 'plot_widget', {'margin-right': 0}, SMINMAX)
+            plot_layout = QHBoxLayout()
+            plot_layout.setContentsMargins(0, 0, 0, 0)
+            plot_layout.setSpacing(self.theme['defaults']['isp'])
+            
+            plot_bundle_frame = self.create_frame(plot_frame, size_policy=SMINMAX)
+            plot_bundle_layout = QVBoxLayout()
+            plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
+            plot_bundle_layout.setSpacing(0)
+            plot_legend_frame = self.create_frame(plot_bundle_frame)
+            plot_legend_layout = QHBoxLayout()
+            plot_legend_layout.setContentsMargins(0, 0, 0, 0)
+            plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
+            plot_legend_frame.setLayout(plot_legend_layout)
+            plot_widget = AnalysisPlot(self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
+                    self.theme_font('plot_widget'), plot_legend_layout)
+            setattr(self.widgets, plot_name, plot_widget)
+            plot_widget.setStyleSheet(self.get_style('plot_widget_nullifier'))
+            plot_widget.setSizePolicy(SMINMAX)
+            plot_bundle_layout.addWidget(plot_widget)
+            plot_bundle_layout.addWidget(plot_legend_frame, alignment=AHCENTER)
+            plot_bundle_frame.setLayout(plot_bundle_layout)
+            plot_layout.addWidget(plot_bundle_frame, stretch=1)
+
+            plot_button_frame = self.create_frame(plot_frame, size_policy=SMAXMIN)
+            plot_button_layout = QVBoxLayout()
+            plot_button_layout.setContentsMargins(0, 0, 0, 0)
+            plot_button_layout.setSpacing(0)
+            freeze_button = self.create_button('Freeze Graph', 'toggle_button', plot_button_frame, 
+                    style_override={'border-color': '@bg'}, toggle=True)
+            freeze_button.clicked.connect(plot_widget.toggle_freeze)
+            plot_button_layout.addWidget(freeze_button, alignment=ARIGHT)
+            clear_button = self.create_button('Clear Graph', parent=plot_button_frame)
+            clear_button.clicked.connect(plot_widget.clear_plot)
+            plot_button_layout.addWidget(clear_button, alignment=ARIGHT)
+            plot_button_frame.setLayout(plot_button_layout)
+            plot_layout.addWidget(plot_button_frame, stretch=0)
+
+            plot_frame.setLayout(plot_layout)  
+            tab_layout.addWidget(plot_frame, stretch=3)
 
             tree = self.create_analysis_table(tab, 'tree_table')
-            tab_layout.addWidget(tree)
-            setattr(self.widgets, name, tree)
-            tab.setLayout(tab_layout)
+            setattr(self.widgets, table_name, tree)
+            tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
+            tab_layout.addWidget(tree, stretch=7)
+            tab.setLayout(tab_layout)          
         
         a_frame.setLayout(layout)
+
+    def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):
+        item = index.internalPointer()
+        color = plot_widget.add_bar(item.graph_data)
+        if color is None:
+            return
+        name = item.data[0]
+        if isinstance(name, tuple):
+            name = ''.join(name)
+        legend_item = self.create_legend_item(color, name)
+        plot_widget.add_legend_item(legend_item)
 
     def setup_league_standings_frame(self):
         """
@@ -517,8 +564,7 @@ class OSCRUI():
                 {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
         dmg_hider_frame.setSizePolicy(SMINMAX)
         for i, head in enumerate(TREE_HEADER[1:]):
-            bt = self.create_button(head, 'toggle_button', dmg_hider_frame)
-            bt.setCheckable(True)
+            bt = self.create_button(head, 'toggle_button', dmg_hider_frame, toggle=True)
             bt.setSizePolicy(SMINMAX)
             bt.setChecked(self.settings.value(f'dmg_columns|{i}', type=bool))
             bt.clicked.connect(lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
@@ -577,7 +623,8 @@ class OSCRUI():
         if self.parser1 and self.parser1.active_combat:
             current_path = entry.text()
             if current_path != '':
-                path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)', save=True)
+                path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)', 
+                        save=True)
                 if path != '':
                     with open(path, "w") as file:
                         for line in self.parser1.active_combat.log_data:

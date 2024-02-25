@@ -60,6 +60,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         self.current_combats.setCurrentRow(0)
         self.current_combat_id = 0
         self.current_combat_path = path
+
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(0))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
         analysis_thread.start(QThread.Priority.IdlePriority)

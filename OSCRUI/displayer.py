@@ -1,7 +1,7 @@
 from typing import Callable, Iterable
 
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableView, QFrame, QLabel
-from pyqtgraph import PlotWidget, BarGraphItem, setConfigOptions, mkBrush, mkPen
+from pyqtgraph import PlotWidget, BarGraphItem, setConfigOptions, mkPen
 import numpy as np
 
 from OSCR import TABLE_HEADER
@@ -9,7 +9,7 @@ from OSCR import TABLE_HEADER
 from .datamodels import OverviewTableModel, SortingProxy
 from .widgetbuilder import SMINMIN, AVCENTER, ACENTER, create_frame, create_label, style_table
 from .widgets import CustomPlotAxis
-from .style import get_style_class, get_style, theme_font
+from .style import get_style, theme_font
 
 setConfigOptions(antialias=True)
 
@@ -197,8 +197,6 @@ def create_legend(self, colors_and_names: Iterable[tuple]) -> QFrame:
         frame_layout.addWidget(lower_frame, alignment=ACENTER)
     frame.setLayout(frame_layout)
     return frame
-
-
 
 def create_legend_item(self, color: str, name: str) -> QFrame:
     """

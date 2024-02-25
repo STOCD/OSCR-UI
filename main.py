@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2a250'
+    version = '2024.2a251'
 
     # holds the style of the app
     theme = {
@@ -73,6 +73,7 @@ class Launcher():
         # dark frame
         'frame': {
             'background-color': '@bg',
+            'border-style': 'none',
             'margin': 0,
             'padding': 0
         },
@@ -101,7 +102,7 @@ class Launcher():
             'text-decoration': 'none',
             'border': 'none',
             'border-radius': '@br',
-            'margin': (3, 10, 3, 10),
+            'margin': (3, 3, 3, 3),
             'padding': (2, 5, 0, 5),
             'font': ('Overpass', 15, 'medium'),
             ':hover': {
@@ -112,7 +113,7 @@ class Launcher():
             },
             ':disabled': {
                 'color': '@bc'
-            }
+            },
         },
         # big button (main tab switcher)
         'menu_button': {
@@ -225,7 +226,6 @@ class Launcher():
         },
         # used in settings
         'toggle_button': {
-            'width': '100%',
             'background': 'none',
             'color': '@fg',
             'text-decoration': 'none',
@@ -456,7 +456,7 @@ class Launcher():
                              '#54A9B4', '#E47B1C', '#BCBCBC'),
         },
         'plot_legend': {
-            'font': ('Overpass', 12, 'Medium'),
+            'font': ('Overpass', 10, 'Medium'),
             'border-style': 'none',
             'padding': 0,
             'margin': 0

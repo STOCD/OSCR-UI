@@ -7,9 +7,7 @@ import os
 import OSCR_django_client
 from OSCR.utilities import logline_to_str
 from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
-from PySide6.QtGui import QStandardItem, QStandardItemModel
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QMessageBox,
-                             QPushButton, QTreeView, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import QMessageBox
 
 from .datamodels import LeagueTableModel, SortingProxy
 from .textedit import format_datetime_str
@@ -31,8 +29,8 @@ def establish_league_connection(self, fetch_maps: bool = False):
         ladders = self.league_api.ladders()
         if ladders is not None:
             for ladder in ladders.results:
-                solo = "[Solo] " if ladder.is_solo else ""
-                key = f"{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})"
+                solo = '[Solo] ' if ladder.is_solo else ''
+                key = f'{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})'
                 self.league_api.ladder_dict[key] = ladder
                 self.widgets.ladder_map.addItem(key)
 

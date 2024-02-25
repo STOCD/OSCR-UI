@@ -25,7 +25,7 @@ RFIXED = QHeaderView.ResizeMode.Fixed
 
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
-def create_button(self, text, style:str='', parent=None, style_override={}):
+def create_button(self, text, style: str = 'button', parent=None, style_override={}, toggle=None):
     """
     Creates a button according to style with parent.
 
@@ -34,6 +34,8 @@ def create_button(self, text, style:str='', parent=None, style_override={}):
     - :param style: name of the style as in self.theme or style dict
     - :param parent: parent of the button (optional)
     - :param style_override: style dict to override default style (optional)
+    - :param toggle: True or False when button should be a toggle button, None when it should be a normal 
+    button; the bool value indicates the default state of the button
 
     :return: configured QPushButton
     """
@@ -44,6 +46,9 @@ def create_button(self, text, style:str='', parent=None, style_override={}):
     else:
         button.setFont(theme_font(self, style))
     button.setSizePolicy(SMAXMAX)
+    if isinstance(toggle, bool):
+        button.setCheckable(True)
+        button.setChecked(toggle)
     return button
 
 def create_icon_button(self, icon, style:str='', parent=None, style_override={}):
@@ -66,19 +71,20 @@ def create_icon_button(self, icon, style:str='', parent=None, style_override={})
     button.setSizePolicy(SMAXMAX)
     return button
 
-def create_frame(self, parent=None, style='frame', style_override={}) -> QFrame:
+def create_frame(self, parent=None, style='frame', style_override={}, size_policy=None) -> QFrame:
     """
     Creates a frame with default styling and parent
 
     Parameters:
     - :param parent: parent of the frame (optional)
     - :param style: style dict to override default style (optional)
+    - :param size_policy: size policy of the frame (optional)
 
     :return: configured QFrame
     """
     frame = QFrame(parent)
     frame.setStyleSheet(get_style(self, style, style_override))
-    frame.setSizePolicy(SMAXMAX)
+    frame.setSizePolicy(size_policy if isinstance(size_policy, QSizePolicy) else SMAXMAX)
     return frame
 
 def create_label(self, text, style:str='', parent=None, style_override={}):
@@ -110,6 +116,15 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
     Parameters:
     - :param parent: widget that will contain the buttons
     - :param buttons: dictionary containing button details
+        - key "default" contains style override for all buttons (optional)
+        - all other keys represent one button, key will be the text on the button; value for the key contains
+        dict with details for the specific button (all optional)
+            - "callback": callable that will be called on button click
+            - "style": individual style override dict
+            - "toggle": True or False when button should be a toggle button, None when it should be a normal 
+            button; the bool value indicates the default state of the button
+            - "stretch": stretch value for the button
+            - "align": alignment flag for button
     - :param style: key for self.theme -> default style
     - :param shape: row / column
     - :param seperator: string seperator displayed between buttons (optional)
@@ -133,14 +148,15 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
     button_list = []
     
     if seperator != '':
-        sep_style = {'color':defaults['color'],'margin':0, 'padding':0, 'background':'rgba(0,0,0,0)'}
+        sep_style = {'color':defaults['color'], 'margin':0, 'padding':0, 'background':'rgba(0,0,0,0)'}
     
     for i, (name, detail) in enumerate(buttons.items()):
         if 'style' in detail:
             button_style = merge_style(self, defaults, detail['style'])
         else:
             button_style = defaults
-        bt = self.create_button(name, style, parent, button_style)
+        toggle_button = detail['toggle'] if 'toggle' in detail else None
+        bt = self.create_button(name, style, parent, button_style, toggle_button)
         if 'callback' in detail and isinstance(detail['callback'], CALLABLE):
             bt.clicked.connect(detail['callback'])
         stretch = detail['stretch'] if 'stretch' in detail else 0

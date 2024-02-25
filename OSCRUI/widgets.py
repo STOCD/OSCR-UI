@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QTabWidget, QFrame, QTreeView, QComboBox, QTableView
-from PySide6.QtGui import QIcon, QPixmap, QPainter
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QFont
 from PySide6.QtCore import QRect, Slot
-from pyqtgraph import AxisItem
+from pyqtgraph import AxisItem, PlotWidget, BarGraphItem
+import numpy as np
 
 from .widgetbuilder import SMINMIN
 
@@ -124,6 +125,87 @@ class CustomPlotAxis(AxisItem):
                 strings.append(f'{tick:.0f}{self._unit}')
         return strings
     
+class AnalysisPlot(PlotWidget):
+    """
+    PlotWidget for plotting the analysis plot.
+    """
+    def __init__(self, colors: tuple, tick_color: str, tick_font: QFont, legend_layout):
+        """
+        Parameters:
+        - :param colors: tuple with at least 5 different colors that are used to paint the bars
+        - :param tick_color: color for the tick annotations
+        - :param tick_font: font for the tick annotations
+        """
+        super().__init__()
+        self._bar_queue = list()
+        self._legend_queue = list()
+        self._bar_position = 0
+        self._colors = colors
+        self._frozen = True
+        self._legend_layout = legend_layout
+        left_axis = CustomPlotAxis('left')
+        left_axis.setTickFont(tick_font)
+        left_axis.setTextPen(color=tick_color)
+        bottom_axis = CustomPlotAxis('bottom', unit='s')
+        bottom_axis.setTickFont(tick_font)
+        bottom_axis.setTextPen(color=tick_color)
+        self.setAxisItems({'left': left_axis, 'bottom': bottom_axis})
+        self.setBackground(None)
+        self.setMouseEnabled(False, False)
+        self.setMenuEnabled(False)
+        self.hideButtons()
+        self.setDefaultPadding(padding=0)
+
+    def add_bar(self, data):
+        """
+        Adds plot item to plot widget and removes plot item if there are more than 5 currently displayed.
+
+        Parameters:
+        - :param data: list or array containing the height of the bars
+
+        :return: returns the color that the graph was created with for the legend
+        """
+        if self._frozen:
+            return
+        time_reference = np.arange(len(data))
+        group_width = 0.9
+        bar_width = group_width / 5
+        bar_offset = - (group_width / 2) + 0.5 * bar_width + self._bar_position * bar_width
+        time_data = np.subtract(time_reference, bar_offset)
+        brush_color = self._colors[self._bar_position]
+        bars = BarGraphItem(x=time_data, width=bar_width, height=data, brush=brush_color, pen=None)
+        if len(self._bar_queue) >= 5:
+            self.removeItem(self._bar_queue.pop(0))
+            self._legend_layout.removeWidget(self._legend_queue.pop(0))
+        self._bar_queue.append(bars)
+        self.addItem(bars)
+        self._bar_position += 1
+        if self._bar_position >=5:
+            self._bar_position = 0
+        return brush_color
+    
+    def add_legend_item(self, legend_item: QFrame):
+        self._legend_queue.append(legend_item)
+        self._legend_layout.addWidget(legend_item)
+
+    def clear_plot(self):
+        """
+        Removes all bars from the plot
+        """
+        for bar in self._bar_queue:
+            self.removeItem(bar)
+        self._bar_queue = list()
+        for legend_item in self._legend_queue:
+            self._legend_layout.removeWidget(legend_item)
+        self._legend_queue = list()
+        self._bar_position = 0
+    
+    def toggle_freeze(self):
+        """
+        Freezes when unfrozen, unfreezes when frozen
+        """
+        self._frozen = not self._frozen
+
 class WidgetStorage():
     """
     Class to store widgets.
@@ -144,6 +226,10 @@ class WidgetStorage():
         self.analysis_table_dtaken: QTreeView
         self.analysis_table_hout: QTreeView
         self.analysis_table_hin: QTreeView
+        self.analysis_plot_dout: AnalysisPlot
+        self.analysis_plot_dtaken: AnalysisPlot
+        self.analysis_plot_hout: AnalysisPlot
+        self.analysis_plot_hin: AnalysisPlot
 
         self.ladder_map: QComboBox
         self.ladder_table: QTableView
