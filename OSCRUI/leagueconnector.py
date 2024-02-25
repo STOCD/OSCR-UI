@@ -31,7 +31,8 @@ def establish_league_connection(self, fetch_maps: bool = False):
         ladders = self.league_api.ladders()
         if ladders is not None:
             for ladder in ladders.results:
-                key = f"{ladder.metric} - {ladder.name} ({ladder.difficulty})"
+                solo = "[Solo] " if ladder.is_solo else ""
+                key = f"{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})"
                 self.league_api.ladder_dict[key] = ladder
                 self.widgets.ladder_map.addItem(key)
 

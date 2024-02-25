@@ -8,8 +8,8 @@ dependencies = [
   "PySide6>=6.6.0",
   "pyqtgraph>=0.13.3",
   "numpy>=1.26.1",
-  "STO-OSCR>=2024.2b221",
-  "OSCR-django-client>=2024.2b191",
+  "STO-OSCR>=2024.2b250",
+  "OSCR-django-client>=2024.2b250",
 ]
 requires-python = ">=3.10"
 authors = []
