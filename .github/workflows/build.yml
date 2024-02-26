@@ -3,7 +3,7 @@ name: Build Python Distribution
 on: push
 
 jobs:
-  build_binary:
+  OSCR:
     # if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -22,12 +22,12 @@ jobs:
     - run: python -m nuitka --standalone --enable-plugin=pyside6 --output-filename=OSCR --output-dir=dist main.py --disable-console --assume-yes-for-downloads --noinclude-qt-translations --include-data-files=./assets/*=./assets/ --windows-icon-from-ico=./assets/oscr_icon_small.ico --clang
     - uses: actions/upload-artifact@v2
       with:
-        name: build_binary
-        path: dist/OSCR*
+        name: OSCR
+        path: dist
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build_binary ]
+    needs: [ OSCR ]
     name: Create release
     runs-on: ubuntu-latest
     permissions:
@@ -37,9 +37,9 @@ jobs:
       - name: Download
         uses: actions/download-artifact@v3
         with:
-          name: build_binary
+          name: OSCR
           path: dist
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: dist/OSCR*
+          artifacts: dist
