@@ -19,7 +19,7 @@ jobs:
 
     - run: pip install .
     - run: pip install nuitka==2.0.4 
-    - run: python -m nuitka --standalone --enable-plugin=pyside6 --onefile --output-filename=OSCR --output-dir=dist main.py --disable-console --assume-yes-for-downloads --noinclude-qt-translations --include-data-files=./assets/*=./assets/ --windows-icon-from-ico=./assets/oscr_icon_small.ico
+    - run: python -m nuitka --standalone --enable-plugin=pyside6 --onefile --output-filename=OSCR --output-dir=dist main.py --disable-console --assume-yes-for-downloads --noinclude-qt-translations --include-data-files=./assets/*=./assets/ --windows-icon-from-ico=./assets/oscr_icon_small.ico --clang
     - uses: actions/upload-artifact@v2
       with:
         name: build_binary
