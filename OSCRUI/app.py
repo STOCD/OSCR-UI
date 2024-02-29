@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings
 
 from OSCR import TREE_HEADER, HEAL_TREE_HEADER
-from OSCR.utilities import logline_to_str
 
 from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
@@ -27,6 +26,7 @@ class OSCRUI():
     from .style import get_style_class, create_style_sheet, theme_font, get_style
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
+    from .widgetbuilder import split_dialog
     from .leagueconnector import upload_callback, update_ladder_index, establish_league_connection
 
     app_dir = None
@@ -84,9 +84,13 @@ class OSCRUI():
             'collapse-left': 'collapse-left.svg',
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
-            'save': 'save-cw.svg',
-            'truncate': 'truncate-cw.svg',
-            'refresh': 'refresh-cw.svg'
+            'save': 'save.svg',
+            'log-up': 'log-up.svg',
+            'log-down': 'log-down.svg',
+            'log-cut': 'log-cut-tight.svg',
+            'parser-left': 'parser-left.svg',
+            'parser-right': 'parser-right.svg',
+            'export-parse': 'export-parse.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -108,6 +112,21 @@ class OSCRUI():
         """
         self.current_combat_id = -1
         self.current_combat_path = ''
+    
+    @property
+    def parser_settings(self) -> dict:
+        """
+        Returns settings relevant to the parser
+        """
+        relevant_settings = (('combats_to_parse', int), ('seconds_between_combats', int),
+                ('excluded_event_ids',  list), ('graph_resolution', float), ('templog_folder_path', str))
+        settings = dict()
+        for setting_key, settings_type in relevant_settings:
+            setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
+            if setting:
+                settings[setting_key] = setting
+        return settings
+
 
     @property
     def sidebar_item_width(self) -> int:
@@ -218,42 +237,71 @@ class OSCRUI():
         left_layout.setContentsMargins(m, m, m, m)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
-        left_button_layout = QHBoxLayout()
-        left_button_layout.setContentsMargins(m, m, m, m)
-        left_button_layout.setSpacing(0)
-        left_button_layout.setAlignment(ATOP)
 
+        head_layout = QHBoxLayout()
         head = self.create_label('STO Combatlog:', 'label', frame)
-        left_layout.addWidget(head, alignment=ALEFT)
+        head_layout.addWidget(head, alignment=ALEFT)
+        cut_log_button = self.create_icon_button(self.icons['log-cut'], 'Manage Logfile', parent=frame)
+        cut_log_button.clicked.connect(self.split_dialog)
+        head_layout.addWidget(cut_log_button, alignment=ARIGHT)
+        left_layout.addLayout(head_layout)
 
         self.entry = QLineEdit(self.settings.value('log_path', ''), frame)
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
         self.entry.setFixedWidth(self.sidebar_item_width)
         left_layout.addWidget(self.entry)
         
-        button_frame = self.create_frame(frame, 'medium_frame')
-        button_frame.setSizePolicy(SMINMAX)
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
             'Browse ...': {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
-            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text()), 
+            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1), 
                     'align': ARIGHT}
         }
-        entry_buttons = self.create_button_series(button_frame, entry_button_config, 'button')
-        button_frame.setLayout(entry_buttons)
-        left_layout.addWidget(button_frame)
+        entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
+        left_layout.addLayout(entry_buttons)
 
-        save_button = self.create_icon_button(self.icons['save'], 'icon_button', frame)
-        left_button_layout.addWidget(save_button, alignment=ALEFT)
-        truncate_button = self.create_icon_button(self.icons['truncate'])
-        left_button_layout.addWidget(truncate_button, alignment=ARIGHT)
-        left_layout.addLayout(left_button_layout)
-        refresh_button = self.create_icon_button(self.icons['refresh'], 'icon_button', frame)
-        left_layout.addWidget(refresh_button, alignment=ARIGHT)
+        top_button_row = QHBoxLayout()
+        top_button_row.setContentsMargins(0, 0, 0, 0)
+        top_button_row.setSpacing(0)
+
+        combat_button_layout = QHBoxLayout()
+        combat_button_layout.setContentsMargins(0, 0, 0, 0)
+        combat_button_layout.setSpacing(m)
+        combat_button_layout.setAlignment(ALEFT)
+        export_button = self.create_icon_button(self.icons['export-parse'], 'Export Combat', parent=frame)
+        combat_button_layout.addWidget(export_button)
+        save_button = self.create_icon_button(self.icons['save'], 'Save Combat to Cache', parent=frame)
+        combat_button_layout.addWidget(save_button)
+        top_button_row.addLayout(combat_button_layout)
+
+        navigation_button_layout = QHBoxLayout()
+        navigation_button_layout.setContentsMargins(0, 0, 0, 0)
+        navigation_button_layout.setSpacing(m)
+        navigation_button_layout.setAlignment(AHCENTER)
+        up_button = self.create_icon_button(self.icons['log-up'], 'Load newer Combats', parent=frame)
+        up_button.setEnabled(False)
+        navigation_button_layout.addWidget(up_button)
+        self.widgets.navigate_up_button = up_button
+        down_button = self.create_icon_button(self.icons['log-down'], 'Load older Combats', parent=frame)
+        down_button.setEnabled(False)
+        navigation_button_layout.addWidget(down_button)
+        self.widgets.navigate_down_button = down_button
+        top_button_row.addLayout(navigation_button_layout)
+
+        parser_button_layout = QHBoxLayout()
+        parser_button_layout.setContentsMargins(0, 0, 0, 0)
+        parser_button_layout.setSpacing(m)
+        parser_button_layout.setAlignment(ARIGHT)
+        parser1_button = self.create_icon_button(self.icons['parser-left'], 'Analyze Combat', parent=frame)
+        parser_button_layout.addWidget(parser1_button)
+        parser2_button = self.create_icon_button(self.icons['parser-right'], 'Analyze Combat', parent=frame)
+        parser_button_layout.addWidget(parser2_button)
+        top_button_row.addLayout(parser_button_layout)
+
+        left_layout.addLayout(top_button_row)
 
         background_frame = self.create_frame(frame, 'light_frame', 
-                {'border-radius': self.theme['listbox']['border-radius']})
-        background_frame.setSizePolicy(SMAXMIN)
+                {'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'}, SMAXMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -265,9 +313,14 @@ class OSCRUI():
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
         
-        refresh_button.clicked.connect(lambda: self.analyze_log_callback(self.current_combats.currentRow()))
-        save_button.clicked.connect(lambda: self.save_log(self.entry))
-        truncate_button.clicked.connect(lambda: self.truncate_log(self.entry))
+        parser1_button.clicked.connect(
+                lambda: self.analyze_log_callback(self.current_combats.currentRow(), parser_num=1))
+        export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
+        up_button.clicked.connect(lambda: self.navigate_log('up'))
+        down_button.clicked.connect(lambda: self.navigate_log('down'))
+
+        parser2_button.setEnabled(False)
+        save_button.setEnabled(False)
 
         frame.setLayout(left_layout)
 
@@ -613,36 +666,42 @@ class OSCRUI():
             if path != '':
                 entry.setText(format_path(path))
 
-    def save_log(self, entry:QLineEdit):
+    def save_combat(self, combat_num: int):
         """
         Callback for save button.
 
         Parameters:
-        - :param entry: QLineEdit -> path entry line widget
+        - :param combat_num: number of combat in self.combats
         """
-        if self.parser1 and self.parser1.active_combat:
-            current_path = entry.text()
-            if current_path != '':
-                path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)', 
-                        save=True)
-                if path != '':
-                    with open(path, "w") as file:
-                        for line in self.parser1.active_combat.log_data:
-                            file.write(logline_to_str(line))
+        if not self.parser1.active_combat:
+            return
+        base_dir = os.path.dirname(self.entry.text())
+        if not base_dir:
+            base_dir = self.app_dir
+        path = self.browse_path(base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
+        if path:
+            self.parser1.export_combat(combat_num, path)
 
-    def truncate_log(self, entry:QLineEdit):
+    def navigate_log(self, direction: str):
         """
-        Callback for truncate button.
+        Load older or newer combats.
 
         Parameters:
-        - :param entry: QLineEdit -> path entry line widget
+        - :param direction: "up" -> load newer combats; "down" -> load older combats
         """
-        if self.parser1 and self.parser1.active_combat:
-            current_path = entry.text()
-            with open(current_path, "w") as file:
-                for line in self.parser1.active_combat.log_data:
-                    file.write(logline_to_str(line))
-            self.analyze_log_callback(path=self.entry.text())
+        logfile_changed = self.parser1.navigate_log(direction)
+        selected_row = self.current_combats.currentRow()
+        self.current_combats.clear()
+        self.current_combats.addItems(self.parser1.analyzed_combats)
+        if logfile_changed:
+            self.current_combats.setCurrentRow(0)
+            self.current_combat_id = None
+            self.analyze_log_callback(0, parser_num=1)
+        else:
+            self.current_combats.setCurrentRow(selected_row)
+        self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
+        self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
+
 
     def set_variable(self, var_to_be_set, index, value):
         """

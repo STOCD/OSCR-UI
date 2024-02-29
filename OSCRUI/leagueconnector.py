@@ -28,6 +28,7 @@ def establish_league_connection(self, fetch_maps: bool = False):
     if fetch_maps and isinstance(self.league_api, OSCRClient):
         ladders = self.league_api.ladders()
         if ladders is not None:
+            self.widgets.ladder_map.clear()
             for ladder in ladders.results:
                 solo = '[Solo] ' if ladder.is_solo else ''
                 key = f'{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})'

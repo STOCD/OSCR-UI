@@ -7,7 +7,7 @@ from OSCR import OSCR
 
 from .datamodels import DamageTreeModel, HealTreeModel
 from .displayer import create_overview
-from .widgetbuilder import show_warning
+from .widgetbuilder import show_warning, log_size_warning, split_dialog
 
 
 class CustomThread(QThread):
@@ -28,7 +28,7 @@ def init_parser(self):
     """
     Initializes Parser.
     """
-    self.parser1 = OSCR()
+    self.parser1 = OSCR(settings=self.parser_settings)
     # self.parser2 = OSCR()
 
 def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
@@ -39,6 +39,8 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     - :param combat_id: id of older combat (0 -> latest combat in the file; len(...) - 1 -> oldest combat)
     - :param path: path to combat log file
     """
+    if combat_id == -1 or combat_id == self.current_combat_id:
+        return
     if parser_num == 1:
         parser: OSCR = self.parser1
     elif parser_num == 2:
@@ -54,20 +56,23 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         if path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
 
-        get_data(self, combat=None, path=path)
+        proceed = get_data(self, combat=None, path=path)
+        if not proceed:
+            return
         self.current_combats.clear()
         self.current_combats.addItems(parser.analyzed_combats)
         self.current_combats.setCurrentRow(0)
         self.current_combat_id = 0
         self.current_combat_path = path
+        self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
+        self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
 
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(0))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
         analysis_thread.start(QThread.Priority.IdlePriority)
 
     # subsequent run / click on older combat
-    elif isinstance(combat_id, int) and combat_id != self.current_combat_id:
-        if combat_id == -1: return
+    elif isinstance(combat_id, int):
         get_data(self, combat_id)
         self.current_combat_id = combat_id
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(combat_id))
@@ -107,8 +112,12 @@ def copy_summary_callback(self):
 
 
 def get_data(self, combat: int | None = None, path: str | None = None):
-    """Interface between OSCRUI and OSCR. 
-    Uses OSCR class to analyze log at path"""
+    """
+    Interface between OSCRUI and OSCR. 
+    Uses OSCR class to analyze log at path
+    
+    :return: False to abort analyzing process, True otherwise
+    """
 
     # new log file
     if combat is None:
@@ -116,13 +125,20 @@ def get_data(self, combat: int | None = None, path: str | None = None):
         try:
             self.parser1.analyze_log_file()
         except FileExistsError:
-            # TODO show annoying message prompting to split the logfile
-            self.parser1.analyze_massive_log_file()
+            action = log_size_warning(self)
+            if action == 'split dialog':
+                split_dialog(self)
+                return False
+            elif action == 'continue':
+                self.parser1.analyze_massive_log_file()
+            else:
+                return False
         self.parser1.shallow_combat_analysis(0)
         
     # same log file, old combat
     else:
         self.parser1.shallow_combat_analysis(combat)
+    return True
 
 def analysis_data_slot(self, item_tuple: tuple):
     """

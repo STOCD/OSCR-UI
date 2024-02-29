@@ -6,6 +6,37 @@ import numpy as np
 
 from .widgetbuilder import SMINMIN
 
+class WidgetStorage():
+    """
+    Class to store widgets.
+    """
+    def __init__(self):
+        self.main_menu_buttons: list[QPushButton] = list()
+        self.main_tabber: QTabWidget
+        self.main_tab_frames: list[QFrame] = list()
+
+        self.navigate_up_button: QPushButton
+        self.navigate_down_button: QPushButton
+
+        self.overview_menu_buttons: list[QPushButton] = list()
+        self.overview_tabber: QTabWidget
+        self.overview_tab_frames: list[QFrame] = list()
+        
+        self.analysis_menu_buttons: list[QPushButton] = list()
+        self.analysis_tabber: QTabWidget
+        self.analysis_tab_frames: list[QFrame] = list()
+        self.analysis_table_dout: QTreeView
+        self.analysis_table_dtaken: QTreeView
+        self.analysis_table_hout: QTreeView
+        self.analysis_table_hin: QTreeView
+        self.analysis_plot_dout: AnalysisPlot
+        self.analysis_plot_dtaken: AnalysisPlot
+        self.analysis_plot_hout: AnalysisPlot
+        self.analysis_plot_hin: AnalysisPlot
+
+        self.ladder_map: QComboBox
+        self.ladder_table: QTableView
+
 class FlipButton(QPushButton):
     """
     QPushButton with two sets of commands, texts and icons that alter on click.
@@ -176,7 +207,9 @@ class AnalysisPlot(PlotWidget):
         bars = BarGraphItem(x=time_data, width=bar_width, height=data, brush=brush_color, pen=None)
         if len(self._bar_queue) >= 5:
             self.removeItem(self._bar_queue.pop(0))
-            self._legend_layout.removeWidget(self._legend_queue.pop(0))
+            legend_item_to_remove = self._legend_queue.pop(0)
+            self._legend_layout.removeWidget(legend_item_to_remove)
+            legend_item_to_remove.setParent(None)
         self._bar_queue.append(bars)
         self.addItem(bars)
         self._bar_position += 1
@@ -197,6 +230,7 @@ class AnalysisPlot(PlotWidget):
         self._bar_queue = list()
         for legend_item in self._legend_queue:
             self._legend_layout.removeWidget(legend_item)
+            legend_item.setParent(None)
         self._legend_queue = list()
         self._bar_position = 0
     
@@ -205,31 +239,3 @@ class AnalysisPlot(PlotWidget):
         Freezes when unfrozen, unfreezes when frozen
         """
         self._frozen = not self._frozen
-
-class WidgetStorage():
-    """
-    Class to store widgets.
-    """
-    def __init__(self):
-        self.main_menu_buttons: list[QPushButton] = list()
-        self.main_tabber: QTabWidget
-        self.main_tab_frames: list[QFrame] = list()
-
-        self.overview_menu_buttons: list[QPushButton] = list()
-        self.overview_tabber: QTabWidget
-        self.overview_tab_frames: list[QFrame] = list()
-        
-        self.analysis_menu_buttons: list[QPushButton] = list()
-        self.analysis_tabber: QTabWidget
-        self.analysis_tab_frames: list[QFrame] = list()
-        self.analysis_table_dout: QTreeView
-        self.analysis_table_dtaken: QTreeView
-        self.analysis_table_hout: QTreeView
-        self.analysis_table_hin: QTreeView
-        self.analysis_plot_dout: AnalysisPlot
-        self.analysis_plot_dtaken: AnalysisPlot
-        self.analysis_plot_hout: AnalysisPlot
-        self.analysis_plot_hin: AnalysisPlot
-
-        self.ladder_map: QComboBox
-        self.ladder_table: QTableView

@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2a260'
+    version = '2024.2a290'
 
     # holds the style of the app
     theme = {
@@ -15,6 +15,9 @@ class Launcher():
             'fg': '#eeeeee',
             'oscr': '#c82934',
             'font': ('Overpass', 15, 'normal'), # used when no font is specified in style definition
+            'heading': ('Overpass', 15, 'bold'),
+            'text': ('Overpass', 13, 'medium'),
+            'subhead': ('Overpass', 12, 'normal'),
             'font-fallback': ('Yu Gothic UI', 'Nirmala UI', 'Microsoft YaHei UI', 'sans-serif'),
             'frame_thickness': 8,
             # this styles every item of the given type
@@ -93,7 +96,23 @@ class Launcher():
         'label': {
             'color': '@fg',
             'margin': (3, 0, 3, 0),
-            'qproperty-indent': '0' # disables auto-indent
+            'qproperty-indent': '0', # disables auto-indent
+            'border-style': 'none',
+            'font': ('Overpass', 12, 'normal')
+        },
+        # heading label
+        'label_heading': {
+            'color': '@fg',
+            'qproperty-indent': '0',
+            'border-style': 'none',
+            'font': ('Overpass', 15, 'bold')
+        },
+        # label for subheading
+        'label_subhead': {
+            'color': '@fg',
+            'qproperty-indent': '0',
+            'border-style': 'none',
+            'font': ('Overpass', 13, 'medium')
         },
         # default button
         'button': {
@@ -162,6 +181,16 @@ class Launcher():
             'padding': (2, 0, 2, 0),
             ':hover': {
                 'border-color': '@oscr'
+            },
+            # Tooltip
+            '~QToolTip': {
+                'background-color': '@mbg',
+                'border-style': 'solid',
+                'border-color': '@lbg',
+                'border-width': '@bw',
+                'padding': (0, 0, 0, 0),
+                'color': '@fg',
+                'font': 'Overpass'
             }
         },
         # line of user-editable text
@@ -172,10 +201,18 @@ class Launcher():
             'border-style': 'solid',
             'border-color': '@bc',
             'border-radius': '@br',
+            'margin-top': '@csp',
             'font': ('Overpass', 12, 'normal'),
             ':focus': { # cursor is inside the line
                 'border-color': '@oscr'
             }
+        },
+        # horizontal seperator
+        'hr': {
+            'background-color': '@oscr',
+            'border-style': 'none',
+            'margin': (0, 10, 0, 10),
+            'height': 2
         },
         # scrollable list of items; ::item refers to the rows
         'listbox': {
@@ -185,6 +222,7 @@ class Launcher():
             'border-style': 'solid',
             'border-color': '@bc',
             'border-radius': '@br',
+            'margin': 0,
             'font': ('Overpass', 10, 'normal'),
             'outline': '0', # removes dotted line around clicked item
             '::item': {
@@ -435,6 +473,10 @@ class Launcher():
                 },
             }
         },
+        # small window
+        'dialog_window': {
+            'background-color': '@oscr'
+        },
         # frame of the plot widgets
         'plot_widget': {
             'border-style': 'solid',
@@ -452,8 +494,8 @@ class Launcher():
         },
         # holds various properties related to graphing
         'plot': {
-            'color_cycler': ('#b47254', '#545db4', '#a84a51', '#8f54b4', '#7FA95F', '#B45492', '#BFBC45', 
-                             '#54A9B4', '#E47B1C', '#BCBCBC'),
+            'color_cycler': ('#8f54b4', '#B14D54', '#89B177', '#545DB4', '#C8B74E',
+                            '#B45492', '#A27534', '#54A9B4', '#E47B1C', '#BCBCBC'),
         },
         'plot_legend': {
             'font': ('Overpass', 10, 'Medium'),
@@ -523,7 +565,13 @@ class Launcher():
                 'heal_columns|10': True,
                 'heal_columns|11': True,
                 'heal_columns|12': True,
-                'heal_columns_length' : 13
+                'heal_columns_length' : 13,
+                'split_log_after': 480000,
+                'seconds_between_combats': 100,
+                'excluded_event_ids': ['Autodesc.Combatevent.Falling', ''],
+                'templog_folder_path': '',
+                'graph_resolution': 0.2,
+                'combats_to_parse': 10
             }
         }
         return config
