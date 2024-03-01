@@ -187,7 +187,7 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
     if ret: return layout, button_list
     else: return layout
 
-def create_combo_box(self, parent, style:str = 'combobox', style_override: dict = {}) -> QComboBox:
+def create_combo_box(self, parent, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
     """
     Creates a combobox with given style and returns it.
 
@@ -206,6 +206,29 @@ def create_combo_box(self, parent, style:str = 'combobox', style_override: dict 
         combo_box.setFont(theme_font(self, style))
     combo_box.setSizePolicy(SMINMAX)
     return combo_box
+
+def create_entry(self, default_value, validator=None, style: str = 'entry', style_override: dict = {}
+        ) -> QLineEdit:
+    """
+    Creates an entry widget and styles it.
+
+    Parameters:
+    - :param default_value: default value for the entry
+    - :param validator: validator to validate entered characters against
+    - :param style: key for self.theme -> default style
+    - :param style_override: style dict to override default style
+
+    :return: styled QLineEdit
+    """
+    entry = QLineEdit(default_value)
+    entry.setValidator(validator)
+    entry.setStyleSheet(get_style_class(self, 'QLineEdit', style, style_override))
+    if 'font' in style_override:
+        entry.setFont(theme_font(self, style, style_override['font']))
+    else:
+        entry.setFont(theme_font(self, style))
+    entry.setSizePolicy(SMAXMAX)
+    return entry
 
 def resize_tree_table(tree: QTreeView):
     """
@@ -347,7 +370,7 @@ def split_dialog(self):
     auto_split_heading = create_label(self, 'Split Log Automatically:', 'label_heading')
     grid_layout.addWidget(auto_split_heading, 0, 0, alignment=ALEFT)
     label_text = ('Automatically splits the logfile at the next combat end after '
-            f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has been split. '
+            f'{self.settings.value('split_log_after', type=int):,} lines until the entire file has been split. '
             'The new files are written to the selected folder. It is advised to select an empty folder '
             'to ensure all files are saved correctly.')
     auto_split_text = create_label(self, label_text, 'label')

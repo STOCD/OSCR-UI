@@ -5,6 +5,7 @@ import os
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings
+from PySide6.QtGui import QIntValidator
 
 from OSCR import TREE_HEADER, HEAL_TREE_HEADER
 
@@ -26,7 +27,7 @@ class OSCRUI():
     from .style import get_style_class, create_style_sheet, theme_font, get_style
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
-    from .widgetbuilder import split_dialog
+    from .widgetbuilder import split_dialog, create_entry
     from .leagueconnector import upload_callback, update_ladder_index, establish_league_connection
 
     app_dir = None
@@ -98,7 +99,7 @@ class OSCRUI():
         """
         Prepares settings. Loads stored settings. Saves current settings for next startup.
         """
-        settings_path = os.path.abspath(f'{self.app_dir}/{self.config["settings_path"]}')
+        settings_path = os.path.abspath(self.app_dir + self.config["settings_path"])
         self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
         for setting, value in self.config['default_settings'].items():
             if self.settings.value(setting, None) is None:
@@ -112,6 +113,8 @@ class OSCRUI():
         """
         self.current_combat_id = -1
         self.current_combat_path = ''
+        self.config['templog_folder_path'] = os.path.abspath(
+                self.app_dir + self.config['templog_folder_path'])
     
     @property
     def parser_settings(self) -> dict:
@@ -119,12 +122,13 @@ class OSCRUI():
         Returns settings relevant to the parser
         """
         relevant_settings = (('combats_to_parse', int), ('seconds_between_combats', int),
-                ('excluded_event_ids',  list), ('graph_resolution', float), ('templog_folder_path', str))
+                ('excluded_event_ids',  list), ('graph_resolution', float))
         settings = dict()
         for setting_key, settings_type in relevant_settings:
             setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
             if setting:
                 settings[setting_key] = setting
+        settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
 
 
@@ -248,13 +252,14 @@ class OSCRUI():
 
         self.entry = QLineEdit(self.settings.value('log_path', ''), frame)
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
+        self.entry.setFont(self.theme_font('entry'))
         self.entry.setFixedWidth(self.sidebar_item_width)
         left_layout.addWidget(self.entry)
         
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
             'Browse ...': {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
-            'Analyze': {'callback': lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1), 
+            'Scan': {'callback': lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1), 
                     'align': ARIGHT}
         }
         entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
@@ -389,13 +394,15 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            'DPS Bar': {'callback': lambda: o_tabber.setCurrentIndex(0), 'align':ACENTER},
-            'DPS Graph': {'callback': lambda: o_tabber.setCurrentIndex(1), 'align':ACENTER},
-            'Damage Graph': {'callback': lambda: o_tabber.setCurrentIndex(2), 'align':ACENTER},
-            'Copy Summary': {'callback': self.copy_summary_callback, 'align':ACENTER},
-            'Upload Result': {'callback': self.upload_callback, 'align':ACENTER},
+            'DPS Bar': {'callback': lambda: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
+            'DPS Graph': {'callback': lambda: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
+            'Damage Graph': {'callback': lambda: self.switch_overview_tab(2), 'align': ACENTER, 
+                    'toggle': False}
         }
-        switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
+        #     'Copy Summary': {'callback': self.copy_summary_callback, 'align':ACENTER},
+        #     'Upload Result': {'callback': self.upload_callback, 'align':ACENTER},
+        # }
+        switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         self.widgets.overview_menu_buttons = buttons
         switch_frame.setLayout(switcher)
@@ -431,12 +438,14 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            'Damage Out': {'callback': lambda: a_tabber.setCurrentIndex(0), 'align':ACENTER},
-            'Damage Taken': {'callback': lambda: a_tabber.setCurrentIndex(1), 'align':ACENTER},
-            'Heals Out': {'callback': lambda: a_tabber.setCurrentIndex(2), 'align':ACENTER},
-            'Heals In': {'callback': lambda: a_tabber.setCurrentIndex(3), 'align':ACENTER}
+            'Damage Out': {'callback': lambda: self.switch_analysis_tab(0), 'align': ACENTER, 'toggle': True},
+            'Damage Taken': {'callback': lambda: self.switch_analysis_tab(1), 'align': ACENTER, 
+                    'toggle': False},
+            'Heals Out': {'callback': lambda: self.switch_analysis_tab(2), 'align': ACENTER, 'toggle': False},
+            'Heals In': {'callback': lambda: self.switch_analysis_tab(3), 'align': ACENTER, 'toggle': False}
         }
-        switcher, buttons = self.create_button_series(switch_frame, switch_style, 'button', ret=True)
+        switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
+        # buttons[0].setEnabled(False)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         self.widgets.analysis_menu_buttons = buttons
         switch_frame.setLayout(switcher)
@@ -595,8 +604,9 @@ class OSCRUI():
         """
         settings_frame = self.widgets.main_tab_frames[3]
         settings_layout = QHBoxLayout()
-        settings_layout.setContentsMargins(0, 0, 0, 0)
-        settings_layout.setSpacing(0)
+        isp = self.theme['defaults']['isp']
+        settings_layout.setContentsMargins(2 * isp, isp, isp, isp)
+        settings_layout.setSpacing(isp)
 
         col_1_frame = self.create_frame(settings_frame)
         col_1_frame.setSizePolicy(SMINMAX)
@@ -608,35 +618,41 @@ class OSCRUI():
         col_3_frame.setSizePolicy(SMINMAX)
         settings_layout.addWidget(col_3_frame, alignment=ATOP, stretch=1)
 
-        col_1 = QVBoxLayout()
-        col_1.setSpacing(0)
-        dmg_hider_label = self.create_label('Damage table columns:', 'label', col_1_frame)
-        col_1.addWidget(dmg_hider_label)
+        # first column
+        col_1 = QHBoxLayout()
+        col_1.setContentsMargins(0, 0, 0, 0)
+        col_1.setSpacing(self.theme['defaults']['isp'])
+        col_1_1 = QVBoxLayout()
+        col_1_1.setSpacing(0)
+        dmg_hider_label = self.create_label('Damage table columns:', 'label_subhead')
+        col_1_1.addWidget(dmg_hider_label)
         dmg_hider_layout = QVBoxLayout()
-        dmg_hider_frame = self.create_frame(col_1_frame, style_override=
+        dmg_hider_frame = self.create_frame(col_1_frame, size_policy=SMINMAX, style_override=
                 {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
-        dmg_hider_frame.setSizePolicy(SMINMAX)
         for i, head in enumerate(TREE_HEADER[1:]):
             bt = self.create_button(head, 'toggle_button', dmg_hider_frame, toggle=True)
             bt.setSizePolicy(SMINMAX)
             bt.setChecked(self.settings.value(f'dmg_columns|{i}', type=bool))
             bt.clicked.connect(lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
             dmg_hider_layout.addWidget(bt, stretch=1)
-        dmg_hider_frame.setLayout(dmg_hider_layout)
-        col_1.addWidget(dmg_hider_frame, alignment=ATOP)
-        apply_button = self.create_button('Apply', 'button', col_1_frame, {'margin-top':15})
+        dmg_seperator = self.create_frame(dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
+                size_policy=SMINMIN)
+        dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
+        dmg_hider_layout.addWidget(dmg_seperator)
+        apply_button = self.create_button('Apply', 'button', dmg_hider_frame)
         apply_button.clicked.connect(self.update_shown_columns_dmg)
-        col_1.addWidget(apply_button, alignment=ALEFT)
-        col_1_frame.setLayout(col_1)
+        dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT|ATOP)
+        dmg_hider_frame.setLayout(dmg_hider_layout)
+        col_1_1.addWidget(dmg_hider_frame, alignment=ATOP)
+        col_1.addLayout(col_1_1, stretch=1)
 
-        col_2 = QVBoxLayout()
-        col_2.setSpacing(0)
-        heal_hider_label = self.create_label('Heal table columns:', 'label', col_2_frame)
-        col_2.addWidget(heal_hider_label)
+        col_1_2 = QVBoxLayout()
+        col_1_2.setSpacing(0)
+        heal_hider_label = self.create_label('Heal table columns:', 'label_subhead', col_1_frame)
+        col_1_2.addWidget(heal_hider_label)
         heal_hider_layout = QVBoxLayout()
-        heal_hider_frame = self.create_frame(col_2_frame, style_override=
+        heal_hider_frame = self.create_frame(col_1_frame, size_policy=SMINMAX, style_override=
                 {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
-        heal_hider_frame.setSizePolicy(SMINMAX)
         for i, head in enumerate(HEAL_TREE_HEADER[1:]):
             bt = self.create_button(head, 'toggle_button', heal_hider_frame)
             bt.setCheckable(True)
@@ -644,11 +660,33 @@ class OSCRUI():
             bt.setChecked(self.settings.value(f'heal_columns|{i}', type=bool))
             bt.clicked.connect(lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
             heal_hider_layout.addWidget(bt, stretch=1)
-        heal_hider_frame.setLayout(heal_hider_layout)
-        col_2.addWidget(heal_hider_frame, alignment=ATOP)
-        apply_button_2 = self.create_button('Apply', 'button', col_2_frame, {'margin-top':15})
+        heal_seperator = self.create_frame(dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
+            size_policy=SMINMIN)
+        heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
+        heal_hider_layout.addWidget(heal_seperator)
+        apply_button_2 = self.create_button('Apply', 'button', heal_hider_frame)
         apply_button_2.clicked.connect(self.update_shown_columns_heal)
-        col_2.addWidget(apply_button_2, alignment=ALEFT)
+        heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT|ATOP)
+        heal_hider_frame.setLayout(heal_hider_layout)
+        col_1_2.addWidget(heal_hider_frame, alignment=ATOP)
+        col_1.addLayout(col_1_2, stretch=1)
+
+        col_1_frame.setLayout(col_1)
+
+        # second column
+        col_2 = QGridLayout()
+        col_2.setContentsMargins(0, 0, 0, 0)
+        col_2.setVerticalSpacing(self.theme['defaults']['isp'])
+        col_2.setHorizontalSpacing(self.theme['defaults']['csp'])
+        combat_delta_label = self.create_label('Seconds Between Combats:', 'label_subhead')
+        col_2.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
+        combat_delta_validator = QIntValidator()
+        combat_delta_validator.setBottom(1)
+        combat_delta_entry = self.create_entry(self.settings.value('seconds_between_combats', 
+                type=str), combat_delta_validator, style_override={'margin-top': 0})
+        combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue('seconds_between_combats', 
+                combat_delta_entry.text()))
+        col_2.addWidget(combat_delta_entry, 0, 1, alignment=ALEFT)
         col_2_frame.setLayout(col_2)
 
         settings_frame.setLayout(settings_layout)
@@ -702,6 +740,33 @@ class OSCRUI():
         self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
         self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
 
+    def switch_analysis_tab(self, tab_index: int):
+        """
+        Callback for tab switch buttons; switches tab and sets active button.
+
+        Parameters:
+        - :param tab_index: index of the tab to switch to
+        """
+        self.widgets.analysis_tabber.setCurrentIndex(tab_index)
+        for index, button in enumerate(self.widgets.analysis_menu_buttons):
+            if not index == tab_index:
+                button.setChecked(False)
+            else:
+                button.setChecked(True)
+    
+    def switch_overview_tab(self, tab_index: int):
+        """
+        Callback for tab switch buttons; switches tab and sets active button.
+
+        Parameters:
+        - :param tab_index: index of the tab to switch to
+        """
+        self.widgets.overview_tabber.setCurrentIndex(tab_index)
+        for index, button in enumerate(self.widgets.overview_menu_buttons):
+            if not index == tab_index:
+                button.setChecked(False)
+            else:
+                button.setChecked(True)
 
     def set_variable(self, var_to_be_set, index, value):
         """

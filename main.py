@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2a290'
+    version = '2024.3a10'
 
     # holds the style of the app
     theme = {
@@ -14,10 +14,10 @@ class Launcher():
             'bg': '#1a1a1a',
             'fg': '#eeeeee',
             'oscr': '#c82934',
-            'font': ('Overpass', 15, 'normal'), # used when no font is specified in style definition
-            'heading': ('Overpass', 15, 'bold'),
-            'text': ('Overpass', 13, 'medium'),
-            'subhead': ('Overpass', 12, 'normal'),
+            'font': ('Overpass', 11, 'normal'), # used when no font is specified in style definition
+            'heading': ('Overpass', 14, 'bold'),
+            'text': ('Overpass', 11, 'normal'),
+            'subhead': ('Overpass', 12, 'medium'),
             'font-fallback': ('Yu Gothic UI', 'Nirmala UI', 'Microsoft YaHei UI', 'sans-serif'),
             'frame_thickness': 8,
             # this styles every item of the given type
@@ -30,10 +30,10 @@ class Launcher():
                     'margin': 0
                 },
                 'QScrollBar:vertical': {
-                    'width': 10,
+                    'width': 8,
                 },
                 'QScrollBar:horizontal': {
-                    'height': 10,    
+                    'height': 8,    
                 },
                 # space above and below the scrollbar handle
                 'QScrollBar::add-page, QScrollBar::sub-page': {
@@ -41,8 +41,8 @@ class Launcher():
                 },
                 # scroll bar handle
                 'QScrollBar::handle': {
-                    'background-color': 'rgba(0,0,0,.75)',
-                    'border-radius': 5,
+                    'background-color': 'rgba(100,100,100,.75)',
+                    'border-radius': 4,
                     'border': 'none'
                 },
                 # scroll bar arrow buttons
@@ -62,7 +62,7 @@ class Launcher():
             'lbg': '#404040', # light background
             'oscr': '#c82934', # accent
             'loscr': '#20c82934', # light accent (12.5% opacity)
-            'font': ('Overpass', 15, 'normal'),
+            'font': ('Overpass', 11, 'normal'),
             'fg': '#eeeeee', # foreground (usually text)
             'mfg': '#bbbbbb', # medium foreground
             'bc': '#888888', # border color
@@ -98,21 +98,22 @@ class Launcher():
             'margin': (3, 0, 3, 0),
             'qproperty-indent': '0', # disables auto-indent
             'border-style': 'none',
-            'font': ('Overpass', 12, 'normal')
+            'font': ('Overpass', 11, 'normal')
         },
         # heading label
         'label_heading': {
             'color': '@fg',
             'qproperty-indent': '0',
             'border-style': 'none',
-            'font': ('Overpass', 15, 'bold')
+            'font': ('Overpass', 14, 'bold')
         },
         # label for subheading
         'label_subhead': {
             'color': '@fg',
             'qproperty-indent': '0',
             'border-style': 'none',
-            'font': ('Overpass', 13, 'medium')
+            'margin-bottom': 3,
+            'font': ('Overpass', 12, 'medium')
         },
         # default button
         'button': {
@@ -123,7 +124,7 @@ class Launcher():
             'border-radius': '@br',
             'margin': (3, 3, 3, 3),
             'padding': (2, 5, 0, 5),
-            'font': ('Overpass', 15, 'medium'),
+            'font': ('Overpass', 13, 'medium'),
             ':hover': {
                 'color': '@fg',
                 'border-width': '@bw',
@@ -132,7 +133,27 @@ class Launcher():
             },
             ':disabled': {
                 'color': '@bc'
+            }
+        },
+        # button for tab switching
+        'tab_button': {
+            'background': 'none',
+            'color': '@fg',
+            'text-decoration': 'none',
+            'border-style': 'none',
+            'border-width': '@bw',
+            'border-color': '@oscr',
+            'border-radius': '@br',
+            'margin': (3, 3, 3, 3),
+            'padding': (2, 5, 0, 5),
+            'font': ('Overpass', 15, 'medium'),
+            ':hover': {
+                'color': '@fg',
+                'border-style': 'solid',
             },
+            ':checked': {
+                'border-style': 'solid',
+            }
         },
         # big button (main tab switcher)
         'menu_button': {
@@ -202,7 +223,7 @@ class Launcher():
             'border-color': '@bc',
             'border-radius': '@br',
             'margin-top': '@csp',
-            'font': ('Overpass', 12, 'normal'),
+            'font': ('Overpass', 10, 'normal'),
             ':focus': { # cursor is inside the line
                 'border-color': '@oscr'
             }
@@ -273,7 +294,7 @@ class Launcher():
             'border-radius': '@br',
             'margin': (3, 3, 3, 3),
             'padding': (2, 5, 0, 5),
-            'font': ('Overpass', 15, 'medium'),
+            'font': ('Overpass', 13, 'medium'),
             ':hover': {
                 'background-color': '@loscr',
             },
@@ -294,7 +315,7 @@ class Launcher():
             'gridline-color': 'rgba(0,0,0,0)', # -> s.c: table_gridline
             'outline': '0', # removes dotted line around clicked item
             'margin': (0, 10, 10, 0),
-            'font': ('Roboto Mono', 15, 'Medium'),
+            'font': ('Roboto Mono', 12, 'Medium'),
             '::item': {
                 'padding': (0, 5, 0, 5),
                 'border-width': '@bw',
@@ -344,7 +365,7 @@ class Launcher():
             'border-bottom-style': 'solid',
             'border-bottom-color': '@bc',
             'outline': '0', # removes dotted line around clicked item
-            'font': ('Overpass', 15, 'Medium'),
+            'font': ('Overpass', 12, 'Medium'),
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
@@ -384,9 +405,9 @@ class Launcher():
             'color': '@fg',
             'margin': (10, 0, 10, 0),
             'outline': '0', # removes dotted line around clicked item
-            'font': ('Overpass', 11, 'Normal'),
+            'font': ('Overpass', 12, 'Normal'),
             '::item': {
-                'font': ('Roboto Mono', 11, 'Normal'),
+                'font': ('Roboto Mono', 12, 'Normal'),
                 'border-right-width': '@bw',
                 'border-right-style': 'solid',
                 'border-right-color': '@bc',
@@ -446,7 +467,7 @@ class Launcher():
             'background-color': '@bg',
             'padding': (2, 5, 0, 5),
             'color': '@fg',
-            'font': ('Overpass', 12, 'normal'),
+            'font': ('Overpass', 12, 'medium'),
             '::down-arrow': {
                 'image': 'url(assets/fat-arrow-down.svg)',
                 'width': '@margin',
@@ -498,7 +519,7 @@ class Launcher():
                             '#B45492', '#A27534', '#54A9B4', '#E47B1C', '#BCBCBC'),
         },
         'plot_legend': {
-            'font': ('Overpass', 10, 'Medium'),
+            'font': ('Overpass', 11, 'Medium'),
             'border-style': 'none',
             'padding': 0,
             'margin': 0
@@ -527,6 +548,7 @@ class Launcher():
             'minimum_window_width': 1280,
             'minimum_window_height': 720,
             'settings_path': r'/.OSCR_settings.ini',
+            'templog_folder_path': r'/~temp_log_files',
             'default_settings': {
                 'log_path': '',
                 'geometry': None,
@@ -569,7 +591,6 @@ class Launcher():
                 'split_log_after': 480000,
                 'seconds_between_combats': 100,
                 'excluded_event_ids': ['Autodesc.Combatevent.Falling', ''],
-                'templog_folder_path': '',
                 'graph_resolution': 0.2,
                 'combats_to_parse': 10
             }
