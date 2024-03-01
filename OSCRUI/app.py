@@ -1,5 +1,4 @@
 from signal import signal, SIGINT, SIG_DFL
-from multiprocessing import Lock
 import os
 
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
@@ -12,7 +11,7 @@ from OSCR import TREE_HEADER, HEAL_TREE_HEADER
 from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton, WidgetStorage, AnalysisPlot
-from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER, AHCENTER
+from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER, AHCENTER, ABOTTOM
 from .leagueconnector import OSCRClient
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
@@ -91,7 +90,9 @@ class OSCRUI():
             'log-cut': 'log-cut-tight.svg',
             'parser-left': 'parser-left.svg',
             'parser-right': 'parser-right.svg',
-            'export-parse': 'export-parse.svg'
+            'export-parse': 'export-parse.svg',
+            'copy': 'copy.svg',
+            'ladder': 'ladder.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -380,9 +381,9 @@ class OSCRUI():
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-
-        switch_frame = self.create_frame(o_frame, 'frame')
-        layout.addWidget(switch_frame, alignment=ACENTER)
+        switch_layout = QGridLayout()
+        switch_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(switch_layout)
 
         o_tabber = QTabWidget(o_frame)
         o_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
@@ -391,6 +392,11 @@ class OSCRUI():
         o_tabber.addTab(dps_graph_frame, 'DPS')
         o_tabber.addTab(dmg_graph_frame, 'DMG')
         layout.addWidget(o_tabber)
+
+        switch_layout.setColumnStretch(0, 1)
+        switch_frame = self.create_frame(o_frame, 'frame')
+        switch_layout.addWidget(switch_frame, 0, 1, alignment=ACENTER)
+        switch_layout.setColumnStretch(1, 2)
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
@@ -404,8 +410,19 @@ class OSCRUI():
         # }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
-        self.widgets.overview_menu_buttons = buttons
         switch_frame.setLayout(switcher)
+        self.widgets.overview_menu_buttons = buttons
+        icon_layout = QHBoxLayout()
+        icon_layout.setContentsMargins(0, 0, self.theme['defaults']['margin'], 0)
+        icon_layout.setSpacing(self.theme['defaults']['csp'])
+        copy_button = self.create_icon_button(self.icons['copy'], 'Copy Result')
+        copy_button.clicked.connect(self.copy_summary_callback)
+        icon_layout.addWidget(copy_button)
+        ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
+        ladder_button.clicked.connect(self.upload_callback)
+        icon_layout.addWidget(ladder_button)
+        switch_layout.addLayout(icon_layout, 0, 2, alignment = ARIGHT | ABOTTOM)
+        switch_layout.setColumnStretch(2, 1)
         o_frame.setLayout(layout)
         self.widgets.overview_tabber = o_tabber
 
@@ -682,11 +699,40 @@ class OSCRUI():
         col_2.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
         combat_delta_validator = QIntValidator()
         combat_delta_validator.setBottom(1)
-        combat_delta_entry = self.create_entry(self.settings.value('seconds_between_combats', 
-                type=str), combat_delta_validator, style_override={'margin-top': 0})
+        combat_delta_entry = self.create_entry(self.settings.value('seconds_between_combats', type=str), 
+                combat_delta_validator, style_override={'margin-top': 0})
         combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue('seconds_between_combats', 
                 combat_delta_entry.text()))
         col_2.addWidget(combat_delta_entry, 0, 1, alignment=ALEFT)
+        combat_num_label = self.create_label('Number of combats to isolate:', 'label_subhead')
+        col_2.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
+        combat_num_validator = QIntValidator()
+        combat_num_validator.setBottom(1)
+        combat_num_entry = self.create_entry(self.settings.value('combats_to_parse', type=str),
+                combat_num_validator, style_override={'margin-top': 0})
+        combat_num_entry.editingFinished.connect(lambda: self.settings.setValue('combats_to_parse', 
+                combat_num_entry.text()))
+        col_2.addWidget(combat_num_entry, 1, 1, alignment=ALEFT)
+        graph_resolution_label = self.create_label('Graph resolution (data points per second):', 
+                'label_subhead')
+        col_2.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
+        graph_resolution_validator = QIntValidator(1, 5)
+        default_graph_resolution = str(int(round(1 / self.settings.value('graph_resolution', type=float), 0)))
+        graph_resolution_entry = self.create_entry(default_graph_resolution, graph_resolution_validator, 
+                style_override={'margin-top': 0})
+        graph_resolution_entry.editingFinished.connect(lambda: self.settings.setValue('graph_resolution', 
+                round(1 / int(graph_resolution_entry.text()), 1)))
+        col_2.addWidget(graph_resolution_entry, 2, 1, alignment=ALEFT)
+        split_length_label = self.create_label('Auto Split After Lines:', 'label_subhead')
+        col_2.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
+        split_length_validator = QIntValidator()
+        split_length_validator.setBottom(1)
+        split_length_entry = self.create_entry(self.settings.value('split_log_after', type=str),
+                split_length_validator, style_override={'margin-top': 0})
+        split_length_entry.editingFinished.connect(lambda: self.settings.setValue('split_log_after', 
+                split_length_entry.text()))
+        col_2.addWidget(split_length_entry, 3, 1, alignment=ALEFT)
+        
         col_2_frame.setLayout(col_2)
 
         settings_frame.setLayout(settings_layout)

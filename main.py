@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3a10'
+    version = '2024.3a11'
 
     # holds the style of the app
     theme = {
@@ -182,10 +182,6 @@ class Launcher():
             'border': 'none',
             'border-radius': 3,
             'margin': (4, 2, 1, 4),
-            # 'margin-left': 4,
-            # 'margin-top': 4,
-            # 'margin-bottom': 1,
-            # 'margin-right': 2,
             'padding': (2, 0, 2, 0),
             ':hover': {
                 'background-color': 'rgba(136,136,136,.2)'

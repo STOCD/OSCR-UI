@@ -370,9 +370,9 @@ def split_dialog(self):
     auto_split_heading = create_label(self, 'Split Log Automatically:', 'label_heading')
     grid_layout.addWidget(auto_split_heading, 0, 0, alignment=ALEFT)
     label_text = ('Automatically splits the logfile at the next combat end after '
-            f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has been split. '
-            'The new files are written to the selected folder. It is advised to select an empty folder '
-            'to ensure all files are saved correctly.')
+            f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has been '
+            'split. The new files are written to the selected folder. It is advised to select an empty '
+            'folder to ensure all files are saved correctly.')
     auto_split_text = create_label(self, label_text, 'label')
     auto_split_text.setWordWrap(True)
     auto_split_text.setFixedWidth(self.sidebar_item_width)
