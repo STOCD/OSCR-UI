@@ -155,6 +155,7 @@ class OSCRUI():
         """
         self.entry.setFixedWidth(self.sidebar_item_width)
         self.current_combats.setFixedWidth(self.sidebar_item_width)
+        self.widgets.ladder_map.setFixedWidth(self.sidebar_item_width)
         event.accept()
     
     # -------------------------------------------------------------------------------------------------------
@@ -192,7 +193,7 @@ class OSCRUI():
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(0)
 
-        left = self.create_frame(main_frame, 'medium_frame')
+        left = self.create_frame(main_frame)
         left.setSizePolicy(SMAXMIN)
         content_layout.addWidget(left, 0, 0)
 
@@ -224,23 +225,53 @@ class OSCRUI():
         content_layout.addWidget(center, 0, 2)
 
         main_frame.setLayout(content_layout)
-        self.setup_left_sidebar(left)
+        self.setup_left_sidebar_tabber(left)
         self.setup_main_tabber(center)
         self.setup_overview_frame()
         self.setup_analysis_frame()
         self.setup_league_standings_frame()
         self.setup_settings_frame()
 
-    def setup_left_sidebar(self, frame:QFrame):
+    def setup_left_sidebar_league(self):
         """
-        Sets up the sidebar used to select parses and combats
-
-        Parameters:
-        - :param frame: QFrame -> parent frame of the sidebar
+        Sets up the league table management tab of the left sidebar
         """
+        frame = self.widgets.sidebar_tab_frames[1]
         m = self.theme['defaults']['margin']
         left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(m, m, m, m)
+        left_layout.setContentsMargins(m, m, 0.5 * m, m)
+        left_layout.setSpacing(0)
+        left_layout.setAlignment(ATOP)
+
+        map_label = self.create_label('Available Maps:', 'label_heading', frame)
+        left_layout.addWidget(map_label)
+
+        background_frame = self.create_frame(frame, 'light_frame', 
+                {'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'}, SMAXMIN)
+        background_layout = QVBoxLayout()
+        background_layout.setContentsMargins(0, 0, 0, 0)
+        background_frame.setLayout(background_layout)
+        map_selector = QListWidget(background_frame)
+        map_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
+        map_selector.setFont(self.theme_font('listbox'))
+        map_selector.setSizePolicy(SMAXMIN)
+        self.widgets.ladder_map = map_selector
+        map_selector.currentTextChanged.connect(lambda new_text: self.update_ladder_index(new_text))
+        map_selector.setFixedWidth(self.sidebar_item_width)
+        background_layout.addWidget(map_selector)
+        left_layout.addWidget(background_frame, stretch=1)
+
+        frame.setLayout(left_layout)
+
+
+    def setup_left_sidebar_log(self):
+        """
+        Sets up the log management tab of the left sidebar
+        """
+        frame = self.widgets.sidebar_tab_frames[0]
+        m = self.theme['defaults']['margin']
+        left_layout = QVBoxLayout()
+        left_layout.setContentsMargins(m, m, 0.5 * m, m)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
@@ -331,6 +362,33 @@ class OSCRUI():
 
         frame.setLayout(left_layout)
 
+    def setup_left_sidebar_tabber(self, frame: QFrame):
+        """
+        Sets up the sidebar used to select parses and combats
+
+        Parameters:
+        - :param frame: QFrame -> parent frame of the sidebar
+        """
+        log_frame = self.create_frame(style='medium_frame')
+        league_frame = self.create_frame(style='medium_frame')
+        sidebar_tabber = QTabWidget(frame)
+        sidebar_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        sidebar_tabber.tabBar().setStyleSheet(self.get_style_class( 'QTabBar', 'tabber_tab'))
+        sidebar_tabber.setSizePolicy(SMAXMIN)
+        sidebar_tabber.addTab(log_frame, 'Log')
+        sidebar_tabber.addTab(league_frame, 'League')
+        self.widgets.sidebar_tabber = sidebar_tabber
+        self.widgets.sidebar_tab_frames.append(log_frame)
+        self.widgets.sidebar_tab_frames.append(league_frame)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(sidebar_tabber)
+        frame.setLayout(layout)
+
+        self.setup_left_sidebar_log()
+        self.setup_left_sidebar_league()
+
     def setup_main_tabber(self, frame:QFrame):
         """
         Sets up the tabber switching between Overview, Analysis, League and Settings.
@@ -338,30 +396,30 @@ class OSCRUI():
         Parameters:
         - :param frame: QFrame -> parent frame of the sidebar
         """
-        o_frame = self.create_frame(None, 'frame')
-        a_frame = self.create_frame(None, 'frame')
-        l_frame = self.create_frame(None, 'frame')
-        s_frame = self.create_frame(None, 'frame')
+        o_frame = self.create_frame()
+        a_frame = self.create_frame()
+        l_frame = self.create_frame()
+        s_frame = self.create_frame()
 
         main_tabber = QTabWidget(frame)
         main_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
         main_tabber.tabBar().setStyleSheet(self.get_style_class( 'QTabBar', 'tabber_tab'))
         main_tabber.setSizePolicy(SMINMIN)
-        main_tabber.addTab(o_frame, 'O')
-        main_tabber.addTab(a_frame, 'A')
-        main_tabber.addTab(l_frame, 'L')
-        main_tabber.addTab(s_frame, 'S')
+        main_tabber.addTab(o_frame, '&O')
+        main_tabber.addTab(a_frame, '&A')
+        main_tabber.addTab(l_frame, '&L')
+        main_tabber.addTab(s_frame, '&S')
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(main_tabber)
         frame.setLayout(layout)
 
-        self.widgets.main_menu_buttons[0].clicked.connect(lambda: main_tabber.setCurrentIndex(0))
-        self.widgets.main_menu_buttons[1].clicked.connect(lambda: main_tabber.setCurrentIndex(1))
-        self.widgets.main_menu_buttons[2].clicked.connect(lambda: main_tabber.setCurrentIndex(2))
+        self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
+        self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
+        self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.establish_league_connection(True))
-        self.widgets.main_menu_buttons[3].clicked.connect(lambda: main_tabber.setCurrentIndex(3))
+        self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
         self.widgets.main_tab_frames.append(l_frame)
@@ -563,27 +621,20 @@ class OSCRUI():
         l_frame = self.widgets.main_tab_frames[2]
         layout = QVBoxLayout()
         margin = self.theme['defaults']['margin']
-        layout.setContentsMargins(0, 0, 0, margin)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        spacing = self.theme['defaults']['isp']
-        control_frame = self.create_frame(l_frame)
-        control_frame_layout = QHBoxLayout()
-        control_frame_layout.setContentsMargins(margin, margin, margin, margin)
-        control_frame_layout.setSpacing(spacing)
-
-        map_selector = self.create_combo_box(control_frame)
-        map_selector.addItem("Select a League")
-        self.widgets.ladder_map = map_selector
-        map_selector.currentIndexChanged.connect(lambda new_index: self.update_ladder_index(new_index))
-        control_frame_layout.addWidget(map_selector)
-        control_frame.setLayout(control_frame_layout)
+        # spacing = self.theme['defaults']['isp']
+        # control_frame = self.create_frame(l_frame)
+        # control_frame_layout = QHBoxLayout()
+        # control_frame_layout.setContentsMargins(margin, margin, margin, margin)
+        # control_frame_layout.setSpacing(spacing)
 
         ladder_table = QTableView(l_frame)
-        self.style_table(ladder_table)
+        self.style_table(ladder_table, {'margin': '@margin'})
         self.widgets.ladder_table = ladder_table
 
-        layout.addWidget(control_frame, alignment=AHCENTER)
+        # layout.addWidget(control_frame, alignment=AHCENTER)
         layout.addWidget(ladder_table)
         l_frame.setLayout(layout)
 
@@ -830,6 +881,22 @@ class OSCRUI():
                 button.setChecked(False)
             else:
                 button.setChecked(True)
+
+    def switch_main_tab(self, tab_index: int):
+        """
+        Callback for main tab switch buttons. Switches main and sidebar tabs.
+
+        Parameters:
+        - :param tab_index: index of the tab to switch to
+        """
+        SIDEBAR_TAB_CONVERSION = {
+            0: 0,
+            1: 0,
+            2: 1,
+            3: 0
+        }
+        self.widgets.main_tabber.setCurrentIndex(tab_index)
+        self.widgets.sidebar_tabber.setCurrentIndex(SIDEBAR_TAB_CONVERSION[tab_index])
 
     def set_variable(self, var_to_be_set, index, value):
         """

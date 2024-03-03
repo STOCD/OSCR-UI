@@ -11,7 +11,6 @@ from OSCR import split_log_by_lines, split_log_by_combat
 from .style import get_style_class, get_style, merge_style, theme_font
 from .textedit import format_path
 from .iofunctions import browse_path
-from .datamodels import TreeSelectionModel
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -276,17 +275,18 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.collapsed.connect(lambda: resize_tree_table(table))
     return table
 
-def style_table(self, table: QTableView):
+def style_table(self, table: QTableView, style_override: dict = {}):
     """
     Styles the given table.
 
     Parameters:
     - :param table: table to be styled
+    - :param style_override: style override for table
     """
     table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
     table.setShowGrid(self.theme['s.c']['table_gridline'])
     table.setSortingEnabled(True)
-    table.setStyleSheet(get_style_class(self, 'QTableView', 'table'))
+    table.setStyleSheet(get_style_class(self, 'QTableView', 'table', style_override))
     table.setHorizontalScrollMode(SMPIXEL)
     table.setVerticalScrollMode(SMPIXEL)
     table.horizontalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_header'))

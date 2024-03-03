@@ -14,6 +14,8 @@ class WidgetStorage():
         self.main_menu_buttons: list[QPushButton] = list()
         self.main_tabber: QTabWidget
         self.main_tab_frames: list[QFrame] = list()
+        self.sidebar_tabber: QTabWidget
+        self.sidebar_tab_frames: list[QFrame] = list()
 
         self.navigate_up_button: QPushButton
         self.navigate_down_button: QPushButton

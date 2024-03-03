@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QMessageBox
 from .datamodels import LeagueTableModel, SortingProxy
 from .textedit import format_datetime_str
 from .style import theme_font
+from .datafunctions import CustomThread
 
 LADDER_HEADER = ('Name', 'Handle', 'DPS', 'Total Damage', 'Deaths', 'Combat Time', 'Date', 'Max One Hit',
         'Debuff')
@@ -25,20 +26,26 @@ def establish_league_connection(self, fetch_maps: bool = False):
     """
     if self.league_api is None:
         self.league_api = OSCRClient()
-    if fetch_maps and isinstance(self.league_api, OSCRClient):
-        ladders = self.league_api.ladders()
-        if ladders is not None:
-            self.widgets.ladder_map.clear()
-            for ladder in ladders.results:
-                solo = '[Solo] ' if ladder.is_solo else ''
-                key = f'{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})'
-                self.league_api.ladder_dict[key] = ladder
-                self.widgets.ladder_map.addItem(key)
+        if fetch_maps:
+            map_fetch_thread = CustomThread(self.window, lambda: fetch_and_insert_maps(self))
+            map_fetch_thread.start()
 
-def update_ladder_index(self, index):
+def fetch_and_insert_maps(self):
+    """
+    Retrieves maps from API and inserts them into the list.
+    """
+    ladders = self.league_api.ladders()
+    if ladders is not None:
+        self.widgets.ladder_map.clear()
+        for ladder in ladders.results:
+            solo = '' # '[Solo] ' if ladder.is_solo else ''
+            key = f'{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})'
+            self.league_api.ladder_dict[key] = ladder
+            self.widgets.ladder_map.addItem(key)
+
+def update_ladder_index(self, selected_map):
     """Open Combat Log Dialog Box"""
 
-    selected_map = self.widgets.ladder_map.currentText()
     if not selected_map in self.league_api.ladder_dict:
         return
     

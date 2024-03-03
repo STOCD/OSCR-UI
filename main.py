@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3a31'
+    version = '2024.3a32'
 
     # holds the style of the app
     theme = {
@@ -269,7 +269,7 @@ class Launcher():
             'margin': 0,
             'padding': 0,
             '::pane': {
-                'border': 'none'
+                'border': 'none',
             }
         },
         # default tabber buttons (hidden)
@@ -542,7 +542,7 @@ class Launcher():
     def app_config() -> dict:
         config = {
             'minimum_window_width': 1280,
-            'minimum_window_height': 720,
+            'minimum_window_height': 1016,
             'settings_path': r'/.OSCR_settings.ini',
             'templog_folder_path': r'/~temp_log_files',
             'default_settings': {
