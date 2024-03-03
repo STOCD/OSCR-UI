@@ -40,8 +40,8 @@ class WidgetStorage():
     
     @property
     def analysis_table(self):
-        return (self.analysis_table_dout, self.analysis_table_dtaken, self.analysis_plot_hout,
-                self.analysis_plot_hin)
+        return (self.analysis_table_dout, self.analysis_table_dtaken, self.analysis_table_hout,
+                self.analysis_table_hin)
 
 class FlipButton(QPushButton):
     """
