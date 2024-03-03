@@ -5,6 +5,7 @@ from pyqtgraph import PlotWidget, BarGraphItem, setConfigOptions, mkPen
 import numpy as np
 
 from OSCR import TABLE_HEADER
+from OSCR.combat import Combat
 
 from .datamodels import OverviewTableModel, SortingProxy
 from .widgetbuilder import SMINMIN, AVCENTER, ACENTER, create_frame, create_label, style_table
@@ -56,6 +57,53 @@ def setup_plot(plot_function: Callable) -> Callable:
         return outer_layout
     return plot_wrapper
 
+
+def _create_overview(combat: Combat) -> tuple:
+    '''
+    converts dictionary containing player data to table data for the front page
+    '''
+    table = list()
+    total_damage = 0
+    total_damage_taken = 0
+    total_attacks = 0
+    total_heals = 0
+
+    DPS_graph_data = dict()
+    DMG_graph_data = dict()
+    graph_time = dict()
+
+    for player in combat.player_dict.values():
+        total_damage += player.total_damage
+        total_damage_taken += player.total_damage_taken
+        total_attacks += player.attacks_in_num
+        total_heals += player.total_heals
+
+    for player in combat.player_dict.values():
+        try:
+            player.damage_share = player.total_damage / total_damage * 100
+        except ZeroDivisionError:
+            player.damage_share = 0.0
+        try:
+            player.taken_damage_share = player.total_damage_taken / total_damage_taken * 100
+        except ZeroDivisionError:
+            player.taken_damage_share = 0.0
+        try:
+            player.attacks_in_share = player.attacks_in_num / total_attacks * 100
+        except ZeroDivisionError:
+            player.attacks_in_share = 0.0
+        try:
+            player.heal_share = player.total_heals / total_heals * 100
+        except ZeroDivisionError:
+            player.heal_share = 0.0
+        table.append((*player,))
+
+        DPS_graph_data[player.handle] = player.DPS_graph_data
+        DMG_graph_data[player.handle] = player.DMG_graph_data
+        graph_time[player.handle] = player.graph_time
+    table.sort(key=lambda x: x[0])
+    return (graph_time, DPS_graph_data, DMG_graph_data, table)
+
+
 def create_overview(self):
     """
     creates the main Parse Overview including graphs and table
@@ -65,8 +113,7 @@ def create_overview(self):
         if frame.layout():
             QWidget().setLayout(frame.layout())
 
-    time_data, DPS_graph_data, DMG_graph_data = self.parser1.active_combat.graph_data
-    current_table = self.parser1.active_combat.table
+    time_data, DPS_graph_data, DMG_graph_data, current_table = _create_overview(self.parser1.active_combat)
 
     line_layout = create_line_graph(self, DPS_graph_data, time_data)
     self.widgets.overview_tab_frames[1].setLayout(line_layout)
@@ -77,7 +124,7 @@ def create_overview(self):
     bar_layout = create_horizontal_bar_graph(self, current_table)
     self.widgets.overview_tab_frames[0].setLayout(bar_layout)
 
-    tbl = create_overview_table(self)
+    tbl = create_overview_table(self, current_table)
     bar_layout.addWidget(tbl, stretch=4)
 
 @setup_plot
@@ -223,13 +270,12 @@ def create_legend_item(self, color: str, name: str) -> QFrame:
     frame.setLayout(layout)
     return frame
 
-def create_overview_table(self) -> QTableView:
+def create_overview_table(self, table_data) -> QTableView:
     """
     Creates the overview table and returns it.
 
     :return: Overview Table
     """
-    table_data = self.parser1.active_combat.table
     table_cell_data = tuple(tuple(line[2:]) for line in table_data)
     table_index = tuple(line[0] + line[1] for line in table_data)
     model = OverviewTableModel(table_cell_data, TABLE_HEADER, table_index, 
