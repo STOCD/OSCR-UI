@@ -51,7 +51,8 @@ def setup_plot(plot_function: Callable) -> Callable:
         frame.setLayout(inner_layout)
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(0, 0, 0, 0)
-        outer_layout.addWidget(frame, stretch=11) # if stretch ever needs to be variable, create argument for decorator
+        # if stretch ever needs to be variable, create argument for decorator
+        outer_layout.addWidget(frame, stretch=11)
         return outer_layout
     return plot_wrapper
 

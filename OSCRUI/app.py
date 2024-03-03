@@ -19,7 +19,8 @@ signal(SIGINT, SIG_DFL)
 
 class OSCRUI():
 
-    from .datafunctions import init_parser, copy_summary_callback
+
+    from .datafunctions import init_parser, copy_summary_callback, copy_analysis_callback
     from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal
     from .displayer import create_legend_item
     from .iofunctions import browse_path
@@ -400,14 +401,11 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            'DPS Bar': {'callback': lambda: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
-            'DPS Graph': {'callback': lambda: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
-            'Damage Graph': {'callback': lambda: self.switch_overview_tab(2), 'align': ACENTER, 
+            'DPS Bar': {'callback': lambda state: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
+            'DPS Graph': {'callback': lambda state: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
+            'Damage Graph': {'callback': lambda state: self.switch_overview_tab(2), 'align': ACENTER, 
                     'toggle': False}
         }
-        #     'Copy Summary': {'callback': self.copy_summary_callback, 'align':ACENTER},
-        #     'Upload Result': {'callback': self.upload_callback, 'align':ACENTER},
-        # }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
@@ -439,9 +437,9 @@ class OSCRUI():
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-
-        switch_frame = self.create_frame(a_frame, 'frame')
-        layout.addWidget(switch_frame, alignment=ACENTER)
+        switch_layout = QGridLayout()
+        switch_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(switch_layout)
         
         a_tabber = QTabWidget(a_frame)
         a_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
@@ -453,19 +451,38 @@ class OSCRUI():
         self.widgets.analysis_tabber = a_tabber
         layout.addWidget(a_tabber)
 
+        switch_layout.setColumnStretch(0, 1)
+        switch_frame = self.create_frame(a_frame, 'frame')
+        switch_layout.addWidget(switch_frame, 0, 1, alignment=ACENTER)
+        switch_layout.setColumnStretch(1, 1)
+
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            'Damage Out': {'callback': lambda: self.switch_analysis_tab(0), 'align': ACENTER, 'toggle': True},
-            'Damage Taken': {'callback': lambda: self.switch_analysis_tab(1), 'align': ACENTER, 
+            'Damage Out': {'callback': lambda state: self.switch_analysis_tab(0), 'align': ACENTER,
+                    'toggle': True},
+            'Damage Taken': {'callback': lambda state: self.switch_analysis_tab(1), 'align': ACENTER, 
                     'toggle': False},
-            'Heals Out': {'callback': lambda: self.switch_analysis_tab(2), 'align': ACENTER, 'toggle': False},
-            'Heals In': {'callback': lambda: self.switch_analysis_tab(3), 'align': ACENTER, 'toggle': False}
+            'Heals Out': {'callback': lambda state: self.switch_analysis_tab(2), 'align': ACENTER,
+                    'toggle': False},
+            'Heals In': {'callback': lambda state: self.switch_analysis_tab(3), 'align': ACENTER,
+                    'toggle': False}
         }
         switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
-        # buttons[0].setEnabled(False)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
-        self.widgets.analysis_menu_buttons = buttons
         switch_frame.setLayout(switcher)
+        self.widgets.analysis_menu_buttons = buttons
+        copy_layout = QHBoxLayout()
+        copy_layout.setContentsMargins(0, 0, self.theme['defaults']['margin'], 0)
+        copy_layout.setSpacing(self.theme['defaults']['csp'])
+        copy_combobox = self.create_combo_box(switch_frame)
+        copy_combobox.addItem('Selection')
+        copy_layout.addWidget(copy_combobox)
+        self.widgets.analysis_copy_combobox = copy_combobox
+        copy_button = self.create_icon_button(self.icons['copy'], 'Copy Data')
+        copy_button.clicked.connect(self.copy_analysis_callback)
+        copy_layout.addWidget(copy_button)
+        switch_layout.addLayout(copy_layout, 0, 2, alignment = ARIGHT | ABOTTOM)
+        switch_layout.setColumnStretch(2, 1)
 
         tabs = (
             (dout_frame, 'analysis_table_dout', 'analysis_plot_dout'), 
@@ -479,7 +496,7 @@ class OSCRUI():
             tab_layout.setSpacing(0)
 
             # graph
-            plot_frame = self.create_frame(tab, 'plot_widget', {'margin-right': 0}, SMINMAX)
+            plot_frame = self.create_frame(tab, 'plot_widget', size_policy=SMINMAX)
             plot_layout = QHBoxLayout()
             plot_layout.setContentsMargins(0, 0, 0, 0)
             plot_layout.setSpacing(self.theme['defaults']['isp'])
@@ -646,11 +663,12 @@ class OSCRUI():
         dmg_hider_layout = QVBoxLayout()
         dmg_hider_frame = self.create_frame(col_1_frame, size_policy=SMINMAX, style_override=
                 {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
+        self.set_buttons = list()
         for i, head in enumerate(TREE_HEADER[1:]):
-            bt = self.create_button(head, 'toggle_button', dmg_hider_frame, toggle=True)
+            bt = self.create_button(head, 'toggle_button', dmg_hider_frame, 
+                    toggle=self.settings.value(f'dmg_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
-            bt.setChecked(self.settings.value(f'dmg_columns|{i}', type=bool))
-            bt.clicked.connect(lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
+            bt.clicked[bool].connect(lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
             dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_seperator = self.create_frame(dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
                 size_policy=SMINMIN)
@@ -671,11 +689,10 @@ class OSCRUI():
         heal_hider_frame = self.create_frame(col_1_frame, size_policy=SMINMAX, style_override=
                 {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
         for i, head in enumerate(HEAL_TREE_HEADER[1:]):
-            bt = self.create_button(head, 'toggle_button', heal_hider_frame)
-            bt.setCheckable(True)
+            bt = self.create_button(head, 'toggle_button', heal_hider_frame,
+                    toggle=self.settings.value(f'heal_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
-            bt.setChecked(self.settings.value(f'heal_columns|{i}', type=bool))
-            bt.clicked.connect(lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
+            bt.clicked[bool].connect(lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
             heal_hider_layout.addWidget(bt, stretch=1)
         heal_seperator = self.create_frame(dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
             size_policy=SMINMIN)

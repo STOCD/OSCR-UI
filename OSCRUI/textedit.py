@@ -27,6 +27,56 @@ def get_entity_num(id:str) -> int:
     except TypeError:
         return -1
     
+def format_damage_tree_data(data, column: int) -> str:
+    """
+    Formats a data point according to TREE_HEADER
+
+    Parameters:
+    - :param data: unformatted data point
+    - :param column: column of the data point in TREE_HEADER
+
+    :return: formatted data point
+    """
+    if data == '':
+        return ''
+    if column == 0:
+        if isinstance(data, tuple):
+            return ''.join(data)
+        return data
+    elif column in (3, 5, 6, 7):
+        return f'{data * 100:,.2f}%'
+    elif column in (1, 2, 4, 13, 14, 15, 16, 17, 18):
+        return f'{data:,.2f}'
+    elif column in (8, 9, 10, 11, 12, 20, 21):
+        return f'{data:,.0f}'
+    elif column == 19:
+        return f'{data}s'
+    
+def format_heal_tree_data(data, column: int) -> str:
+    """
+    Formats a data point according to HEAL_TREE_HEADER
+
+    Parameters:
+    - :param data: unformatted data point
+    - :param column: column of the data point in HEAL_TREE_HEADER
+
+    :return: formatted data point
+    """
+    if data == '':
+        return ''
+    if column == 0:
+        if isinstance(data, tuple):
+            return ''.join(data)
+        return data
+    elif column == 8:
+        return f'{data * 100:,.2f}%'
+    elif column in (1, 2, 3, 4, 5, 6, 7, 17, 18):
+        return f'{data:,.2f}'
+    elif column in (9, 10, 12, 13):
+        return f'{data:,.0f}'
+    elif column == 11:
+        return f'{data}s'
+
 def compensate_text(text:str) -> str:
     """
     Unescapes various characters not correctly represented in combatlog files

@@ -11,6 +11,7 @@ from OSCR import split_log_by_lines, split_log_by_combat
 from .style import get_style_class, get_style, merge_style, theme_font
 from .textedit import format_path
 from .iofunctions import browse_path
+from .datamodels import TreeSelectionModel
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -172,7 +173,10 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
         toggle_button = detail['toggle'] if 'toggle' in detail else None
         bt = self.create_button(name, style, parent, button_style, toggle_button)
         if 'callback' in detail and isinstance(detail['callback'], CALLABLE):
-            bt.clicked.connect(detail['callback'])
+            if toggle_button:
+                bt.clicked[bool].connect(detail['callback'])
+            else:
+                bt.clicked.connect(detail['callback'])
         stretch = detail['stretch'] if 'stretch' in detail else 0
         if 'align' in detail:
             layout.addWidget(bt, stretch, detail['align'])
@@ -260,7 +264,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.setSortingEnabled(True)
     table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
     table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-    table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+    table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
     table.header().setStyleSheet(get_style_class(self, 'QHeaderView', 'tree_table_header'))
     table.header().setSectionResizeMode(RFIXED)
     #table.header().setSectionsMovable(False)

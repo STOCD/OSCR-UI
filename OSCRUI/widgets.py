@@ -23,6 +23,7 @@ class WidgetStorage():
         self.overview_tab_frames: list[QFrame] = list()
         
         self.analysis_menu_buttons: list[QPushButton] = list()
+        self.analysis_copy_combobox: QComboBox
         self.analysis_tabber: QTabWidget
         self.analysis_tab_frames: list[QFrame] = list()
         self.analysis_table_dout: QTreeView
@@ -36,6 +37,11 @@ class WidgetStorage():
 
         self.ladder_map: QComboBox
         self.ladder_table: QTableView
+    
+    @property
+    def analysis_table(self):
+        return (self.analysis_table_dout, self.analysis_table_dtaken, self.analysis_plot_hout,
+                self.analysis_plot_hin)
 
 class FlipButton(QPushButton):
     """
@@ -234,7 +240,7 @@ class AnalysisPlot(PlotWidget):
         self._legend_queue = list()
         self._bar_position = 0
     
-    def toggle_freeze(self):
+    def toggle_freeze(self, state):
         """
         Freezes when unfrozen, unfreezes when frozen
         """

@@ -5,7 +5,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3a11'
+    version = '2024.3a30'
 
     # holds the style of the app
     theme = {
@@ -399,7 +399,7 @@ class Launcher():
             'background-color': '@bg',
             'alternate-background-color': '@mbg',
             'color': '@fg',
-            'margin': (10, 0, 10, 0),
+            'margin': (10, 10, 10, 0),
             'outline': '0', # removes dotted line around clicked item
             'font': ('Overpass', 12, 'Normal'),
             '::item': {

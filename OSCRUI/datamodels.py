@@ -1,10 +1,14 @@
 from typing import Iterable
 
 from PySide6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
+from PySide6.QtCore import QItemSelectionModel, QItemSelection, Slot
 from PySide6.QtGui import QFont
 from OSCR import TreeItem
 
-from .widgetbuilder import AVCENTER, ARIGHT, ACENTER, ALEFT
+ARIGHT = Qt.AlignmentFlag.AlignRight
+ALEFT = Qt.AlignmentFlag.AlignLeft
+ACENTER = Qt.AlignmentFlag.AlignCenter
+AVCENTER = Qt.AlignmentFlag.AlignVCenter
 
 class TableModel(QAbstractTableModel):
     def __init__(self, data, header: Iterable, index: Iterable, header_font: QFont, cell_font: QFont):
@@ -288,3 +292,26 @@ class HealTreeModel(TreeModel):
             return index.internalPointer().get_data(column)
         return None
     
+class TreeSelectionModel(QItemSelectionModel):
+    """
+    Implements custom selection behavior for analysis tables.
+    """
+    def __init__(self, model: QAbstractItemModel):
+        super().__init__(model)
+
+    def select(self, index_or_selection: QModelIndex | QItemSelection, 
+            flag: QItemSelectionModel.SelectionFlag):
+        if isinstance(index_or_selection, QItemSelection):
+            try:
+                if index_or_selection.indexes()[0].column() == 0:
+                    super().select(index_or_selection, flag | QItemSelectionModel.SelectionFlag.Rows)
+                else:
+                    super().select(index_or_selection, flag)
+            # deselecting has empty list of indexes
+            except IndexError:
+                super().select(index_or_selection, QItemSelectionModel.SelectionFlag.Clear)
+        else:
+            if index_or_selection.isValid():
+                super().select(index_or_selection, flag)
+            else:
+                self.clear()
