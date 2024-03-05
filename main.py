@@ -1,7 +1,8 @@
-import sys
 import os
+import sys
 
 from OSCRUI import OSCRUI
+
 
 class Launcher():
 
@@ -14,7 +15,7 @@ class Launcher():
             'bg': '#1a1a1a',
             'fg': '#eeeeee',
             'oscr': '#c82934',
-            'font': ('Overpass', 11, 'normal'), # used when no font is specified in style definition
+            'font': ('Overpass', 11, 'normal'),
             'heading': ('Overpass', 14, 'bold'),
             'text': ('Overpass', 11, 'normal'),
             'subhead': ('Overpass', 12, 'medium'),
@@ -33,7 +34,7 @@ class Launcher():
                     'width': 8,
                 },
                 'QScrollBar:horizontal': {
-                    'height': 8,    
+                    'height': 8,
                 },
                 # space above and below the scrollbar handle
                 'QScrollBar::add-page, QScrollBar::sub-page': {
@@ -47,7 +48,7 @@ class Launcher():
                 },
                 # scroll bar arrow buttons
                 'QScrollBar::add-line, QScrollBar::sub-line': {
-                    'height': 0 # hiding the arrow buttons
+                    'height': 0  # hiding the arrow buttons
                 },
                 # top left corner of table
                 'QTableCornerButton::section': {
@@ -57,21 +58,21 @@ class Launcher():
         },
         # shortcuts, @bg -> means bg in this sub-dictionary
         'defaults': {
-            'bg': '#1a1a1a', # background
-            'mbg': '#242424', # medium background
-            'lbg': '#404040', # light background
-            'oscr': '#c82934', # accent
-            'loscr': '#20c82934', # light accent (12.5% opacity)
+            'bg': '#1a1a1a',  # background
+            'mbg': '#242424',  # medium background
+            'lbg': '#404040',  # light background
+            'oscr': '#c82934',  # accent
+            'loscr': '#20c82934',  # light accent (12.5% opacity)
             'font': ('Overpass', 11, 'normal'),
-            'fg': '#eeeeee', # foreground (usually text)
-            'mfg': '#bbbbbb', # medium foreground
-            'bc': '#888888', # border color
-            'bw': 1, # border width
-            'br': 2, # border radius
-            'sep': 2, # seperator -> width of major seperating lines
-            'margin': 10, # default margin between widgets
-            'csp': 5, # child spacing -> content margin
-            'isp': 15, # item spacing
+            'fg': '#eeeeee',  # foreground (usually text)
+            'mfg': '#bbbbbb',  # medium foreground
+            'bc': '#888888',  # border color
+            'bw': 1,  # border width
+            'br': 2,  # border radius
+            'sep': 2,  # seperator -> width of major seperating lines
+            'margin': 10,  # default margin between widgets
+            'csp': 5,  # child spacing -> content margin
+            'isp': 15,  # item spacing
         },
         # dark frame
         'frame': {
@@ -96,7 +97,7 @@ class Launcher():
         'label': {
             'color': '@fg',
             'margin': (3, 0, 3, 0),
-            'qproperty-indent': '0', # disables auto-indent
+            'qproperty-indent': '0',  # disables auto-indent
             'border-style': 'none',
             'font': ('Overpass', 11, 'normal')
         },
@@ -159,7 +160,7 @@ class Launcher():
         'menu_button': {
             'background': 'none',
             'color': '@fg',
-            'text-decoration': 'none', # removes underline
+            'text-decoration': 'none',  # removes underline
             'border': 'none',
             'margin': (6, 10, 4, 10),
             # 'margin-left': 10,
@@ -220,7 +221,8 @@ class Launcher():
             'border-radius': '@br',
             'margin-top': '@csp',
             'font': ('Overpass', 10, 'normal'),
-            ':focus': { # cursor is inside the line
+            # cursor is inside the line
+            ':focus': {
                 'border-color': '@oscr'
             }
         },
@@ -241,7 +243,7 @@ class Launcher():
             'border-radius': '@br',
             'margin': 0,
             'font': ('Overpass', 10, 'normal'),
-            'outline': '0', # removes dotted line around clicked item
+            'outline': '0',  # removes dotted line around clicked item
             '::item': {
                 'border-width': '@bw',
                 'border-style': 'solid',
@@ -256,7 +258,7 @@ class Launcher():
             },
             # selected but not the last click of the user
             '::item:selected:!active': {
-                'color':'@fg'
+                'color': '@fg'
             },
             '::item:hover': {
                 'background-color': '@loscr',
@@ -301,15 +303,16 @@ class Launcher():
                 'color': '@bc'
             }
         },
-        # table; ::item refers to the cells, :alternate is the alternate style -> s.c: table_alternate
+        # table; ::item refers to the cells,
+        #        :alternate is the alternate style -> s.c: table_alternate
         'table': {
             'color': '@fg',
             'background-color': '@bg',
             'border-width': '@bw',
             'border-style': 'solid',
             'border-color': '@bc',
-            'gridline-color': 'rgba(0,0,0,0)', # -> s.c: table_gridline
-            'outline': '0', # removes dotted line around clicked item
+            'gridline-color': 'rgba(0,0,0,0)',  # -> s.c: table_gridline
+            'outline': '0',  # removes dotted line around clicked item
             'margin': (0, 10, 10, 0),
             'font': ('Roboto Mono', 12, 'Medium'),
             '::item': {
@@ -360,12 +363,12 @@ class Launcher():
             'border-bottom-width': '@sep',
             'border-bottom-style': 'solid',
             'border-bottom-color': '@bc',
-            'outline': '0', # removes dotted line around clicked item
+            'outline': '0',  # removes dotted line around clicked item
             'font': ('Overpass', 12, 'Medium'),
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'padding': (0, 0, 0, 0), #(0, -8, -3, 6), # don't ask
+                'padding': (0, 0, 0, 0),  # (0, -8, -3, 6), # don't ask
                 'border': 'none',
                 'margin': 0
             },
@@ -381,7 +384,7 @@ class Launcher():
             'border-right-width': '@sep',
             'border-right-style': 'solid',
             'border-right-color': '@bc',
-            'outline': '0', # removes dotted line around clicked item
+            'outline': '0',  # removes dotted line around clicked item
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
@@ -393,14 +396,15 @@ class Launcher():
                 'background-color': '@loscr'
             },
         },
-        # analysis table; ::item refers to the cells; ::branch refers to the space on the left of the rows
+        # analysis table; ::item refers to the cells;
+        #                 ::branch refers to the space on the left of the rows
         'tree_table': {
             'border': '1px solid #888888',
             'background-color': '@bg',
             'alternate-background-color': '@mbg',
             'color': '@fg',
             'margin': (10, 10, 10, 0),
-            'outline': '0', # removes dotted line around clicked item
+            'outline': '0',  # removes dotted line around clicked item
             'font': ('Overpass', 12, 'Normal'),
             '::item': {
                 'font': ('Roboto Mono', 12, 'Normal'),
@@ -583,7 +587,7 @@ class Launcher():
                 'heal_columns|10': True,
                 'heal_columns|11': True,
                 'heal_columns|12': True,
-                'heal_columns_length' : 13,
+                'heal_columns_length': 13,
                 'split_log_after': 480000,
                 'seconds_between_combats': 100,
                 'excluded_event_ids': ['Autodesc.Combatevent.Falling', ''],
@@ -596,9 +600,8 @@ class Launcher():
     @staticmethod
     def launch():
         args = {}
-        exit_code = OSCRUI(version=Launcher.version, theme=Launcher.theme, args=args, 
-                path=Launcher.base_path(), config=Launcher.app_config()
-                ).run()
+        exit_code = OSCRUI(version=Launcher.version, theme=Launcher.theme, args=args,
+                path=Launcher.base_path(), config=Launcher.app_config()).run()
         sys.exit(exit_code)
 
 

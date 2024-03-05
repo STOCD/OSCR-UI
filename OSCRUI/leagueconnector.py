@@ -5,8 +5,8 @@ import os
 import tempfile
 
 import OSCR_django_client
-from OSCR.utilities import logline_to_str
 from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
+from OSCR.utilities import logline_to_str
 from PySide6.QtWidgets import QMessageBox
 
 from .datafunctions import CustomThread
@@ -58,7 +58,7 @@ def fetch_and_insert_maps(self):
 def update_ladder_index(self, selected_map):
     """Open Combat Log Dialog Box"""
 
-    if not selected_map in self.league_api.ladder_dict:
+    if selected_map not in self.league_api.ladder_dict:
         return
 
     selected_ladder = self.league_api.ladder_dict[selected_map]
@@ -84,8 +84,8 @@ def update_ladder_index(self, selected_map):
         )
 
     model = LeagueTableModel(
-        table_data, LADDER_HEADER, table_index, theme_font(self, "table_header"), theme_font(self, "table")
-    )
+        table_data, LADDER_HEADER, table_index, theme_font(self, "table_header"),
+        theme_font(self, "table"))
     sorting_proxy = SortingProxy()
     sorting_proxy.setSourceModel(model)
     table = self.widgets.ladder_table

@@ -1,7 +1,8 @@
-from signal import signal, SIGINT, SIG_DFL
+
 import os
 
-from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget, QTableView
+from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget
+from PySide6. QtWidgets import QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings
 from PySide6.QtGui import QIntValidator
@@ -11,17 +12,19 @@ from OSCR import TREE_HEADER, HEAL_TREE_HEADER
 from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton, WidgetStorage, AnalysisPlot
-from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER, AHCENTER, ABOTTOM
+from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
+from .widgetbuilder import AHCENTER, ABOTTOM
 from .leagueconnector import OSCRClient
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
+from signal import signal, SIGINT, SIG_DFL
 signal(SIGINT, SIG_DFL)
+
 
 class OSCRUI():
 
-
-    from .datafunctions import init_parser, copy_summary_callback, copy_analysis_callback
-    from .datafunctions import analyze_log_callback, update_shown_columns_dmg, update_shown_columns_heal
+    from .datafunctions import analyze_log_callback, copy_analysis_callback, copy_summary_callback
+    from .datafunctions import init_parser, update_shown_columns_dmg, update_shown_columns_heal
     from .displayer import create_legend_item
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
@@ -32,9 +35,9 @@ class OSCRUI():
 
     app_dir = None
 
-    config = {} # see main.py for contents
+    config = {}  # see main.py for contents
 
-    settings: QSettings # see main.py for defaults
+    settings: QSettings  # see main.py for defaults
 
     # stores widgets that need to be accessed from outside their creating function
     widgets: WidgetStorage
@@ -74,7 +77,7 @@ class OSCRUI():
         :return: exit code of event loop
         """
         return self.app.exec()
-    
+
     def cache_assets(self):
         """
         Caches assets like icon images
@@ -108,7 +111,7 @@ class OSCRUI():
                 self.settings.setValue(setting, value)
         if not self.settings.value('log_path', ''):
             self.settings.setValue('log_path', format_path(self.app_dir))
-        
+
     def init_config(self):
         """
         Prepares config.
@@ -117,14 +120,15 @@ class OSCRUI():
         self.current_combat_path = ''
         self.config['templog_folder_path'] = os.path.abspath(
                 self.app_dir + self.config['templog_folder_path'])
-    
+
     @property
     def parser_settings(self) -> dict:
         """
         Returns settings relevant to the parser
         """
-        relevant_settings = (('combats_to_parse', int), ('seconds_between_combats', int),
-                ('excluded_event_ids',  list), ('graph_resolution', float))
+        relevant_settings = (
+                ('combats_to_parse', int), ('seconds_between_combats', int),
+                ('excluded_event_ids', list), ('graph_resolution', float))
         settings = dict()
         for setting_key, settings_type in relevant_settings:
             setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
@@ -132,7 +136,6 @@ class OSCRUI():
                 settings[setting_key] = setting
         settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
-
 
     @property
     def sidebar_item_width(self) -> int:
@@ -157,7 +160,7 @@ class OSCRUI():
         self.current_combats.setFixedWidth(self.sidebar_item_width)
         self.widgets.ladder_map.setFixedWidth(self.sidebar_item_width)
         event.accept()
-    
+
     # -------------------------------------------------------------------------------------------------------
     # GUI functions below
     # -------------------------------------------------------------------------------------------------------
@@ -177,7 +180,7 @@ class OSCRUI():
                 int(self.config['minimum_window_width']),
                 int(self.config['minimum_window_height']))
         if self.settings.value('geometry'):
-            window.restoreGeometry(self.settings.value('geometry'))        
+            window.restoreGeometry(self.settings.value('geometry'))
         window.closeEvent = self.main_window_close_callback
         window.resizeEvent = self.main_window_resize_callback
         return app, window
@@ -197,8 +200,9 @@ class OSCRUI():
         left.setSizePolicy(SMAXMIN)
         content_layout.addWidget(left, 0, 0)
 
-        right = self.create_frame(main_frame, 'frame', 
-                {'border-left-style': 'solid', 'border-left-width': '@sep', 'border-left-color': '@oscr' })
+        right = self.create_frame(main_frame, 'frame', style_override={
+                'border-left-style': 'solid', 'border-left-width': '@sep',
+                'border-left-color': '@oscr'})
         right.setSizePolicy(SMINMIN)
         right.hide()
         content_layout.addWidget(right, 0, 4)
@@ -246,8 +250,9 @@ class OSCRUI():
         map_label = self.create_label('Available Maps:', 'label_heading', frame)
         left_layout.addWidget(map_label)
 
-        background_frame = self.create_frame(frame, 'light_frame', 
-                {'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'}, SMAXMIN)
+        background_frame = self.create_frame(frame, 'light_frame', style_override={
+                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
+                size_policy=SMAXMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -263,7 +268,6 @@ class OSCRUI():
 
         frame.setLayout(left_layout)
 
-
     def setup_left_sidebar_log(self):
         """
         Sets up the log management tab of the left sidebar
@@ -278,7 +282,8 @@ class OSCRUI():
         head_layout = QHBoxLayout()
         head = self.create_label('STO Combatlog:', 'label', frame)
         head_layout.addWidget(head, alignment=ALEFT)
-        cut_log_button = self.create_icon_button(self.icons['log-cut'], 'Manage Logfile', parent=frame)
+        cut_log_button = self.create_icon_button(
+                self.icons['log-cut'], 'Manage Logfile', parent=frame)
         cut_log_button.clicked.connect(self.split_dialog)
         head_layout.addWidget(cut_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
@@ -288,12 +293,12 @@ class OSCRUI():
         self.entry.setFont(self.theme_font('entry'))
         self.entry.setFixedWidth(self.sidebar_item_width)
         left_layout.addWidget(self.entry)
-        
+
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
             'Browse ...': {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
-            'Scan': {'callback': lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1), 
-                    'align': ARIGHT}
+            'Scan': {'callback': lambda: self.analyze_log_callback(
+                    path=self.entry.text(), parser_num=1), 'align': ARIGHT}
         }
         entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
         left_layout.addLayout(entry_buttons)
@@ -306,9 +311,11 @@ class OSCRUI():
         combat_button_layout.setContentsMargins(0, 0, 0, 0)
         combat_button_layout.setSpacing(m)
         combat_button_layout.setAlignment(ALEFT)
-        export_button = self.create_icon_button(self.icons['export-parse'], 'Export Combat', parent=frame)
+        export_button = self.create_icon_button(
+                self.icons['export-parse'], 'Export Combat', parent=frame)
         combat_button_layout.addWidget(export_button)
-        save_button = self.create_icon_button(self.icons['save'], 'Save Combat to Cache', parent=frame)
+        save_button = self.create_icon_button(
+                self.icons['save'], 'Save Combat to Cache', parent=frame)
         combat_button_layout.addWidget(save_button)
         top_button_row.addLayout(combat_button_layout)
 
@@ -316,11 +323,13 @@ class OSCRUI():
         navigation_button_layout.setContentsMargins(0, 0, 0, 0)
         navigation_button_layout.setSpacing(m)
         navigation_button_layout.setAlignment(AHCENTER)
-        up_button = self.create_icon_button(self.icons['log-up'], 'Load newer Combats', parent=frame)
+        up_button = self.create_icon_button(
+                self.icons['log-up'], 'Load newer Combats', parent=frame)
         up_button.setEnabled(False)
         navigation_button_layout.addWidget(up_button)
         self.widgets.navigate_up_button = up_button
-        down_button = self.create_icon_button(self.icons['log-down'], 'Load older Combats', parent=frame)
+        down_button = self.create_icon_button(
+                self.icons['log-down'], 'Load older Combats', parent=frame)
         down_button.setEnabled(False)
         navigation_button_layout.addWidget(down_button)
         self.widgets.navigate_down_button = down_button
@@ -330,16 +339,19 @@ class OSCRUI():
         parser_button_layout.setContentsMargins(0, 0, 0, 0)
         parser_button_layout.setSpacing(m)
         parser_button_layout.setAlignment(ARIGHT)
-        parser1_button = self.create_icon_button(self.icons['parser-left'], 'Analyze Combat', parent=frame)
+        parser1_button = self.create_icon_button(
+                self.icons['parser-left'], 'Analyze Combat', parent=frame)
         parser_button_layout.addWidget(parser1_button)
-        parser2_button = self.create_icon_button(self.icons['parser-right'], 'Analyze Combat', parent=frame)
+        parser2_button = self.create_icon_button(
+                self.icons['parser-right'], 'Analyze Combat', parent=frame)
         parser_button_layout.addWidget(parser2_button)
         top_button_row.addLayout(parser_button_layout)
 
         left_layout.addLayout(top_button_row)
 
-        background_frame = self.create_frame(frame, 'light_frame', 
-                {'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'}, SMAXMIN)
+        background_frame = self.create_frame(frame, 'light_frame', style_override={
+                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
+                size_policy=SMAXMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -350,7 +362,7 @@ class OSCRUI():
         self.current_combats.setFixedWidth(self.sidebar_item_width)
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
-        
+
         parser1_button.clicked.connect(
                 lambda: self.analyze_log_callback(self.current_combats.currentRow(), parser_num=1))
         export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
@@ -373,7 +385,7 @@ class OSCRUI():
         league_frame = self.create_frame(style='medium_frame')
         sidebar_tabber = QTabWidget(frame)
         sidebar_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
-        sidebar_tabber.tabBar().setStyleSheet(self.get_style_class( 'QTabBar', 'tabber_tab'))
+        sidebar_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
         sidebar_tabber.setSizePolicy(SMAXMIN)
         sidebar_tabber.addTab(log_frame, 'Log')
         sidebar_tabber.addTab(league_frame, 'League')
@@ -389,7 +401,7 @@ class OSCRUI():
         self.setup_left_sidebar_log()
         self.setup_left_sidebar_league()
 
-    def setup_main_tabber(self, frame:QFrame):
+    def setup_main_tabber(self, frame: QFrame):
         """
         Sets up the tabber switching between Overview, Analysis, League and Settings.
 
@@ -403,7 +415,7 @@ class OSCRUI():
 
         main_tabber = QTabWidget(frame)
         main_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
-        main_tabber.tabBar().setStyleSheet(self.get_style_class( 'QTabBar', 'tabber_tab'))
+        main_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
         main_tabber.setSizePolicy(SMINMIN)
         main_tabber.addTab(o_frame, '&O')
         main_tabber.addTab(a_frame, '&A')
@@ -418,7 +430,8 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
-        self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.establish_league_connection(True))
+        self.widgets.main_menu_buttons[2].clicked.connect(
+                lambda: self.establish_league_connection(True))
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
@@ -459,12 +472,15 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            'DPS Bar': {'callback': lambda state: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
-            'DPS Graph': {'callback': lambda state: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
-            'Damage Graph': {'callback': lambda state: self.switch_overview_tab(2), 'align': ACENTER, 
-                    'toggle': False}
+            'DPS Bar': {
+                'callback': lambda: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
+            'DPS Graph': {
+                'callback': lambda: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
+            'Damage Graph': {
+                'callback': lambda: self.switch_overview_tab(2), 'align': ACENTER, 'toggle': False}
         }
-        switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
+        switcher, buttons = self.create_button_series(
+                switch_frame, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
         self.widgets.overview_menu_buttons = buttons
@@ -477,7 +493,7 @@ class OSCRUI():
         ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
         ladder_button.clicked.connect(self.upload_callback)
         icon_layout.addWidget(ladder_button)
-        switch_layout.addLayout(icon_layout, 0, 2, alignment = ARIGHT | ABOTTOM)
+        switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
         o_frame.setLayout(layout)
         self.widgets.overview_tabber = o_tabber
@@ -498,7 +514,7 @@ class OSCRUI():
         switch_layout = QGridLayout()
         switch_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(switch_layout)
-        
+
         a_tabber = QTabWidget(a_frame)
         a_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
         a_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
@@ -516,16 +532,21 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            'Damage Out': {'callback': lambda state: self.switch_analysis_tab(0), 'align': ACENTER,
-                    'toggle': True},
-            'Damage Taken': {'callback': lambda state: self.switch_analysis_tab(1), 'align': ACENTER, 
-                    'toggle': False},
-            'Heals Out': {'callback': lambda state: self.switch_analysis_tab(2), 'align': ACENTER,
-                    'toggle': False},
-            'Heals In': {'callback': lambda state: self.switch_analysis_tab(3), 'align': ACENTER,
-                    'toggle': False}
+            'Damage Out': {
+                'callback': lambda state: self.switch_analysis_tab(0), 'align': ACENTER,
+                'toggle': True},
+            'Damage Taken': {
+                'callback': lambda state: self.switch_analysis_tab(1),
+                'align': ACENTER, 'toggle': False},
+            'Heals Out': {
+                'callback': lambda state: self.switch_analysis_tab(2), 'align': ACENTER,
+                'toggle': False},
+            'Heals In': {
+                'callback': lambda state: self.switch_analysis_tab(3), 'align': ACENTER,
+                'toggle': False}
         }
-        switcher, buttons = self.create_button_series(switch_frame, switch_style, 'tab_button', ret=True)
+        switcher, buttons = self.create_button_series(
+                switch_frame, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
         self.widgets.analysis_menu_buttons = buttons
@@ -539,11 +560,11 @@ class OSCRUI():
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Data')
         copy_button.clicked.connect(self.copy_analysis_callback)
         copy_layout.addWidget(copy_button)
-        switch_layout.addLayout(copy_layout, 0, 2, alignment = ARIGHT | ABOTTOM)
+        switch_layout.addLayout(copy_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
 
         tabs = (
-            (dout_frame, 'analysis_table_dout', 'analysis_plot_dout'), 
+            (dout_frame, 'analysis_table_dout', 'analysis_plot_dout'),
             (dtaken_frame, 'analysis_table_dtaken', 'analysis_plot_dtaken'),
             (hout_frame, 'analysis_table_hout', 'analysis_plot_hout'),
             (hin_frame, 'analysis_table_hin', 'analysis_plot_hin')
@@ -558,7 +579,7 @@ class OSCRUI():
             plot_layout = QHBoxLayout()
             plot_layout.setContentsMargins(0, 0, 0, 0)
             plot_layout.setSpacing(self.theme['defaults']['isp'])
-            
+
             plot_bundle_frame = self.create_frame(plot_frame, size_policy=SMINMAX)
             plot_bundle_layout = QVBoxLayout()
             plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
@@ -568,7 +589,8 @@ class OSCRUI():
             plot_legend_layout.setContentsMargins(0, 0, 0, 0)
             plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
             plot_legend_frame.setLayout(plot_legend_layout)
-            plot_widget = AnalysisPlot(self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
+            plot_widget = AnalysisPlot(
+                    self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
                     self.theme_font('plot_widget'), plot_legend_layout)
             setattr(self.widgets, plot_name, plot_widget)
             plot_widget.setStyleSheet(self.get_style('plot_widget_nullifier'))
@@ -582,7 +604,8 @@ class OSCRUI():
             plot_button_layout = QVBoxLayout()
             plot_button_layout.setContentsMargins(0, 0, 0, 0)
             plot_button_layout.setSpacing(0)
-            freeze_button = self.create_button('Freeze Graph', 'toggle_button', plot_button_frame, 
+            freeze_button = self.create_button(
+                    'Freeze Graph', 'toggle_button', plot_button_frame,
                     style_override={'border-color': '@bg'}, toggle=True)
             freeze_button.clicked.connect(plot_widget.toggle_freeze)
             plot_button_layout.addWidget(freeze_button, alignment=ARIGHT)
@@ -592,15 +615,15 @@ class OSCRUI():
             plot_button_frame.setLayout(plot_button_layout)
             plot_layout.addWidget(plot_button_frame, stretch=0)
 
-            plot_frame.setLayout(plot_layout)  
+            plot_frame.setLayout(plot_layout)
             tab_layout.addWidget(plot_frame, stretch=3)
 
             tree = self.create_analysis_table(tab, 'tree_table')
             setattr(self.widgets, table_name, tree)
             tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
             tab_layout.addWidget(tree, stretch=7)
-            tab.setLayout(tab_layout)          
-        
+            tab.setLayout(tab_layout)
+
         a_frame.setLayout(layout)
 
     def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):
@@ -620,21 +643,13 @@ class OSCRUI():
         """
         l_frame = self.widgets.main_tab_frames[2]
         layout = QVBoxLayout()
-        margin = self.theme['defaults']['margin']
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-
-        # spacing = self.theme['defaults']['isp']
-        # control_frame = self.create_frame(l_frame)
-        # control_frame_layout = QHBoxLayout()
-        # control_frame_layout.setContentsMargins(margin, margin, margin, margin)
-        # control_frame_layout.setSpacing(spacing)
 
         ladder_table = QTableView(l_frame)
         self.style_table(ladder_table, {'margin': '@margin'})
         self.widgets.ladder_table = ladder_table
 
-        # layout.addWidget(control_frame, alignment=AHCENTER)
         layout.addWidget(ladder_table)
         l_frame.setLayout(layout)
 
@@ -647,7 +662,7 @@ class OSCRUI():
 
         :return: populated QVBoxlayout and content frame QFrame
         """
-        layout =  QVBoxLayout()
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         bg_frame = self.create_frame(parent, 'frame', {'background': '@oscr'})
         bg_frame.setSizePolicy(SMINMIN)
@@ -660,23 +675,23 @@ class OSCRUI():
 
         main_layout.addWidget(lbl)
 
-        menu_frame = self.create_frame(bg_frame, 'frame', {'background':'@oscr'})
+        menu_frame = self.create_frame(bg_frame, 'frame', {'background': '@oscr'})
         menu_frame.setSizePolicy(SMAXMAX)
         menu_frame.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(menu_frame)
         menu_button_style = {
-            'Overview': {'style':{'margin-left': '@isp'}},
+            'Overview': {'style': {'margin-left': '@isp'}},
             'Analysis': {},
             'League Standings': {},
             'Settings': {},
         }
-        bt_lay, buttons = self.create_button_series(menu_frame, menu_button_style, 
-                style='menu_button', seperator='•', ret=True)
+        bt_lay, buttons = self.create_button_series(
+                menu_frame, menu_button_style, style='menu_button', seperator='•', ret=True)
         menu_frame.setLayout(bt_lay)
         self.widgets.main_menu_buttons = buttons
 
         w = self.theme['app']['frame_thickness']
-        main_frame = self.create_frame(bg_frame, 'frame', {'margin':(0, w, w, w)})
+        main_frame = self.create_frame(bg_frame, 'frame', {'margin': (0, w, w, w)})
         main_frame.setSizePolicy(SMINMIN)
         main_layout.addWidget(main_frame)
         bg_frame.setLayout(main_layout)
@@ -704,6 +719,10 @@ class OSCRUI():
         settings_layout.addWidget(col_3_frame, alignment=ATOP, stretch=1)
 
         # first column
+        hider_frame_style_override = {
+            'border-color': '@lbg',
+            'border-width': '@bw', 'border-style': 'solid', 'border-radius': 2
+        }
         col_1 = QHBoxLayout()
         col_1.setContentsMargins(0, 0, 0, 0)
         col_1.setSpacing(self.theme['defaults']['isp'])
@@ -712,22 +731,25 @@ class OSCRUI():
         dmg_hider_label = self.create_label('Damage table columns:', 'label_subhead')
         col_1_1.addWidget(dmg_hider_label)
         dmg_hider_layout = QVBoxLayout()
-        dmg_hider_frame = self.create_frame(col_1_frame, size_policy=SMINMAX, style_override=
-                {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
+        dmg_hider_frame = self.create_frame(
+                col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
         self.set_buttons = list()
         for i, head in enumerate(TREE_HEADER[1:]):
-            bt = self.create_button(head, 'toggle_button', dmg_hider_frame, 
+            bt = self.create_button(
+                    head, 'toggle_button', dmg_hider_frame,
                     toggle=self.settings.value(f'dmg_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
-            bt.clicked[bool].connect(lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
+            bt.clicked[bool].connect(
+                    lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
             dmg_hider_layout.addWidget(bt, stretch=1)
-        dmg_seperator = self.create_frame(dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
+        dmg_seperator = self.create_frame(
+                dmg_hider_frame, 'hr',  style_override={'background-color': '@lbg'},
                 size_policy=SMINMIN)
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)
         apply_button = self.create_button('Apply', 'button', dmg_hider_frame)
         apply_button.clicked.connect(self.update_shown_columns_dmg)
-        dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT|ATOP)
+        dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT | ATOP)
         dmg_hider_frame.setLayout(dmg_hider_layout)
         col_1_1.addWidget(dmg_hider_frame, alignment=ATOP)
         col_1.addLayout(col_1_1, stretch=1)
@@ -737,21 +759,23 @@ class OSCRUI():
         heal_hider_label = self.create_label('Heal table columns:', 'label_subhead', col_1_frame)
         col_1_2.addWidget(heal_hider_label)
         heal_hider_layout = QVBoxLayout()
-        heal_hider_frame = self.create_frame(col_1_frame, size_policy=SMINMAX, style_override=
-                {'border-color':'@lbg', 'border-width':'@bw', 'border-style':'solid', 'border-radius': 2})
+        heal_hider_frame = self.create_frame(
+                col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(HEAL_TREE_HEADER[1:]):
-            bt = self.create_button(head, 'toggle_button', heal_hider_frame,
+            bt = self.create_button(
+                    head, 'toggle_button', heal_hider_frame,
                     toggle=self.settings.value(f'heal_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
-            bt.clicked[bool].connect(lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
+            bt.clicked[bool].connect(
+                    lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
             heal_hider_layout.addWidget(bt, stretch=1)
-        heal_seperator = self.create_frame(dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
-            size_policy=SMINMIN)
+        heal_seperator = self.create_frame(
+            dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
         apply_button_2 = self.create_button('Apply', 'button', heal_hider_frame)
         apply_button_2.clicked.connect(self.update_shown_columns_heal)
-        heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT|ATOP)
+        heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
         col_1_2.addWidget(heal_hider_frame, alignment=ATOP)
         col_1.addLayout(col_1_2, stretch=1)
@@ -767,45 +791,49 @@ class OSCRUI():
         col_2.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
         combat_delta_validator = QIntValidator()
         combat_delta_validator.setBottom(1)
-        combat_delta_entry = self.create_entry(self.settings.value('seconds_between_combats', type=str), 
+        combat_delta_entry = self.create_entry(
+                self.settings.value('seconds_between_combats', type=str),
                 combat_delta_validator, style_override={'margin-top': 0})
-        combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue('seconds_between_combats', 
-                combat_delta_entry.text()))
+        combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'seconds_between_combats', combat_delta_entry.text()))
         col_2.addWidget(combat_delta_entry, 0, 1, alignment=ALEFT)
         combat_num_label = self.create_label('Number of combats to isolate:', 'label_subhead')
         col_2.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
         combat_num_validator = QIntValidator()
         combat_num_validator.setBottom(1)
-        combat_num_entry = self.create_entry(self.settings.value('combats_to_parse', type=str),
-                combat_num_validator, style_override={'margin-top': 0})
-        combat_num_entry.editingFinished.connect(lambda: self.settings.setValue('combats_to_parse', 
-                combat_num_entry.text()))
+        combat_num_entry = self.create_entry(
+                self.settings.value('combats_to_parse', type=str), combat_num_validator,
+                style_override={'margin-top': 0})
+        combat_num_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'combats_to_parse', combat_num_entry.text()))
         col_2.addWidget(combat_num_entry, 1, 1, alignment=ALEFT)
-        graph_resolution_label = self.create_label('Graph resolution (data points per second):', 
-                'label_subhead')
+        graph_resolution_label = self.create_label(
+                'Graph resolution (data points per second):', 'label_subhead')
         col_2.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
         graph_resolution_validator = QIntValidator(1, 5)
-        default_graph_resolution = str(int(round(1 / self.settings.value('graph_resolution', type=float), 0)))
-        graph_resolution_entry = self.create_entry(default_graph_resolution, graph_resolution_validator, 
+        default_graph_resolution = f"{1 / self.settings.value('graph_resolution', type=float):.0f}"
+        graph_resolution_entry = self.create_entry(
+                default_graph_resolution, graph_resolution_validator,
                 style_override={'margin-top': 0})
-        graph_resolution_entry.editingFinished.connect(lambda: self.settings.setValue('graph_resolution', 
-                round(1 / int(graph_resolution_entry.text()), 1)))
+        graph_resolution_entry.editingFinished.connect(
+                lambda: self.set_graph_resolution_setting(graph_resolution_entry.text()))
         col_2.addWidget(graph_resolution_entry, 2, 1, alignment=ALEFT)
         split_length_label = self.create_label('Auto Split After Lines:', 'label_subhead')
         col_2.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
         split_length_validator = QIntValidator()
         split_length_validator.setBottom(1)
-        split_length_entry = self.create_entry(self.settings.value('split_log_after', type=str),
-                split_length_validator, style_override={'margin-top': 0})
-        split_length_entry.editingFinished.connect(lambda: self.settings.setValue('split_log_after', 
-                split_length_entry.text()))
+        split_length_entry = self.create_entry(
+                self.settings.value('split_log_after', type=str), split_length_validator,
+                style_override={'margin-top': 0})
+        split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'split_log_after', split_length_entry.text()))
         col_2.addWidget(split_length_entry, 3, 1, alignment=ALEFT)
-        
+
         col_2_frame.setLayout(col_2)
 
         settings_frame.setLayout(settings_layout)
 
-    def browse_log(self, entry:QLineEdit):
+    def browse_log(self, entry: QLineEdit):
         """
         Callback for browse button.
 
@@ -814,7 +842,8 @@ class OSCRUI():
         """
         current_path = entry.text()
         if current_path != '':
-            path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
+            path = self.browse_path(
+                    os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
             if path != '':
                 entry.setText(format_path(path))
 
@@ -867,7 +896,7 @@ class OSCRUI():
                 button.setChecked(False)
             else:
                 button.setChecked(True)
-    
+
     def switch_overview_tab(self, tab_index: int):
         """
         Callback for tab switch buttons; switches tab and sets active button.
@@ -903,3 +932,16 @@ class OSCRUI():
         Assigns value at index to variable
         """
         var_to_be_set[index] = value
+
+    def set_graph_resolution_setting(self, setting_text: str):
+        """
+        Calculates inverse of setting_text and stores it to settings.
+
+        Parameters:
+        - :param setting_text: data points per second
+        """
+        try:
+            value = round(1 / int(setting_text), 1)
+            self.settings.setValue('graph_resolution', value)
+        except (ValueError, ZeroDivisionError):
+            return

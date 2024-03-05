@@ -1,17 +1,19 @@
 from typing import Iterable
 
-from PySide6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, QAbstractItemModel, QModelIndex
-from PySide6.QtCore import QItemSelectionModel, QItemSelection, Slot
-from PySide6.QtGui import QFont
 from OSCR import TreeItem
+from PySide6.QtCore import QAbstractItemModel, QAbstractTableModel, QItemSelectionModel
+from PySide6.QtCore import QItemSelection, QModelIndex, QSortFilterProxyModel, Qt
+from PySide6.QtGui import QFont
 
 ARIGHT = Qt.AlignmentFlag.AlignRight
 ALEFT = Qt.AlignmentFlag.AlignLeft
 ACENTER = Qt.AlignmentFlag.AlignCenter
 AVCENTER = Qt.AlignmentFlag.AlignVCenter
 
+
 class TableModel(QAbstractTableModel):
-    def __init__(self, data, header: Iterable, index: Iterable, header_font: QFont, cell_font: QFont):
+    def __init__(
+            self, data, header: Iterable, index: Iterable, header_font: QFont, cell_font: QFont):
         """
         Creates table model from supplied data.
 
@@ -34,7 +36,7 @@ class TableModel(QAbstractTableModel):
 
     def columnCount(self, index):
         try:
-            return len(self._data[0]) # all columns must have the same length
+            return len(self._data[0])  # all columns must have the same length
         except IndexError:
             return 0
 
@@ -56,7 +58,8 @@ class TableModel(QAbstractTableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 return AVCENTER + ARIGHT
-            
+
+
 class OverviewTableModel(TableModel):
     """
     Model for overview table
@@ -75,13 +78,14 @@ class OverviewTableModel(TableModel):
             elif column in (9, 16, 17, 18, 19, 20, 21, 22):
                 return str(cell)
             return cell
-        
+
         if role == Qt.ItemDataRole.FontRole:
             return self._cell_font
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return AVCENTER + ARIGHT
-        
+
+
 class LeagueTableModel(TableModel):
     """
     Model for league table
@@ -100,7 +104,7 @@ class LeagueTableModel(TableModel):
             elif column == 4:
                 return str(cell)
             return cell
-        
+
         if role == Qt.ItemDataRole.FontRole:
             return self._cell_font
 
@@ -108,21 +112,23 @@ class LeagueTableModel(TableModel):
             if index.column() == 1:
                 return AVCENTER + ALEFT
             return AVCENTER + ARIGHT
-    
+
     def headerData(self, section, orientation, role):
         if role == Qt.ItemDataRole.FontRole and orientation == Qt.Orientation.Vertical:
             return self._cell_font
         return super().headerData(section, orientation, role)
+
 
 class SortingProxy(QSortFilterProxyModel):
     def __init__(self):
         super().__init__()
 
     def lessThan(self, left, right):
-        l = self.sourceModel()._data[left.row()][left.column()]
-        r = self.sourceModel()._data[right.row()][right.column()]
-        return l > r # inverted operator to make descending sort come up first
-    
+        links = self.sourceModel()._data[left.row()][left.column()]
+        rechts = self.sourceModel()._data[right.row()][right.column()]
+        return links > rechts  # inverted operator to make descending sort come up first
+
+
 class TreeModel(QAbstractItemModel):
     """
     Data model for the analysis table
@@ -133,12 +139,15 @@ class TreeModel(QAbstractItemModel):
 
         Parameters:
         - :param root_item: item supporting the following operations:
-            - function "get_child(row: int)" returning the n-th child of the item; None if not exists
-            - function "get_data(column: int)" returning the data of the item at the given column; None if
+            - function "get_child(row: int)" returning the n-th child of the item; None if not
+            exists
+            - function "get_data(column: int)" returning the data of the item at the given column;
+            None if
             not exists
-            - function "append_child(item)" adds the given item as child to the item 
+            - function "append_child(item)" adds the given item as child to the item
             - property "parent" containing the parent item of the item; None for the root item
-            - property "row" containing the row number which the item is stored at in its parent item
+            - property "row" containing the row number which the item is stored at in its parent
+            item
             - property "child_count" containing the number of children the item has
             - property "column_count" containing the number of columns the items data row
 
@@ -163,7 +172,7 @@ class TreeModel(QAbstractItemModel):
         self.recursive_sort(self._root._children[0], column, descending)
         self.recursive_sort(self._root._children[1], column, descending)
         self.layoutChanged.emit()
-    
+
     def recursive_sort(self, item: TreeItem, column: int, desc):
         if item.child_count > 0:
             for child in item._children:
@@ -178,10 +187,10 @@ class TreeModel(QAbstractItemModel):
         else:
             p = parent.internalPointer()
         c = p.get_child(row)
-        if not c is None:
+        if c is not None:
             return self.createIndex(row, column, c)
         return QModelIndex()
-    
+
     def parent(self, index: QModelIndex) -> QModelIndex | None:
         if not index.isValid():
             return QModelIndex()
@@ -190,24 +199,24 @@ class TreeModel(QAbstractItemModel):
         if parent is None:
             return QModelIndex()
         return self.createIndex(parent.row, 0, parent)
-    
+
     def rowCount(self, parent: QModelIndex) -> int:
         if not parent.isValid():
             parent = self._root
         else:
             parent = parent.internalPointer()
         return parent.child_count
-    
+
     def columnCount(self, parent: QModelIndex) -> int:
         if parent.isValid():
             return parent.internalPointer().column_count
         return self._root.column_count
-    
+
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
         if not index.isValid():
             return Qt.ItemFlag.NoItemFlags
         return super().flags(index)
-    
+
     def headerData(self, section, orientation, role) -> str:
         if role == Qt.ItemDataRole.DisplayRole:
             return self._root.data[section]
@@ -255,6 +264,7 @@ class DamageTreeModel(TreeModel):
             return index.internalPointer().get_data(column)
         return None
 
+
 class HealTreeModel(TreeModel):
     """
     Tree Model subclass for the heal tables
@@ -291,7 +301,8 @@ class HealTreeModel(TreeModel):
         elif role == -13:
             return index.internalPointer().get_data(column)
         return None
-    
+
+
 class TreeSelectionModel(QItemSelectionModel):
     """
     Implements custom selection behavior for analysis tables.
@@ -299,12 +310,14 @@ class TreeSelectionModel(QItemSelectionModel):
     def __init__(self, model: QAbstractItemModel):
         super().__init__(model)
 
-    def select(self, index_or_selection: QModelIndex | QItemSelection, 
+    def select(
+            self, index_or_selection: QModelIndex | QItemSelection,
             flag: QItemSelectionModel.SelectionFlag):
         if isinstance(index_or_selection, QItemSelection):
             try:
                 if index_or_selection.indexes()[0].column() == 0:
-                    super().select(index_or_selection, flag | QItemSelectionModel.SelectionFlag.Rows)
+                    super().select(
+                        index_or_selection, flag | QItemSelectionModel.SelectionFlag.Rows)
                 else:
                     super().select(index_or_selection, flag)
             # deselecting has empty list of indexes

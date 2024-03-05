@@ -1,12 +1,12 @@
 import os
 
-from PySide6.QtCore import QThread, Signal, Qt
-from OSCR import OSCR, TREE_HEADER, HEAL_TREE_HEADER
+from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER
+from PySide6.QtCore import Qt, QThread, Signal
 
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
 from .displayer import create_overview
-from .widgetbuilder import show_warning, log_size_warning, split_dialog
 from .textedit import format_damage_tree_data, format_heal_tree_data
+from .widgetbuilder import log_size_warning, show_warning, split_dialog
 
 
 class CustomThread(QThread):
@@ -23,6 +23,7 @@ class CustomThread(QThread):
         r = self._func()
         self.result.emit((r,))
 
+
 def init_parser(self):
     """
     Initializes Parser.
@@ -30,12 +31,14 @@ def init_parser(self):
     self.parser1 = OSCR(settings=self.parser_settings)
     # self.parser2 = OSCR()
 
+
 def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     """
     Wrapper function for retrieving and showing data. Callback of "Analyse" and "Refresh" button.
-    
+
     Parameters:
-    - :param combat_id: id of older combat (0 -> latest combat in the file; len(...) - 1 -> oldest combat)
+    - :param combat_id: id of older combat (0 -> latest combat in the file;
+    len(...) - 1 -> oldest combat)
     - :param path: path to combat log file
     """
     if combat_id == -1 or combat_id == self.current_combat_id:
@@ -46,11 +49,12 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
         parser: OSCR = self.parser2
     else:
         return
-    
+
     # initial run / click on the Analyze buttonQGuiApplication
     if combat_id is None:
         if not path or not os.path.isfile(path):
-            show_warning(self, 'Invalid Logfile', 'The Logfile you are trying to open does not exist.')
+            show_warning(
+                    self, 'Invalid Logfile', 'The Logfile you are trying to open does not exist.')
             return
         if path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
@@ -84,6 +88,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     self.widgets.main_tabber.setCurrentIndex(0)
     self.widgets.overview_tabber.setCurrentIndex(0)
 
+
 def copy_summary_callback(self):
     """
     Callback to set the combat summary of the active combat to the user's clippboard
@@ -112,9 +117,9 @@ def copy_summary_callback(self):
 
 def get_data(self, combat: int | None = None, path: str | None = None):
     """
-    Interface between OSCRUI and OSCR. 
+    Interface between OSCRUI and OSCR.
     Uses OSCR class to analyze log at path
-    
+
     :return: False to abort analyzing process, True otherwise
     """
 
@@ -133,11 +138,12 @@ def get_data(self, combat: int | None = None, path: str | None = None):
             else:
                 return False
         self.parser1.shallow_combat_analysis(0)
-        
+
     # same log file, old combat
     else:
         self.parser1.shallow_combat_analysis(combat)
     return True
+
 
 def analysis_data_slot(self, item_tuple: tuple):
     """
@@ -149,6 +155,7 @@ def analysis_data_slot(self, item_tuple: tuple):
     populate_analysis(self, *item_tuple)
     self.widgets.main_menu_buttons[1].setDisabled(False)
 
+
 def populate_analysis(self, root_items: tuple):
     """
     Populates the Analysis' treeview table.
@@ -156,47 +163,48 @@ def populate_analysis(self, root_items: tuple):
     damage_out_item, damage_in_item, heal_out_item, heal_in_item = root_items
 
     damage_out_table = self.widgets.analysis_table_dout
-    damage_out_model = DamageTreeModel(damage_out_item, self.theme_font('tree_table_header'),
-            self.theme_font('tree_table'),
+    damage_out_model = DamageTreeModel(
+            damage_out_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
     damage_out_table.setModel(damage_out_model)
-    damage_out_table.expand(damage_out_model.index(0, 0, 
-            damage_out_model.createIndex(0, 0, damage_out_model._root)))
+    damage_out_root_index = damage_out_model.createIndex(0, 0, damage_out_model._root)
+    damage_out_table.expand(damage_out_model.index(0, 0, damage_out_root_index))
     damage_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
     damage_out_table.setSelectionModel(TreeSelectionModel(damage_out_model))
 
     damage_in_table = self.widgets.analysis_table_dtaken
-    damage_in_model = DamageTreeModel(damage_in_item, self.theme_font('tree_table_header'),
-            self.theme_font('tree_table'),
+    damage_in_model = DamageTreeModel(
+            damage_in_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
     damage_in_table.setModel(damage_in_model)
-    damage_in_table.expand(damage_in_model.index(0, 0, 
-            damage_in_model.createIndex(0, 0, damage_in_model._root)))
+    damage_in_root_index = damage_in_model.createIndex(0, 0, damage_in_model._root)
+    damage_in_table.expand(damage_in_model.index(0, 0, damage_in_root_index))
     damage_in_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
     damage_in_table.setSelectionModel(TreeSelectionModel(damage_in_model))
 
     heal_out_table = self.widgets.analysis_table_hout
-    heal_out_model = HealTreeModel(heal_out_item, self.theme_font('tree_table_header'),
-            self.theme_font('tree_table'),
+    heal_out_model = HealTreeModel(
+            heal_out_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
     heal_out_table.setModel(heal_out_model)
-    heal_out_table.expand(heal_out_model.index(0, 0, 
-            damage_in_model.createIndex(0, 0, heal_out_model._root)))
+    heal_out_root_index = damage_in_model.createIndex(0, 0, heal_out_model._root)
+    heal_out_table.expand(heal_out_model.index(0, 0, heal_out_root_index))
     heal_out_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
     heal_out_table.setSelectionModel(TreeSelectionModel(heal_out_model))
 
     heal_in_table = self.widgets.analysis_table_hin
-    heal_in_model = HealTreeModel(heal_in_item, self.theme_font('tree_table_header'),
-            self.theme_font('tree_table'),
+    heal_in_model = HealTreeModel(
+            heal_in_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
             self.theme_font('', self.theme['tree_table']['::item']['font']))
     heal_in_table.setModel(heal_in_model)
-    heal_in_table.expand(heal_in_model.index(0, 0, 
-            damage_in_model.createIndex(0, 0, heal_in_model._root)))
+    heal_in_root_index = damage_in_model.createIndex(0, 0, heal_in_model._root)
+    heal_in_table.expand(heal_in_model.index(0, 0, heal_in_root_index))
     heal_in_table.sortByColumn(1, Qt.SortOrder.AscendingOrder)
     heal_in_table.setSelectionModel(TreeSelectionModel(heal_in_model))
-    
+
     update_shown_columns_dmg(self)
     update_shown_columns_heal(self)
+
 
 def update_shown_columns_dmg(self):
     """
@@ -207,11 +215,12 @@ def update_shown_columns_dmg(self):
     for i in range(self.settings.value('dmg_columns_length', type=int)):
         state = self.settings.value(f'dmg_columns|{i}')
         if state:
-            dout_table.showColumn(i+1)
-            dtaken_table.showColumn(i+1)
+            dout_table.showColumn(i + 1)
+            dtaken_table.showColumn(i + 1)
         else:
-            dout_table.hideColumn(i+1)
-            dtaken_table.hideColumn(i+1)
+            dout_table.hideColumn(i + 1)
+            dtaken_table.hideColumn(i + 1)
+
 
 def update_shown_columns_heal(self):
     """
@@ -222,12 +231,13 @@ def update_shown_columns_heal(self):
     for i in range(self.settings.value('heal_columns_length', type=int)):
         state = self.settings.value(f'heal_columns|{i}')
         if state:
-            hout_table.showColumn(i+1)
-            hin_table.showColumn(i+1)
+            hout_table.showColumn(i + 1)
+            hin_table.showColumn(i + 1)
         else:
-            hout_table.hideColumn(i+1)
-            hin_table.hideColumn(i+1)
-        
+            hout_table.hideColumn(i + 1)
+            hin_table.hideColumn(i + 1)
+
+
 def resize_tree_table(tree):
     """
     Resizes the columns of the given tree table to fit its contents.
@@ -238,6 +248,7 @@ def resize_tree_table(tree):
     for col in range(tree.header().count()):
         width = max(tree.sizeHintForColumn(col), tree.header().sectionSizeHint(col)) + 5
         tree.header().resizeSection(col, width)
+
 
 def copy_analysis_callback(self):
     """
@@ -259,7 +270,7 @@ def copy_analysis_callback(self):
             for selected_cell in selection:
                 column = selected_cell.column()
                 row_name = selected_cell.internalPointer().get_data(0)
-                if not row_name in selection_dict:
+                if row_name not in selection_dict:
                     selection_dict[row_name] = dict()
                 if column != 0:
                     cell_data = selected_cell.internalPointer().get_data(column)

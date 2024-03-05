@@ -1,18 +1,20 @@
 from typing import Callable, Iterable
 
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableView, QFrame, QLabel
-from pyqtgraph import PlotWidget, BarGraphItem, setConfigOptions, mkPen
 import numpy as np
+from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
 
 from OSCR import TABLE_HEADER
 from OSCR.combat import Combat
 
 from .datamodels import OverviewTableModel, SortingProxy
-from .widgetbuilder import SMINMIN, AVCENTER, ACENTER, create_frame, create_label, style_table
+from .widgetbuilder import ACENTER, AVCENTER, SMINMIN
+from .widgetbuilder import create_frame, create_label, style_table
 from .widgets import CustomPlotAxis
 from .style import get_style, theme_font
 
 setConfigOptions(antialias=True)
+
 
 def setup_plot(plot_function: Callable) -> Callable:
     '''
@@ -87,7 +89,8 @@ def create_overview(self):
         if frame.layout():
             QWidget().setLayout(frame.layout())
 
-    time_data, DPS_graph_data, DMG_graph_data, current_table = _create_overview(self.parser1.active_combat)
+    time_data, DPS_graph_data, DMG_graph_data, current_table = _create_overview(
+            self.parser1.active_combat)
 
     line_layout = create_line_graph(self, DPS_graph_data, time_data)
     self.widgets.overview_tab_frames[1].setLayout(line_layout)
@@ -103,8 +106,9 @@ def create_overview(self):
 
 
 @setup_plot
-def create_grouped_bar_plot(self, data: dict[str, tuple], time_reference: dict[str, tuple], 
-            bar_widget: PlotWidget) -> QVBoxLayout:
+def create_grouped_bar_plot(
+        self, data: dict[str, tuple], time_reference: dict[str, tuple], bar_widget: PlotWidget
+        ) -> QVBoxLayout:
     """
     Creates a bar plot with grouped bars.
 
@@ -129,11 +133,13 @@ def create_grouped_bar_plot(self, data: dict[str, tuple], time_reference: dict[s
     for (player, graph_data), color, offset in zipper:
         if player in time_reference:
             time_data = np.subtract(time_reference[player], offset)
-            bars = BarGraphItem(x=time_data, width=bar_width, height=graph_data, brush=color, pen=None, 
+            bars = BarGraphItem(
+                    x=time_data, width=bar_width, height=graph_data, brush=color, pen=None,
                     name=player)
             bar_widget.addItem(bars)
             legend_data.append((color, player))
     return legend_data
+
 
 @setup_plot
 def create_horizontal_bar_graph(self, table: list[list], bar_widget: PlotWidget) -> QVBoxLayout:
@@ -155,14 +161,17 @@ def create_horizontal_bar_graph(self, table: list[list], bar_widget: PlotWidget)
     x = tuple(line[3] for line in table)
     y = tuple(range(1, len(x) + 1))
     bar_widget.setXRange(0, max(x) * 1.05, padding=0)
-    bars = BarGraphItem(x0=0, y=y, height=0.75, width=x, brush=self.theme['defaults']['mfg'], pen=None)
+    bars = BarGraphItem(
+            x0=0, y=y, height=0.75, width=x, brush=self.theme['defaults']['mfg'], pen=None)
     bar_widget.addItem(bars)
 
+
 @setup_plot
-def create_line_graph(self, data: dict[str, tuple], time_reference: dict[str, tuple], 
-            graph_widget: PlotWidget) -> QVBoxLayout:
+def create_line_graph(
+        self, data: dict[str, tuple], time_reference: dict[str, tuple], graph_widget: PlotWidget
+        ) -> QVBoxLayout:
     """
-    Creates line plot from data and returns layout that countins the plot. 
+    Creates line plot from data and returns layout that countins the plot.
 
     Parameters:
     - :param data: dictionary containing the data to be plotted
@@ -182,12 +191,13 @@ def create_line_graph(self, data: dict[str, tuple], time_reference: dict[str, tu
             legend_data.append((color, player))
     return legend_data
 
+
 def create_legend(self, colors_and_names: Iterable[tuple]) -> QFrame:
     """
     Creates Legend from color / name pairs and returns frame containing it.
 
     Parameters:
-    - :param colors_and_names: Iterable containing color / name pairs : [('#9f9f00', 'Line 1'), 
+    - :param colors_and_names: Iterable containing color / name pairs : [('#9f9f00', 'Line 1'),
     ('#0000ff', 'Line 2'), (...), ...]
 
     :return: frame containing the legend
@@ -221,6 +231,7 @@ def create_legend(self, colors_and_names: Iterable[tuple]) -> QFrame:
     frame.setLayout(frame_layout)
     return frame
 
+
 def create_legend_item(self, color: str, name: str) -> QFrame:
     """
     Creates a colored patch next to a label inside a frame
@@ -240,10 +251,12 @@ def create_legend_item(self, color: str, name: str) -> QFrame:
     patch_height = self.theme['app']['frame_thickness']
     colored_patch.setFixedSize(2*patch_height, patch_height)
     layout.addWidget(colored_patch, alignment=AVCENTER)
-    label = create_label(self, name, 'label', style_override={'font': self.theme['plot_legend']['font']})
+    label = create_label(
+            self, name, 'label', style_override={'font': self.theme['plot_legend']['font']})
     layout.addWidget(label)
     frame.setLayout(layout)
     return frame
+
 
 def create_overview_table(self, table_data) -> QTableView:
     """
@@ -253,8 +266,9 @@ def create_overview_table(self, table_data) -> QTableView:
     """
     table_cell_data = tuple(tuple(line[2:]) for line in table_data)
     table_index = tuple(line[0] + line[1] for line in table_data)
-    model = OverviewTableModel(table_cell_data, TABLE_HEADER, table_index, 
-            self.theme_font('table_header'), self.theme_font('table'))
+    model = OverviewTableModel(
+            table_cell_data, TABLE_HEADER, table_index, self.theme_font('table_header'),
+            self.theme_font('table'))
     sort = SortingProxy()
     sort.setSourceModel(model)
     table = QTableView(self.widgets.overview_tab_frames[0])

@@ -1,16 +1,17 @@
 from types import FunctionType, BuiltinFunctionType, MethodType
 import os
 
-from PySide6.QtWidgets import QPushButton, QFrame, QLabel, QTreeView, QHeaderView, QTableView, QSpacerItem
-from PySide6.QtWidgets import QSizePolicy, QAbstractItemView, QMessageBox, QComboBox, QDialog, QLineEdit
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIntValidator
+from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFileDialog, QFrame
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit
+from PySide6.QtWidgets import QMessageBox, QPushButton, QSizePolicy, QSpacerItem, QTableView
+from PySide6.QtWidgets import QTreeView, QVBoxLayout
 
-from OSCR import split_log_by_lines, split_log_by_combat
-from .style import get_style_class, get_style, merge_style, theme_font
-from .textedit import format_path
 from .iofunctions import browse_path
+from OSCR import split_log_by_combat, split_log_by_lines
+from .style import get_style, get_style_class, merge_style, theme_font
+from .textedit import format_path
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -35,6 +36,7 @@ RFIXED = QHeaderView.ResizeMode.Fixed
 
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
+
 def create_button(self, text, style: str = 'button', parent=None, style_override={}, toggle=None):
     """
     Creates a button according to style with parent.
@@ -44,8 +46,8 @@ def create_button(self, text, style: str = 'button', parent=None, style_override
     - :param style: name of the style as in self.theme or style dict
     - :param parent: parent of the button (optional)
     - :param style_override: style dict to override default style (optional)
-    - :param toggle: True or False when button should be a toggle button, None when it should be a normal 
-    button; the bool value indicates the default state of the button
+    - :param toggle: True or False when button should be a toggle button, None when it should be a
+    normal button; the bool value indicates the default state of the button
 
     :return: configured QPushButton
     """
@@ -61,8 +63,10 @@ def create_button(self, text, style: str = 'button', parent=None, style_override
         button.setChecked(toggle)
     return button
 
-def create_icon_button(self, icon, tooltip: str = '', style: str = 'icon_button', parent=None,
-        style_override={}) -> QPushButton:
+
+def create_icon_button(
+        self, icon, tooltip: str = '', style: str = 'icon_button', parent=None, style_override={}
+        ) -> QPushButton:
     """
     Creates a button showing an icon according to style with parent.
 
@@ -85,6 +89,7 @@ def create_icon_button(self, icon, tooltip: str = '', style: str = 'icon_button'
     button.setSizePolicy(SMAXMAX)
     return button
 
+
 def create_frame(self, parent=None, style='frame', style_override={}, size_policy=None) -> QFrame:
     """
     Creates a frame with default styling and parent
@@ -101,7 +106,8 @@ def create_frame(self, parent=None, style='frame', style_override={}, size_polic
     frame.setSizePolicy(size_policy if isinstance(size_policy, QSizePolicy) else SMAXMAX)
     return frame
 
-def create_label(self, text, style:str='', parent=None, style_override={}):
+
+def create_label(self, text, style: str = '', parent=None, style_override={}):
     """
     Creates a label according to style with parent.
 
@@ -122,8 +128,10 @@ def create_label(self, text, style:str='', parent=None, style_override={}):
     else:
         label.setFont(theme_font(self, style))
     return label
-    
-def create_button_series(self, parent, buttons:dict, style, shape:str='row', seperator:str='', ret=False):
+
+
+def create_button_series(
+        self, parent, buttons: dict, style, shape: str = 'row', seperator: str = '', ret=False):
     """
     Creates a row / column of buttons.
 
@@ -131,12 +139,12 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
     - :param parent: widget that will contain the buttons
     - :param buttons: dictionary containing button details
         - key "default" contains style override for all buttons (optional)
-        - all other keys represent one button, key will be the text on the button; value for the key contains
-        dict with details for the specific button (all optional)
+        - all other keys represent one button, key will be the text on the button; value for the
+        key contains dict with details for the specific button (all optional)
             - "callback": callable that will be called on button click
             - "style": individual style override dict
-            - "toggle": True or False when button should be a toggle button, None when it should be a normal 
-            button; the bool value indicates the default state of the button
+            - "toggle": True or False when button should be a toggle button, None when it should be
+            a normal button; the bool value indicates the default state of the button
             - "stretch": stretch value for the button
             - "align": alignment flag for button
     - :param style: key for self.theme -> default style
@@ -155,15 +163,16 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
     else:
         shape = 'row'
         layout = QHBoxLayout()
-    
+
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(0)
 
     button_list = []
-    
+
     if seperator != '':
-        sep_style = {'color':defaults['color'], 'margin':0, 'padding':0, 'background':'rgba(0,0,0,0)'}
-    
+        sep_style = {
+                'color': defaults['color'], 'margin': 0, 'padding': 0, 'background': '#00000000'}
+
     for i, (name, detail) in enumerate(buttons.items()):
         if 'style' in detail:
             button_style = merge_style(self, defaults, detail['style'])
@@ -186,9 +195,12 @@ def create_button_series(self, parent, buttons:dict, style, shape:str='row', sep
             sep_label = self.create_label(seperator, 'label', parent, sep_style)
             sep_label.setSizePolicy(SMAXMIN)
             layout.addWidget(sep_label)
-    
-    if ret: return layout, button_list
-    else: return layout
+
+    if ret:
+        return layout, button_list
+    else:
+        return layout
+
 
 def create_combo_box(self, parent, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
     """
@@ -210,7 +222,9 @@ def create_combo_box(self, parent, style: str = 'combobox', style_override: dict
     combo_box.setSizePolicy(SMINMAX)
     return combo_box
 
-def create_entry(self, default_value, validator=None, style: str = 'entry', style_override: dict = {}
+
+def create_entry(
+        self, default_value, validator=None, style: str = 'entry', style_override: dict = {}
         ) -> QLineEdit:
     """
     Creates an entry widget and styles it.
@@ -233,6 +247,7 @@ def create_entry(self, default_value, validator=None, style: str = 'entry', styl
     entry.setSizePolicy(SMAXMAX)
     return entry
 
+
 def resize_tree_table(tree: QTreeView):
     """
     Resizes the columns of the given tree table to fit its contents
@@ -243,7 +258,8 @@ def resize_tree_table(tree: QTreeView):
     for col in range(tree.header().count()):
         width = max(tree.sizeHintForColumn(col), tree.header().sectionSizeHint(col)) + 5
         tree.header().resizeSection(col, width)
-        
+
+
 def create_analysis_table(self, parent, widget) -> QTreeView:
     """
     Creates and returns a QTreeView with parent, styled according to widget.
@@ -266,7 +282,6 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
     table.header().setStyleSheet(get_style_class(self, 'QHeaderView', 'tree_table_header'))
     table.header().setSectionResizeMode(RFIXED)
-    #table.header().setSectionsMovable(False)
     table.header().setMinimumSectionSize(1)
     table.header().setSectionsClickable(True)
     table.header().setStretchLastSection(False)
@@ -274,6 +289,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.expanded.connect(lambda: resize_tree_table(table))
     table.collapsed.connect(lambda: resize_tree_table(table))
     return table
+
 
 def style_table(self, table: QTableView, style_override: dict = {}):
     """
@@ -298,6 +314,7 @@ def style_table(self, table: QTableView, style_override: dict = {}):
     table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
 
+
 def show_warning(self, title: str, message: str):
     """
     Displays a warning in form of a message box
@@ -307,12 +324,13 @@ def show_warning(self, title: str, message: str):
     - :param message: message to be displayed
     """
     error = QMessageBox()
-    error.setIcon(QMessageBox.Icon.Warning), 
+    error.setIcon(QMessageBox.Icon.Warning),
     error.setText(message)
     error.setWindowTitle(title)
     error.setStandardButtons(QMessageBox.StandardButton.Ok)
     error.setWindowIcon(self.icons['oscr'])
     error.exec()
+
 
 def log_size_warning(self):
     """
@@ -322,9 +340,11 @@ def log_size_warning(self):
     """
     dialog = QMessageBox()
     dialog.setIcon(QMessageBox.Icon.Warning)
-    message = ('The combatlog file you are trying to open will impair the performance of the app due to its '
-            'size. It is advised to split the log. \n\nClick "Split Dialog" to split the file, "Cancel" to '
-            'abort combatlog analysis or "Continue" to analyze the log nevertheless.')
+    message = (
+            'The combatlog file you are trying to open will impair the performance of the app '
+            'due to its size. It is advised to split the log. \n\nClick "Split Dialog" to split '
+            'the file, "Cancel" to abort combatlog analysis or "Continue" to analyze the log '
+            'nevertheless.')
     dialog.setText(message)
     dialog.setWindowTitle('Open Source Combalog Reader')
     dialog.setWindowIcon(self.icons['oscr'])
@@ -339,7 +359,8 @@ def log_size_warning(self):
         return 'continue'
     else:
         return 'cancel'
-    
+
+
 def split_dialog(self):
     """
     Opens dialog to split the current logfile.
@@ -373,17 +394,18 @@ def split_dialog(self):
     vertical_layout.addLayout(grid_layout)
     auto_split_heading = create_label(self, 'Split Log Automatically:', 'label_heading')
     grid_layout.addWidget(auto_split_heading, 0, 0, alignment=ALEFT)
-    label_text = ('Automatically splits the logfile at the next combat end after '
-            f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has been '
-            'split. The new files are written to the selected folder. It is advised to select an empty '
-            'folder to ensure all files are saved correctly.')
+    label_text = (
+            'Automatically splits the logfile at the next combat end after '
+            f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has '
+            ' been split. The new files are written to the selected folder. It is advised to '
+            'select an empty folder to ensure all files are saved correctly.')
     auto_split_text = create_label(self, label_text, 'label')
     auto_split_text.setWordWrap(True)
     auto_split_text.setFixedWidth(self.sidebar_item_width)
     grid_layout.addWidget(auto_split_text, 1, 0, alignment=ALEFT)
     auto_split_button = create_button(self, 'Auto Split')
     auto_split_button.clicked.connect(lambda: auto_split_callback(self, current_logpath))
-    grid_layout.addWidget(auto_split_button, 1, 2, alignment=ARIGHT|ABOTTOM)
+    grid_layout.addWidget(auto_split_button, 1, 2, alignment=ARIGHT | ABOTTOM)
     grid_layout.setRowMinimumHeight(2, item_spacing)
     seperator_3 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
     seperator_3.setFixedHeight(self.theme['hr']['height'])
@@ -391,10 +413,11 @@ def split_dialog(self):
     grid_layout.setRowMinimumHeight(4, item_spacing)
     range_split_heading = create_label(self, 'Export Range of Combats:', 'label_heading')
     grid_layout.addWidget(range_split_heading, 5, 0, alignment=ALEFT)
-    label_text = ('Exports combats including and between lower and upper limit to selected file. '
+    label_text = (
+            'Exports combats including and between lower and upper limit to selected file. '
             'Both limits refer to the indexed list of all combats in the file starting with 1. '
-            'An upper limit larger than the total number of combats or of "-1", is treated as being equal to '
-            'the total number of combats.')
+            'An upper limit larger than the total number of combats or of "-1", is treated as '
+            'being equal to the total number of combats.')
     range_split_text = create_label(self, label_text, 'label')
     range_split_text.setWordWrap(True)
     range_split_text.setFixedWidth(self.sidebar_item_width)
@@ -412,7 +435,8 @@ def split_dialog(self):
     lower_validator.setBottom(1)
     lower_range_entry.setValidator(lower_validator)
     lower_range_entry.setText('1')
-    lower_range_entry.setStyleSheet(get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
+    lower_range_entry.setStyleSheet(
+            get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
     lower_range_entry.setFixedWidth(self.sidebar_item_width // 7)
     range_limit_layout.addWidget(lower_range_entry, 1, 1, alignment=AVCENTER)
     upper_range_entry = QLineEdit()
@@ -420,14 +444,16 @@ def split_dialog(self):
     upper_validator.setBottom(-1)
     upper_range_entry.setValidator(upper_validator)
     upper_range_entry.setText('1')
-    upper_range_entry.setStyleSheet(get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
+    upper_range_entry.setStyleSheet(
+            get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
     upper_range_entry.setFixedWidth(self.sidebar_item_width // 7)
     range_limit_layout.addWidget(upper_range_entry, 2, 1, alignment=AVCENTER)
     grid_layout.addLayout(range_limit_layout, 6, 1)
     range_split_button = create_button(self, 'Export Combats')
-    range_split_button.clicked.connect(lambda le=lower_range_entry, ue=upper_range_entry: 
+    range_split_button.clicked.connect(
+            lambda le=lower_range_entry, ue=upper_range_entry:
             combat_split_callback(self, current_logpath, le.text(), ue.text()))
-    grid_layout.addWidget(range_split_button, 6, 2, alignment=ARIGHT|ABOTTOM)
+    grid_layout.addWidget(range_split_button, 6, 2, alignment=ARIGHT | ABOTTOM)
 
     content_frame.setLayout(vertical_layout)
 
@@ -438,19 +464,24 @@ def split_dialog(self):
     dialog.setSizePolicy(SMAXMAX)
     dialog.exec()
 
+
 def auto_split_callback(self, path: str):
     """
     Callback for auto split button
     """
-    folder_path = QFileDialog.getExistingDirectory(self.window, 'Select Folder', os.path.dirname(path))
-    split_log_by_lines(path, folder_path, self.settings.value('split_log_after', type=int),
+    folder_path = QFileDialog.getExistingDirectory(
+            self.window, 'Select Folder', os.path.dirname(path))
+    split_log_by_lines(
+            path, folder_path, self.settings.value('split_log_after', type=int),
             self.settings.value('combat_distance', type=int))
+
 
 def combat_split_callback(self, path: str, first_num: str, last_num: str):
     """
     Callback for combat split button
     """
     target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
-    split_log_by_combat(path, target_path, int(first_num), int(last_num), 
-            self.settings.value('seconds_between_combats', type=int), 
+    split_log_by_combat(
+            path, target_path, int(first_num), int(last_num),
+            self.settings.value('seconds_between_combats', type=int),
             self.settings.value('excluded_event_ids', type=list))

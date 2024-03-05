@@ -3,26 +3,27 @@ import copy
 from PySide6.QtGui import QFont
 
 WEIGHT_CONVERSION = {
-        'normal': QFont.Weight.Normal,
-        'bold': QFont.Weight.Bold,
-        'extrabold': QFont.Weight.ExtraBold,
-        'medium': QFont.Weight.Medium
-    }
+    'normal': QFont.Weight.Normal,
+    'bold': QFont.Weight.Bold,
+    'extrabold': QFont.Weight.ExtraBold,
+    'medium': QFont.Weight.Medium
+}
 
-def get_style(self, widget, override:dict={}) -> str:
+
+def get_style(self, widget, override: dict = {}) -> str:
     """
     Returns style sheet according to default style of widget with override style.
 
     Parameters:
-    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if only the 
-    style in override should be applied)
+    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if
+    only the style in override should be applied)
     - :param override: dict -> contains additional style (optional)
 
     :return: str containing css style sheet
     """
     if widget is None or widget == '':
         return get_css(self, override)
-    elif widget != 'app' and widget != 'defaults' and widget != 's.c'and widget in self.theme.keys():
+    elif widget != 'app' and widget != 'defaults' and widget != 's.c' and widget in self.theme:
         if len(override) > 0:
             style = merge_style(self, self.theme[widget], override)
         else:
@@ -30,29 +31,30 @@ def get_style(self, widget, override:dict={}) -> str:
         return get_css(self, style)
 
 
-def get_style_class(self, class_name:str, widget, override={}) -> str:
+def get_style_class(self, class_name: str, widget, override={}) -> str:
     """
-    Returns style sheet according to default style of widget with override style. Style only applies to
-    class_name. Sub-controls, pseudo-states and descendant selectors (marked with "~") defined in self.theme 
-    and override are correctly handled.
+    Returns style sheet according to default style of widget with override style. Style only
+    applies to class_name. Sub-controls, pseudo-states and descendant selectors (marked with "~")
+    defined in self.theme and override are correctly handled.
 
     Parameters:
     - :param class_name: str -> name of the widget to be styled
-    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if only the 
-    style in override should be applied)
+    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if
+    only the style in override should be applied)
     - :param override: dict -> contains additional style (optional)
 
     :return: str containing css style sheet
     """
     if widget is None or widget == '':
         style = override
-    elif widget != 'app' and widget != 'defaults' and widget != 's.c' and widget in self.theme.keys():
+    elif widget != 'app' and widget != 'defaults' and widget != 's.c' and widget in self.theme:
         if len(override) > 0:
             style = merge_style(self, self.theme[widget], override)
         else:
             style = self.theme[widget]
     else:
-        raise KeyError(f'Parameter widget=`{widget}` must be None or key of self.theme '
+        raise KeyError(
+                f'Parameter widget=`{widget}` must be None or key of self.theme '
                 'except `app` or `defaults`.')
     main = f'{class_name} {{{get_css(self, style)}}}'
     for k, v in style.items():
@@ -62,7 +64,8 @@ def get_style_class(self, class_name:str, widget, override={}) -> str:
             main += f' {get_style_class(self, f"{class_name} {k[1:]}", None, v)}'
     return main
 
-def merge_style(self, s1:dict, s2:dict) -> dict:
+
+def merge_style(self, s1: dict, s2: dict) -> dict:
     """
     Returns new dictionary where the given styles are merged.
     Up to one sub-dictionary is merged recursively.
@@ -81,9 +84,11 @@ def merge_style(self, s1:dict, s2:dict) -> dict:
         result[k] = v
     return result
 
+
 def get_css(self, style: dict) -> str:
     """
-    Converts style dictionary into css style sheet. Escapes '@' - shortcuts with their respective values.
+    Converts style dictionary into css style sheet. Escapes '@' - shortcuts with their respective
+    values.
     """
     css = str()
     for key, val in style.items():
@@ -101,9 +106,11 @@ def get_css(self, style: dict) -> str:
             css += f'{key}:{v};'
     return css
 
-def theme_font(self, key, font_spec:tuple=()) -> QFont:
+
+def theme_font(self, key, font_spec: tuple = ()) -> QFont:
     """
-    Returns QFont object with font specified in self.theme or font_spec. Adds default fallback font families.
+    Returns QFont object with font specified in self.theme or font_spec. Adds default fallback font
+    families.
 
     Parameters:
     - :param key: key in self.theme to access font tuple like: self.theme[key]['font']
@@ -124,6 +131,7 @@ def theme_font(self, key, font_spec:tuple=()) -> QFont:
     except KeyError:
         font_weight = QFont.Weight.Normal
     return QFont(font_family, font[1], font_weight)
+
 
 def create_style_sheet(self, d: dict) -> str:
     """

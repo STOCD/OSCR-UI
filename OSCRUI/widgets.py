@@ -1,10 +1,12 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QTabWidget, QFrame, QTreeView, QComboBox, QTableView
-from PySide6.QtGui import QIcon, QPixmap, QPainter, QFont
-from PySide6.QtCore import QRect, Slot
-from pyqtgraph import AxisItem, PlotWidget, BarGraphItem
 import numpy as np
+from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
+from PySide6.QtCore import QRect, Slot
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QFont
+from PySide6.QtWidgets import QComboBox, QFrame, QPushButton, QTableView, QTabWidget, QTreeView
+from PySide6.QtWidgets import QWidget
 
 from .widgetbuilder import SMINMIN
+
 
 class WidgetStorage():
     """
@@ -23,7 +25,7 @@ class WidgetStorage():
         self.overview_menu_buttons: list[QPushButton] = list()
         self.overview_tabber: QTabWidget
         self.overview_tab_frames: list[QFrame] = list()
-        
+
         self.analysis_menu_buttons: list[QPushButton] = list()
         self.analysis_copy_combobox: QComboBox
         self.analysis_tabber: QTabWidget
@@ -39,11 +41,12 @@ class WidgetStorage():
 
         self.ladder_map: QComboBox
         self.ladder_table: QTableView
-    
+
     @property
     def analysis_table(self):
         return (self.analysis_table_dout, self.analysis_table_dtaken, self.analysis_table_hout,
                 self.analysis_table_hin)
+
 
 class FlipButton(QPushButton):
     """
@@ -74,12 +77,12 @@ class FlipButton(QPushButton):
             self.setText(self._r_text)
             self._r = not self._r
 
-    def set_icon_r(self, icon:QIcon):
+    def set_icon_r(self, icon: QIcon):
         self._r_icon = icon
         if self._r:
             self.setIcon(icon)
 
-    def set_icon_l(self, icon:QIcon):
+    def set_icon_l(self, icon: QIcon):
         self._l_icon = icon
         if not self._r:
             self.setIcon(icon)
@@ -99,7 +102,7 @@ class FlipButton(QPushButton):
 
     def set_func_l(self, func):
         self._l_function = func
-            
+
     def configure(self, settings):
         self.set_icon_r(settings['icon_r'])
         self.set_icon_l(settings['icon_l'])
@@ -109,15 +112,17 @@ class FlipButton(QPushButton):
     def _f(self):
         return
 
+
 class BannerLabel(QWidget):
     """
-    Label displaying image that resizes according to its parents width while preserving aspect ratio.
+    Label displaying image that resizes according to its parents width while preserving aspect
+    ratio.
     """
     def __init__(self, path, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.setPixmap(QPixmap(path))
         self.setSizePolicy(SMINMIN)
-        self.setMinimumHeight(10) # forces visibility
+        self.setMinimumHeight(10)  # forces visibility
 
     def setPixmap(self, p):
         self.p = p
@@ -134,6 +139,7 @@ class BannerLabel(QWidget):
             self.setMaximumHeight(h)
             self.setMinimumHeight(h)
 
+
 class CustomPlotAxis(AxisItem):
     """
     Extending AxisItem for custom tick formatting
@@ -145,7 +151,7 @@ class CustomPlotAxis(AxisItem):
     @property
     def unit(self):
         return self._unit
-    
+
     @unit.setter
     def unit(self, value):
         self._unit = ' ' + value
@@ -153,7 +159,7 @@ class CustomPlotAxis(AxisItem):
     def tickStrings(self, values, scale, spacing):
         if self.logMode:
             return self.logTickStrings(values, scale, spacing)
-        
+
         strings = list()
         for tick in values:
             if tick >= 1000000:
@@ -163,7 +169,8 @@ class CustomPlotAxis(AxisItem):
             else:
                 strings.append(f'{tick:.0f}{self._unit}')
         return strings
-    
+
+
 class AnalysisPlot(PlotWidget):
     """
     PlotWidget for plotting the analysis plot.
@@ -197,7 +204,8 @@ class AnalysisPlot(PlotWidget):
 
     def add_bar(self, data):
         """
-        Adds plot item to plot widget and removes plot item if there are more than 5 currently displayed.
+        Adds plot item to plot widget and removes plot item if there are more than 5 currently
+        displayed.
 
         Parameters:
         - :param data: list or array containing the height of the bars
@@ -221,10 +229,10 @@ class AnalysisPlot(PlotWidget):
         self._bar_queue.append(bars)
         self.addItem(bars)
         self._bar_position += 1
-        if self._bar_position >=5:
+        if self._bar_position >= 5:
             self._bar_position = 0
         return brush_color
-    
+
     def add_legend_item(self, legend_item: QFrame):
         self._legend_queue.append(legend_item)
         self._legend_layout.addWidget(legend_item)
@@ -241,7 +249,7 @@ class AnalysisPlot(PlotWidget):
             legend_item.setParent(None)
         self._legend_queue = list()
         self._bar_position = 0
-    
+
     def toggle_freeze(self, state):
         """
         Freezes when unfrozen, unfreezes when frozen
