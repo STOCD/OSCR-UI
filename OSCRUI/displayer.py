@@ -63,38 +63,12 @@ def _create_overview(combat: Combat) -> tuple:
     converts dictionary containing player data to table data for the front page
     '''
     table = list()
-    total_damage = 0
-    total_damage_taken = 0
-    total_attacks = 0
-    total_heals = 0
 
     DPS_graph_data = dict()
     DMG_graph_data = dict()
     graph_time = dict()
 
     for player in combat.player_dict.values():
-        total_damage += player.total_damage
-        total_damage_taken += player.total_damage_taken
-        total_attacks += player.attacks_in_num
-        total_heals += player.total_heals
-
-    for player in combat.player_dict.values():
-        try:
-            player.damage_share = player.total_damage / total_damage * 100
-        except ZeroDivisionError:
-            player.damage_share = 0.0
-        try:
-            player.taken_damage_share = player.total_damage_taken / total_damage_taken * 100
-        except ZeroDivisionError:
-            player.taken_damage_share = 0.0
-        try:
-            player.attacks_in_share = player.attacks_in_num / total_attacks * 100
-        except ZeroDivisionError:
-            player.attacks_in_share = 0.0
-        try:
-            player.heal_share = player.total_heals / total_heals * 100
-        except ZeroDivisionError:
-            player.heal_share = 0.0
         table.append((*player,))
 
         DPS_graph_data[player.handle] = player.DPS_graph_data
@@ -126,6 +100,7 @@ def create_overview(self):
 
     tbl = create_overview_table(self, current_table)
     bar_layout.addWidget(tbl, stretch=4)
+
 
 @setup_plot
 def create_grouped_bar_plot(self, data: dict[str, tuple], time_reference: dict[str, tuple], 
