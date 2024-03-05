@@ -38,7 +38,7 @@ def fetch_and_insert_maps(self):
     if ladders is not None:
         self.widgets.ladder_map.clear()
         for ladder in ladders.results:
-            solo = '' # '[Solo] ' if ladder.is_solo else ''
+            solo = '[Solo] ' if ladder.is_solo else ''
             key = f'{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})'
             self.league_api.ladder_dict[key] = ladder
             self.widgets.ladder_map.addItem(key)
