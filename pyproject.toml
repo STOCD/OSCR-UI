@@ -42,3 +42,7 @@ oscr = "main:Launcher.launch"
 [tool.hatch.version]
 path = "main.py"
 pattern = "\\s*version = '(?P<version>.*)'"
+
+[tool.black]
+target-version = ['py38']
+line-length = 110
