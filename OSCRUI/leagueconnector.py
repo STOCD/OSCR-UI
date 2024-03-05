@@ -1,21 +1,31 @@
 """Backend inteface to the OSCR web server"""
 
 import gzip
-import tempfile
 import os
+import tempfile
 
 import OSCR_django_client
 from OSCR.utilities import logline_to_str
 from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
 from PySide6.QtWidgets import QMessageBox
 
-from .datamodels import LeagueTableModel, SortingProxy
-from .textedit import format_datetime_str
-from .style import theme_font
 from .datafunctions import CustomThread
+from .datamodels import LeagueTableModel, SortingProxy
+from .style import theme_font
+from .textedit import format_datetime_str
 
-LADDER_HEADER = ('Name', 'Handle', 'DPS', 'Total Damage', 'Deaths', 'Combat Time', 'Date', 'Max One Hit',
-        'Debuff')
+LADDER_HEADER = (
+    "Name",
+    "Handle",
+    "DPS",
+    "Total Damage",
+    "Deaths",
+    "Combat Time",
+    "Date",
+    "Max One Hit",
+    "Debuff",
+)
+
 
 def establish_league_connection(self, fetch_maps: bool = False):
     """
@@ -30,6 +40,7 @@ def establish_league_connection(self, fetch_maps: bool = False):
             map_fetch_thread = CustomThread(self.window, lambda: fetch_and_insert_maps(self))
             map_fetch_thread.start()
 
+
 def fetch_and_insert_maps(self):
     """
     Retrieves maps from API and inserts them into the list.
@@ -38,17 +49,18 @@ def fetch_and_insert_maps(self):
     if ladders is not None:
         self.widgets.ladder_map.clear()
         for ladder in ladders.results:
-            solo = '[Solo] ' if ladder.is_solo else ''
-            key = f'{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})'
+            solo = "[Solo] " if ladder.is_solo else ""
+            key = f"{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})"
             self.league_api.ladder_dict[key] = ladder
             self.widgets.ladder_map.addItem(key)
+
 
 def update_ladder_index(self, selected_map):
     """Open Combat Log Dialog Box"""
 
     if not selected_map in self.league_api.ladder_dict:
         return
-    
+
     selected_ladder = self.league_api.ladder_dict[selected_map]
     ladder_data = self.league_api.ladder_entries(selected_ladder.id)
     table_index = list()
@@ -57,11 +69,23 @@ def update_ladder_index(self, selected_map):
     for rank, entry in enumerate(ladder_data.results, 1):
         table_index.append(rank)
         row = entry.data
-        table_data.append((row['name'], row['handle'], row['DPS'], row['total_damage'], row['deaths'], 
-                row['combat_time'], format_datetime_str(entry.var_date), row['max_one_hit'], row['debuff']))
-        
-    model = LeagueTableModel(table_data, LADDER_HEADER, table_index, theme_font(self, 'table_header'),
-            theme_font(self, 'table'))
+        table_data.append(
+            (
+                row["name"],
+                row["handle"],
+                row["DPS"],
+                row["total_damage"],
+                row["deaths"],
+                row["combat_time"],
+                format_datetime_str(entry.var_date),
+                row["max_one_hit"],
+                row["debuff"],
+            )
+        )
+
+    model = LeagueTableModel(
+        table_data, LADDER_HEADER, table_index, theme_font(self, "table_header"), theme_font(self, "table")
+    )
     sorting_proxy = SortingProxy()
     sorting_proxy.setSourceModel(model)
     table = self.widgets.ladder_table
@@ -85,17 +109,12 @@ def upload_callback(self):
 
     establish_league_connection(self)
 
-    if (
-        self.parser1.active_combat is None
-        or self.parser1.active_combat.log_data is None
-    ):
+    if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
         raise Exception("No data to upload")
 
     with tempfile.NamedTemporaryFile(dir=self.app_dir, delete=False) as file:
         data = gzip.compress(
-            "".join(
-                [logline_to_str(line) for line in self.parser1.active_combat.log_data]
-            ).encode()
+            "".join([logline_to_str(line) for line in self.parser1.active_combat.log_data]).encode()
         )
         file.write(data)
         file.flush()
@@ -167,7 +186,7 @@ class OSCRClient:
                 ladder=str(id),
                 page=page,
                 ordering="-data__DPS",
-                page_size=200,
+                page_size=50,
             )
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
