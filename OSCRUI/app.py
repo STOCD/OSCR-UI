@@ -743,7 +743,7 @@ class OSCRUI():
                     lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
             dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_seperator = self.create_frame(
-                dmg_hider_frame, 'hr',  style_override={'background-color': '@lbg'},
+                dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
                 size_policy=SMINMIN)
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)

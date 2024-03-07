@@ -6,7 +6,7 @@ def clean_player_id(id: str) -> str:
     """
     cleans player id and returns handle
     """
-    return id[id.find(' ')+1:-1]
+    return id[id.find(' ') + 1:-1]
 
 
 def clean_entity_id(id: str) -> str:

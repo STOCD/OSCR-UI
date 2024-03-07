@@ -65,8 +65,8 @@ def create_button(self, text, style: str = 'button', parent=None, style_override
 
 
 def create_icon_button(
-        self, icon, tooltip: str = '', style: str = 'icon_button', parent=None, style_override={}
-        ) -> QPushButton:
+        self, icon, tooltip: str = '', style: str = 'icon_button', parent=None,
+        style_override={}) -> QPushButton:
     """
     Creates a button showing an icon according to style with parent.
 
@@ -224,8 +224,8 @@ def create_combo_box(self, parent, style: str = 'combobox', style_override: dict
 
 
 def create_entry(
-        self, default_value, validator=None, style: str = 'entry', style_override: dict = {}
-        ) -> QLineEdit:
+        self, default_value, validator=None, style: str = 'entry',
+        style_override: dict = {}) -> QLineEdit:
     """
     Creates an entry widget and styles it.
 

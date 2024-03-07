@@ -107,8 +107,8 @@ def create_overview(self):
 
 @setup_plot
 def create_grouped_bar_plot(
-        self, data: dict[str, tuple], time_reference: dict[str, tuple], bar_widget: PlotWidget
-        ) -> QVBoxLayout:
+        self, data: dict[str, tuple], time_reference: dict[str, tuple],
+        bar_widget: PlotWidget) -> QVBoxLayout:
     """
     Creates a bar plot with grouped bars.
 
@@ -126,7 +126,7 @@ def create_grouped_bar_plot(
     group_width = 0.18
     player_num = len(data)
     bar_width = group_width / player_num
-    relative_bar_positions = np.linspace(0+bar_width/2, group_width-bar_width/2, player_num)
+    relative_bar_positions = np.linspace(0 + bar_width / 2, group_width - bar_width / 2, player_num)
     bar_position_offsets = relative_bar_positions - np.median(relative_bar_positions)
 
     zipper = zip(data.items(), self.theme['plot']['color_cycler'], bar_position_offsets)
@@ -156,7 +156,7 @@ def create_horizontal_bar_graph(self, table: list[list], bar_widget: PlotWidget)
     left_axis.setTickFont(theme_font(self, 'app'))
     bar_widget.setDefaultPadding(padding=0.01)
 
-    y_annotations = (tuple((index+1, line[0]+line[1]) for index, line in enumerate(table)),)
+    y_annotations = (tuple((index + 1, line[0] + line[1]) for index, line in enumerate(table)),)
     bar_widget.getAxis('left').setTicks(y_annotations)
     x = tuple(line[3] for line in table)
     y = tuple(range(1, len(x) + 1))
@@ -168,8 +168,8 @@ def create_horizontal_bar_graph(self, table: list[list], bar_widget: PlotWidget)
 
 @setup_plot
 def create_line_graph(
-        self, data: dict[str, tuple], time_reference: dict[str, tuple], graph_widget: PlotWidget
-        ) -> QVBoxLayout:
+        self, data: dict[str, tuple], time_reference: dict[str, tuple],
+        graph_widget: PlotWidget) -> QVBoxLayout:
     """
     Creates line plot from data and returns layout that countins the plot.
 
@@ -249,7 +249,7 @@ def create_legend_item(self, color: str, name: str) -> QFrame:
     colored_patch = QLabel()
     colored_patch.setStyleSheet(get_style(self, 'plot_legend', {'background-color': color}))
     patch_height = self.theme['app']['frame_thickness']
-    colored_patch.setFixedSize(2*patch_height, patch_height)
+    colored_patch.setFixedSize(2 * patch_height, patch_height)
     layout.addWidget(colored_patch, alignment=AVCENTER)
     label = create_label(
             self, name, 'label', style_override={'font': self.theme['plot_legend']['font']})
