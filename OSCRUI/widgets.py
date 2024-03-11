@@ -2,8 +2,8 @@ import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
 from PySide6.QtCore import QRect, Slot
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QFont
-from PySide6.QtWidgets import QComboBox, QFrame, QPushButton, QTableView, QTabWidget, QTreeView
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QTableView, QTabWidget
+from PySide6.QtWidgets import QTreeView, QWidget
 
 from .widgetbuilder import SMINMIN
 
@@ -18,6 +18,9 @@ class WidgetStorage():
         self.main_tab_frames: list[QFrame] = list()
         self.sidebar_tabber: QTabWidget
         self.sidebar_tab_frames: list[QFrame] = list()
+        self.map_tabber: QTabWidget
+        self.map_tab_frames: list[QFrame] = list()
+        self.map_menu_buttons: list[QPushButton] = list()
 
         self.navigate_up_button: QPushButton
         self.navigate_down_button: QPushButton
@@ -39,7 +42,9 @@ class WidgetStorage():
         self.analysis_plot_hout: AnalysisPlot
         self.analysis_plot_hin: AnalysisPlot
 
-        self.ladder_map: QComboBox
+        self.ladder_selector: QListWidget
+        self.favorite_ladder_selector: QListWidget
+        self.season_ladder_selector: QListWidget
         self.ladder_table: QTableView
 
     @property

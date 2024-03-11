@@ -47,12 +47,12 @@ def fetch_and_insert_maps(self):
     """
     ladders = self.league_api.ladders()
     if ladders is not None:
-        self.widgets.ladder_map.clear()
+        self.widgets.ladder_selector.clear()
         for ladder in ladders.results:
             solo = "[Solo] " if ladder.is_solo else ""
             key = f"{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})"
             self.league_api.ladder_dict[key] = ladder
-            self.widgets.ladder_map.addItem(key)
+            self.widgets.ladder_selector.addItem(key)
 
 
 def update_ladder_index(self, selected_map):
@@ -60,6 +60,10 @@ def update_ladder_index(self, selected_map):
 
     if selected_map not in self.league_api.ladder_dict:
         return
+    if self.widgets.map_tabber.currentIndex() == 0:
+        self.widgets.favorite_ladder_selector.selectionModel().clear()
+    else:
+        self.widgets.ladder_selector.selectionModel().clear()
 
     selected_ladder = self.league_api.ladder_dict[selected_map]
     ladder_data = self.league_api.ladder_entries(selected_ladder.id)

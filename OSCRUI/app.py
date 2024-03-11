@@ -13,7 +13,7 @@ from .iofunctions import load_icon_series, get_asset_path, load_icon
 from .textedit import format_path
 from .widgets import BannerLabel, FlipButton, WidgetStorage, AnalysisPlot
 from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
-from .widgetbuilder import AHCENTER, ABOTTOM
+from .widgetbuilder import AHCENTER, ABOTTOM, SMIXMAX, SMIXMIN
 from .leagueconnector import OSCRClient
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
@@ -96,7 +96,8 @@ class OSCRUI():
             'parser-right': 'parser-right.svg',
             'export-parse': 'export-parse.svg',
             'copy': 'copy.svg',
-            'ladder': 'ladder.svg'
+            'ladder': 'ladder.svg',
+            'star': 'star.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -156,9 +157,7 @@ class OSCRUI():
         """
         Executed when application is resized.
         """
-        self.entry.setFixedWidth(self.sidebar_item_width)
-        self.current_combats.setFixedWidth(self.sidebar_item_width)
-        self.widgets.ladder_map.setFixedWidth(self.sidebar_item_width)
+        self.widgets.sidebar_tabber.setFixedWidth(self.sidebar_item_width)
         event.accept()
 
     # -------------------------------------------------------------------------------------------------------
@@ -243,27 +242,111 @@ class OSCRUI():
         frame = self.widgets.sidebar_tab_frames[1]
         m = self.theme['defaults']['margin']
         left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(m, m, 0.5 * m, m)
+        left_layout.setContentsMargins(m, m, m, m)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
         map_label = self.create_label('Available Maps:', 'label_heading', frame)
         left_layout.addWidget(map_label)
 
-        background_frame = self.create_frame(frame, 'light_frame', style_override={
+        map_switch_layout = QGridLayout()
+        map_switch_layout.setContentsMargins(0, 0, 0, 0)
+        map_switch_layout.setSpacing(0)
+        map_switch_layout.setColumnStretch(0, 1)
+        map_switch_layout.setColumnStretch(1, 3)
+        map_switch_layout.setColumnStretch(2, 1)
+        map_switch_buttons_frame = self.create_frame(frame, 'medium_frame')
+        map_switch_layout.addWidget(map_switch_buttons_frame, 0, 1, alignment=ACENTER)
+        map_switch_style = {
+            'default': {'margin-left': '@margin', 'margin-right': '@margin'},
+            'All Maps': {
+                'callback': lambda: self.switch_map_tab(0), 'align': ACENTER, 'toggle': True},
+            'Favorites': {
+                'callback': lambda: self.switch_map_tab(1), 'align': ACENTER, 'toggle': False},
+        }
+        map_switcher, map_buttons = self.create_button_series(
+                map_switch_buttons_frame, map_switch_style, 'tab_button', ret=True)
+        for button in map_buttons:
+            button.setSizePolicy(SMAXMIN)
+        map_switcher.setContentsMargins(0, 0, 0, 0)
+        map_switch_buttons_frame.setLayout(map_switcher)
+        self.widgets.map_menu_buttons = map_buttons
+        favorite_button = self.create_icon_button(self.icons['star'], 'Add to Favorites')
+        favorite_button.clicked.connect(self.favorite_button_callback)
+        map_switch_layout.addWidget(favorite_button, 0, 2, ARIGHT)
+        left_layout.addLayout(map_switch_layout)
+
+        all_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
+        favorites_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
+        maps_tabber = QTabWidget(frame)
+        maps_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        maps_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
+        maps_tabber.setSizePolicy(SMINMIN)
+        maps_tabber.addTab(all_frame, 'All Maps')
+        maps_tabber.addTab(favorites_frame, 'Favorites')
+        self.widgets.map_tabber = maps_tabber
+        self.widgets.map_tab_frames.append(all_frame)
+        self.widgets.map_tab_frames.append(favorites_frame)
+        left_layout.addWidget(maps_tabber, stretch=1)
+
+        all_layout = QVBoxLayout()
+        all_layout.setContentsMargins(0, 0, 0, 0)
+        all_layout.setSpacing(0)
+        background_frame = self.create_frame(all_frame, 'light_frame', style_override={
                 'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
-                size_policy=SMAXMIN)
+                size_policy=SMINMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
         map_selector = QListWidget(background_frame)
         map_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
         map_selector.setFont(self.theme_font('listbox'))
-        map_selector.setSizePolicy(SMAXMIN)
-        self.widgets.ladder_map = map_selector
+        map_selector.setSizePolicy(SMIXMIN)
+        self.widgets.ladder_selector = map_selector
         map_selector.currentTextChanged.connect(lambda new_text: self.update_ladder_index(new_text))
-        map_selector.setFixedWidth(self.sidebar_item_width)
         background_layout.addWidget(map_selector)
+        all_layout.addWidget(background_frame, stretch=1)
+        all_frame.setLayout(all_layout)
+
+        favorites_layout = QVBoxLayout()
+        favorites_layout.setContentsMargins(0, 0, 0, 0)
+        favorites_layout.setSpacing(0)
+        background_frame = self.create_frame(favorites_frame, 'light_frame', style_override={
+                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
+                size_policy=SMINMIN)
+        background_layout = QVBoxLayout()
+        background_layout.setContentsMargins(0, 0, 0, 0)
+        background_frame.setLayout(background_layout)
+        favorite_selector = QListWidget(background_frame)
+        favorite_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
+        favorite_selector.setFont(self.theme_font('listbox'))
+        favorite_selector.setSizePolicy(SMIXMIN)
+        self.widgets.favorite_ladder_selector = favorite_selector
+        favorite_selector.addItems(self.settings.value('favorite_ladders', type=list))
+        favorite_selector.currentTextChanged.connect(
+                lambda new_text: self.update_ladder_index(new_text))
+        background_layout.addWidget(favorite_selector)
+        favorites_layout.addWidget(background_frame, stretch=1)
+        favorites_frame.setLayout(favorites_layout)
+
+        map_label = self.create_label(
+                'Seasonal Records:', 'label_heading', frame, {'margin-top': '@isp'})
+        left_layout.addWidget(map_label)
+
+        background_frame = self.create_frame(all_frame, 'light_frame', style_override={
+                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
+                size_policy=SMINMIN)
+        background_layout = QVBoxLayout()
+        background_layout.setContentsMargins(0, 0, 0, 0)
+        background_frame.setLayout(background_layout)
+        season_selector = QListWidget(background_frame)
+        season_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
+        season_selector.setFont(self.theme_font('listbox'))
+        season_selector.setSizePolicy(SMIXMIN)
+        self.widgets.season_ladder_selector = season_selector
+        season_selector.currentTextChanged.connect(
+                lambda new_text: self.update_ladder_index(new_text))
+        background_layout.addWidget(season_selector)
         left_layout.addWidget(background_frame, stretch=1)
 
         frame.setLayout(left_layout)
@@ -275,13 +358,13 @@ class OSCRUI():
         frame = self.widgets.sidebar_tab_frames[0]
         m = self.theme['defaults']['margin']
         left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(m, m, 0.5 * m, m)
+        left_layout.setContentsMargins(m, m, m, m)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
         head_layout = QHBoxLayout()
-        head = self.create_label('STO Combatlog:', 'label', frame)
-        head_layout.addWidget(head, alignment=ALEFT)
+        head = self.create_label('STO Combatlog:', 'label_heading', frame)
+        head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         cut_log_button = self.create_icon_button(
                 self.icons['log-cut'], 'Manage Logfile', parent=frame)
         cut_log_button.clicked.connect(self.split_dialog)
@@ -291,7 +374,7 @@ class OSCRUI():
         self.entry = QLineEdit(self.settings.value('log_path', ''), frame)
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
         self.entry.setFont(self.theme_font('entry'))
-        self.entry.setFixedWidth(self.sidebar_item_width)
+        self.entry.setSizePolicy(SMIXMAX)
         left_layout.addWidget(self.entry)
 
         entry_button_config = {
@@ -351,15 +434,14 @@ class OSCRUI():
 
         background_frame = self.create_frame(frame, 'light_frame', style_override={
                 'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
-                size_policy=SMAXMIN)
+                size_policy=SMINMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
         self.current_combats = QListWidget(background_frame)
         self.current_combats.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
         self.current_combats.setFont(self.theme_font('listbox'))
-        self.current_combats.setSizePolicy(SMAXMIN)
-        self.current_combats.setFixedWidth(self.sidebar_item_width)
+        self.current_combats.setSizePolicy(SMIXMIN)
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
@@ -381,8 +463,8 @@ class OSCRUI():
         Parameters:
         - :param frame: QFrame -> parent frame of the sidebar
         """
-        log_frame = self.create_frame(style='medium_frame')
-        league_frame = self.create_frame(style='medium_frame')
+        log_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
+        league_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
         sidebar_tabber = QTabWidget(frame)
         sidebar_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
         sidebar_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
@@ -911,6 +993,20 @@ class OSCRUI():
             else:
                 button.setChecked(True)
 
+    def switch_map_tab(self, tab_index: int):
+        """
+        Callback for tab switch buttons; switches tab and sets active button.
+
+        Parameters:
+        - :param tab_index: index of the tab to switch to
+        """
+        self.widgets.map_tabber.setCurrentIndex(tab_index)
+        for index, button in enumerate(self.widgets.map_menu_buttons):
+            if not index == tab_index:
+                button.setChecked(False)
+            else:
+                button.setChecked(True)
+
     def switch_main_tab(self, tab_index: int):
         """
         Callback for main tab switch buttons. Switches main and sidebar tabs.
@@ -926,6 +1022,29 @@ class OSCRUI():
         }
         self.widgets.main_tabber.setCurrentIndex(tab_index)
         self.widgets.sidebar_tabber.setCurrentIndex(SIDEBAR_TAB_CONVERSION[tab_index])
+
+    def favorite_button_callback(self):
+        """
+        Adds ladder to / removes ladder from favorites list. Updates settings.
+        """
+        # Add current ladder to favorites
+        if self.widgets.map_tabber.currentIndex() == 0:
+            current_ladder = self.widgets.ladder_selector.currentItem().text()
+            favorite_ladders = self.settings.value('favorite_ladders', type=list)
+            if current_ladder not in favorite_ladders:
+                favorite_ladders.append(current_ladder)
+                self.settings.setValue('favorite_ladders', favorite_ladders)
+                self.widgets.favorite_ladder_selector.addItem(current_ladder)
+        # Remove current ladder from favorites
+        else:
+            current_item = self.widgets.favorite_ladder_selector.currentItem()
+            current_ladder = current_item.text()
+            favorite_ladders = self.settings.value('favorite_ladders', type=list)
+            if current_ladder in favorite_ladders:
+                favorite_ladders.remove(current_ladder)
+                self.settings.setValue('favorite_ladders', favorite_ladders)
+                row = self.widgets.favorite_ladder_selector.row(current_item)
+                self.widgets.favorite_ladder_selector.takeItem(row)
 
     def set_variable(self, var_to_be_set, index, value):
         """

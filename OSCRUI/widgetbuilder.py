@@ -19,6 +19,8 @@ SMINMIN = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 SMAXMAX = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 SMAXMIN = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
 SMINMAX = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
+SMIXMAX = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Maximum)
+SMIXMIN = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
 SMAX = QSizePolicy.Policy.Maximum
 SMIN = QSizePolicy.Policy.Minimum
 SEXPAND = QSizePolicy.Policy.Expanding
@@ -471,9 +473,10 @@ def auto_split_callback(self, path: str):
     """
     folder_path = QFileDialog.getExistingDirectory(
             self.window, 'Select Folder', os.path.dirname(path))
-    split_log_by_lines(
-            path, folder_path, self.settings.value('split_log_after', type=int),
-            self.settings.value('combat_distance', type=int))
+    if folder_path:
+        split_log_by_lines(
+                path, folder_path, self.settings.value('split_log_after', type=int),
+                self.settings.value('combat_distance', type=int))
 
 
 def combat_split_callback(self, path: str, first_num: str, last_num: str):
@@ -481,7 +484,8 @@ def combat_split_callback(self, path: str, first_num: str, last_num: str):
     Callback for combat split button
     """
     target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
-    split_log_by_combat(
-            path, target_path, int(first_num), int(last_num),
-            self.settings.value('seconds_between_combats', type=int),
-            self.settings.value('excluded_event_ids', type=list))
+    if target_path:
+        split_log_by_combat(
+                path, target_path, int(first_num), int(last_num),
+                self.settings.value('seconds_between_combats', type=int),
+                self.settings.value('excluded_event_ids', type=list))
