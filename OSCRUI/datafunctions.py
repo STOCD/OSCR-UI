@@ -256,14 +256,14 @@ def copy_analysis_callback(self):
     """
     current_tab = self.widgets.analysis_tabber.currentIndex()
     current_table = self.widgets.analysis_table[current_tab]
-    if current_tab <= 1:
-        current_header = TREE_HEADER
-        format_function = format_damage_tree_data
-    else:
-        current_header = HEAL_TREE_HEADER
-        format_function = format_heal_tree_data
     copy_mode = self.widgets.analysis_copy_combobox.currentText()
     if copy_mode == 'Selection':
+        if current_tab <= 1:
+            current_header = TREE_HEADER
+            format_function = format_damage_tree_data
+        else:
+            current_header = HEAL_TREE_HEADER
+            format_function = format_heal_tree_data
         selection = current_table.selectedIndexes()
         if selection:
             selection_dict = dict()
@@ -275,7 +275,7 @@ def copy_analysis_callback(self):
                 if column != 0:
                     cell_data = selected_cell.internalPointer().get_data(column)
                     selection_dict[row_name][column] = cell_data
-            output = list()
+            output = ['< OSCR >']
             for row_name, row_data in selection_dict.items():
                 formatted_row = list()
                 for col, value in row_data.items():
@@ -284,3 +284,55 @@ def copy_analysis_callback(self):
                 output.append(f"{formatted_row_name}: {' | '.join(formatted_row)}")
             output_string = '\n'.join(output)
             self.app.clipboard().setText(output_string)
+    elif copy_mode == 'Max One Hit':
+        if current_tab <= 1:
+            max_one_hit_col = 4
+            prefix = 'Max One Hit'
+        else:
+            max_one_hit_col = 7
+            prefix = 'Max One Heal'
+        max_one_hits = []
+        for player_item in current_table.model()._player._children:
+            max_one_hits.append((player_item.get_data(max_one_hit_col), player_item))
+        max_one_hit, max_one_hit_item = max(max_one_hits, key=lambda x: x[0])
+        max_one_hit_ability = max(
+                max_one_hit_item._children, key=lambda x: x.get_data(max_one_hit_col))
+        max_one_hit_ability = max_one_hit_ability.get_data(0)
+        if isinstance(max_one_hit_ability, tuple):
+            max_one_hit_ability = ''.join(max_one_hit_ability)
+        output_string = (f'< OSCR > {prefix}: {max_one_hit:,.2f} '
+                         f'({"".join(max_one_hit_item.get_data(0))} – '
+                         f'{max_one_hit_ability})')
+        self.app.clipboard().setText(output_string)
+    elif copy_mode == 'Magnitude':
+        if current_tab == 0:
+            prefix = 'Total Damage Out'
+        elif current_tab == 1:
+            prefix = 'Total Damage Taken'
+        elif current_tab == 2:
+            prefix = 'Total Heal Out'
+        else:
+            prefix = 'Total Heal In'
+        magnitudes = list()
+        for player_item in current_table.model()._player._children:
+            magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
+        magnitudes.sort(key=lambda x: x[0], reverse=True)
+        magnitudes = [f'{magnitude:,.2f} [{''.join(player)}]' for magnitude, player in magnitudes]
+        output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
+        self.app.clipboard().setText(output_string)
+    elif copy_mode == 'Magnitude / s':
+        if current_tab == 0:
+            prefix = 'Total DPS Out'
+        elif current_tab == 1:
+            prefix = 'Total DPS Taken'
+        elif current_tab == 2:
+            prefix = 'Total HPS Out'
+        else:
+            prefix = 'Total HPS In'
+        magnitudes = list()
+        for player_item in current_table.model()._player._children:
+            magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
+        magnitudes.sort(key=lambda x: x[0], reverse=True)
+        magnitudes = [f'{magnitude:,.2f} [{''.join(player)}]' for magnitude, player in magnitudes]
+        output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
+        self.app.clipboard().setText(output_string)

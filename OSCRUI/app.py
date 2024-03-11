@@ -554,7 +554,7 @@ class OSCRUI():
         copy_layout.setContentsMargins(0, 0, self.theme['defaults']['margin'], 0)
         copy_layout.setSpacing(self.theme['defaults']['csp'])
         copy_combobox = self.create_combo_box(switch_frame)
-        copy_combobox.addItem('Selection')
+        copy_combobox.addItems(('Selection', 'Max One Hit', 'Magnitude', 'Magnitude / s'))
         copy_layout.addWidget(copy_combobox)
         self.widgets.analysis_copy_combobox = copy_combobox
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Data')

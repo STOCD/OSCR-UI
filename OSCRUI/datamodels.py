@@ -162,6 +162,12 @@ class TreeModel(QAbstractItemModel):
         self._header_font = header_font
         self._name_font = name_font
         self._cell_font = cell_font
+        if root_item.get_child(0).get_data(0) == 'Player':
+            self._player = root_item.get_child(0)
+            self._npc = root_item.get_child(1)
+        else:
+            self._player = root_item.get_child(1)
+            self._npc = root_item.get_child(0)
 
     def sort(self, column: int, order: Qt.SortOrder):
         if order == Qt.SortOrder.AscendingOrder:
