@@ -9,12 +9,13 @@ from PySide6.QtGui import QIntValidator
 
 from OSCR import TREE_HEADER, HEAL_TREE_HEADER
 
-from .iofunctions import load_icon_series, get_asset_path, load_icon
-from .textedit import format_path
-from .widgets import BannerLabel, FlipButton, WidgetStorage, AnalysisPlot
-from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, ALEFT, ARIGHT, ATOP, ACENTER
-from .widgetbuilder import AHCENTER, ABOTTOM, SMIXMAX, SMIXMIN
+from .datamodels import SortingProxy
 from .leagueconnector import OSCRClient
+from .iofunctions import get_asset_path, load_icon_series, load_icon
+from .textedit import format_path
+from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
+from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
+from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 from signal import signal, SIGINT, SIG_DFL
@@ -31,7 +32,8 @@ class OSCRUI():
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
     from .widgetbuilder import split_dialog, create_entry
-    from .leagueconnector import upload_callback, update_ladder_index, establish_league_connection
+    from .leagueconnector import apply_league_table_filter, establish_league_connection
+    from .leagueconnector import extend_ladder, slot_ladder, upload_callback
 
     app_dir = None
 
@@ -303,7 +305,7 @@ class OSCRUI():
         map_selector.setFont(self.theme_font('listbox'))
         map_selector.setSizePolicy(SMIXMIN)
         self.widgets.ladder_selector = map_selector
-        map_selector.currentTextChanged.connect(lambda new_text: self.update_ladder_index(new_text))
+        map_selector.currentTextChanged.connect(lambda new_text: self.slot_ladder(new_text))
         background_layout.addWidget(map_selector)
         all_layout.addWidget(background_frame, stretch=1)
         all_frame.setLayout(all_layout)
@@ -324,7 +326,7 @@ class OSCRUI():
         self.widgets.favorite_ladder_selector = favorite_selector
         favorite_selector.addItems(self.settings.value('favorite_ladders', type=list))
         favorite_selector.currentTextChanged.connect(
-                lambda new_text: self.update_ladder_index(new_text))
+                lambda new_text: self.slot_ladder(new_text))
         background_layout.addWidget(favorite_selector)
         favorites_layout.addWidget(background_frame, stretch=1)
         favorites_frame.setLayout(favorites_layout)
@@ -345,7 +347,7 @@ class OSCRUI():
         season_selector.setSizePolicy(SMIXMIN)
         self.widgets.season_ladder_selector = season_selector
         season_selector.currentTextChanged.connect(
-                lambda new_text: self.update_ladder_index(new_text))
+                lambda new_text: self.slot_ladder(new_text))
         background_layout.addWidget(season_selector)
         left_layout.addWidget(background_frame, stretch=1)
 
@@ -731,8 +733,26 @@ class OSCRUI():
         ladder_table = QTableView(l_frame)
         self.style_table(ladder_table, {'margin': '@margin'})
         self.widgets.ladder_table = ladder_table
+        layout.addWidget(ladder_table, stretch=1)
 
-        layout.addWidget(ladder_table)
+        control_layout = QGridLayout()
+        m = self.theme['defaults']['margin']
+        control_layout.setContentsMargins(m, 0, m, m)
+        control_layout.setSpacing(0)
+        control_layout.setColumnStretch(2, 1)
+        search_label = self.create_label(
+                'Search:', 'label_subhead', style_override={'margin-bottom': 0})
+        control_layout.addWidget(search_label, 0, 0, alignment=AVCENTER)
+        search_bar = self.create_entry(
+                placeholder='name@handle', style_override={'margin-left': '@isp', 'margin-top': 0})
+        search_bar.textChanged.connect(lambda text: self.apply_league_table_filter(text))
+        control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
+        next_button = self.create_button('More', style_override={'margin-right': 0})
+        next_button.clicked.connect(self.extend_ladder)
+        control_layout.addWidget(next_button, 0, 3, alignment=AVCENTER)
+
+        layout.addLayout(control_layout)
+
         l_frame.setLayout(layout)
 
     def create_master_layout(self, parent) -> tuple[QVBoxLayout, QFrame]:

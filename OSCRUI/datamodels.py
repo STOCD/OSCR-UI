@@ -18,7 +18,8 @@ class TableModel(QAbstractTableModel):
         Creates table model from supplied data.
 
         Parameters:
-        - :param data: data to be displayed without index or header; two-dimensional iterable
+        - :param data: data to be displayed without index or header; two-dimensional iterable;
+        must support .extend() function
         - :param header: column headings
         - :param index: row index
         - :param header_font: font to style the column headings with
@@ -118,15 +119,38 @@ class LeagueTableModel(TableModel):
             return self._cell_font
         return super().headerData(section, orientation, role)
 
+    def extend_data(self, index: list, rows: list):
+        current_row_count = len(self._index)
+        self.beginInsertRows(QModelIndex(), current_row_count, current_row_count + len(index) - 1)
+        self._index.extend(index)
+        self._data.extend(rows)
+        self.endInsertRows()
+
 
 class SortingProxy(QSortFilterProxyModel):
     def __init__(self):
         super().__init__()
+        self._name_filter: str = ''
+
+    @property
+    def name_filter(self) -> str:
+        return self._name_filter
+
+    @name_filter.setter
+    def name_filter(self, filter_value: str):
+        self._name_filter = filter_value
+        self.invalidateFilter()
 
     def lessThan(self, left, right):
         links = self.sourceModel()._data[left.row()][left.column()]
         rechts = self.sourceModel()._data[right.row()][right.column()]
         return links > rechts  # inverted operator to make descending sort come up first
+
+    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+        filter_value = self.name_filter
+        if filter_value:
+            return filter_value in ''.join(self.sourceModel()._data[source_row][0:2])
+        return True
 
 
 class TreeModel(QAbstractItemModel):

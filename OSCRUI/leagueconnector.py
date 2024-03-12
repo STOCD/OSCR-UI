@@ -8,6 +8,7 @@ import OSCR_django_client
 from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
 from OSCR.utilities import logline_to_str
 from PySide6.QtWidgets import QMessageBox
+from PySide6.QtCore import Qt
 
 from .datafunctions import CustomThread
 from .datamodels import LeagueTableModel, SortingProxy
@@ -55,8 +56,20 @@ def fetch_and_insert_maps(self):
             self.widgets.ladder_selector.addItem(key)
 
 
-def update_ladder_index(self, selected_map):
-    """Open Combat Log Dialog Box"""
+def apply_league_table_filter(self, filter_text: str):
+    """
+    Sets filter to proxy model of league table
+    """
+    try:
+        self.widgets.ladder_table.model().name_filter = filter_text
+    except AttributeError:
+        pass
+
+
+def slot_ladder(self, selected_map):
+    """
+    Fetches current ladder and puts it into the table.
+    """
 
     if selected_map not in self.league_api.ladder_dict:
         return
@@ -66,13 +79,17 @@ def update_ladder_index(self, selected_map):
         self.widgets.ladder_selector.selectionModel().clear()
 
     selected_ladder = self.league_api.ladder_dict[selected_map]
+    self.league_api.current_ladder_id = selected_ladder.id
     ladder_data = self.league_api.ladder_entries(selected_ladder.id)
+    if len(ladder_data.results) >= 50:
+        self.league_api.entire_ladder_loaded = False
+    self.league_api.pages_loaded = 1
     table_index = list()
     table_data = list()
 
-    for rank, entry in enumerate(ladder_data.results, 1):
-        table_index.append(rank)
+    for entry in ladder_data.results:
         row = entry.data
+        table_index.append(entry.rank)
         table_data.append(
             (
                 row["name"],
@@ -91,6 +108,7 @@ def update_ladder_index(self, selected_map):
         table_data, LADDER_HEADER, table_index, theme_font(self, "table_header"),
         theme_font(self, "table"))
     sorting_proxy = SortingProxy()
+    sorting_proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
     sorting_proxy.setSourceModel(model)
     table = self.widgets.ladder_table
     table.setModel(sorting_proxy)
@@ -98,6 +116,42 @@ def update_ladder_index(self, selected_map):
     table_header = table.horizontalHeader()
     for col in range(len(model._header)):
         table_header.resizeSection(col, table_header.sectionSize(col) + 5)
+
+
+def extend_ladder(self):
+    """
+    Extends the ladder table by 50 newly fetched rows.
+    """
+    if self.league_api.entire_ladder_loaded:
+        return
+    if self.league_api.current_ladder_id is None:
+        return
+
+    ladder_data = self.league_api.ladder_entries(
+            self.league_api.current_ladder_id, self.league_api.pages_loaded + 1)
+    if ladder_data is not None:
+        if len(ladder_data.results) < 50:
+            self.league_api.entire_ladder_loaded = True
+        self.league_api.pages_loaded += 1
+        table_index = list()
+        table_data = list()
+        for entry in ladder_data.results:
+            row = entry.data
+            table_index.append(entry.rank)
+            table_data.append(
+                (
+                    row["name"],
+                    row["handle"],
+                    row["DPS"],
+                    row["total_damage"],
+                    row["deaths"],
+                    row["combat_time"],
+                    format_datetime_str(entry.var_date),
+                    row["max_one_hit"],
+                    row["debuff"],
+                )
+            )
+        self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data)
 
 
 def download_and_view_combat(self, idx):
@@ -141,6 +195,9 @@ class OSCRClient:
         self.api_ladder = LadderApi(api_client=self.api_client)
         self.api_ladder_entries = LadderEntriesApi(api_client=self.api_client)
         self.ladder_dict: dict = dict()
+        self.current_ladder_id = None
+        self.pages_loaded: int = -1
+        self.entire_ladder_loaded: bool = True
 
     def upload(self, filename):
         """Upload a combat log located at path for analysis"""

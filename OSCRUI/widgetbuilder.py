@@ -109,7 +109,7 @@ def create_frame(self, parent=None, style='frame', style_override={}, size_polic
     return frame
 
 
-def create_label(self, text, style: str = '', parent=None, style_override={}):
+def create_label(self, text, style: str = 'label', parent=None, style_override={}):
     """
     Creates a label according to style with parent.
 
@@ -226,8 +226,8 @@ def create_combo_box(self, parent, style: str = 'combobox', style_override: dict
 
 
 def create_entry(
-        self, default_value, validator=None, style: str = 'entry',
-        style_override: dict = {}) -> QLineEdit:
+        self, default_value='', validator=None, style: str = 'entry',
+        style_override: dict = {}, placeholder='') -> QLineEdit:
     """
     Creates an entry widget and styles it.
 
@@ -236,11 +236,13 @@ def create_entry(
     - :param validator: validator to validate entered characters against
     - :param style: key for self.theme -> default style
     - :param style_override: style dict to override default style
+    - :param placeholder: placeholder shown when entry is empty
 
     :return: styled QLineEdit
     """
     entry = QLineEdit(default_value)
     entry.setValidator(validator)
+    entry.setPlaceholderText(placeholder)
     entry.setStyleSheet(get_style_class(self, 'QLineEdit', style, style_override))
     if 'font' in style_override:
         entry.setFont(theme_font(self, style, style_override['font']))
