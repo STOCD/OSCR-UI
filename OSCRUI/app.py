@@ -2,16 +2,15 @@
 import os
 
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget
-from PySide6. QtWidgets import QTableView
+from PySide6.QtWidgets import QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings
 from PySide6.QtGui import QIntValidator
 
-from OSCR import TREE_HEADER, HEAL_TREE_HEADER
+from OSCR import HEAL_TREE_HEADER, TABLE_HEADER, TREE_HEADER
 
-from .datamodels import SortingProxy
 from .leagueconnector import OSCRClient
-from .iofunctions import get_asset_path, load_icon_series, load_icon
+from .iofunctions import get_asset_path, load_icon_series, load_icon, reset_temp_folder
 from .textedit import format_path
 from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
 from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
@@ -24,6 +23,8 @@ signal(SIGINT, SIG_DFL)
 
 class OSCRUI():
 
+    from .callbacks import browse_log, favorite_button_callback, navigate_log, save_combat
+    from .callbacks import switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab
     from .datafunctions import analyze_log_callback, copy_analysis_callback, copy_summary_callback
     from .datafunctions import init_parser, update_shown_columns_dmg, update_shown_columns_heal
     from .displayer import create_legend_item
@@ -32,8 +33,9 @@ class OSCRUI():
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
     from .widgetbuilder import split_dialog, create_entry
-    from .leagueconnector import apply_league_table_filter, establish_league_connection
-    from .leagueconnector import extend_ladder, slot_ladder, upload_callback
+    from .leagueconnector import apply_league_table_filter, download_and_view_combat
+    from .leagueconnector import establish_league_connection, extend_ladder, slot_ladder
+    from .leagueconnector import upload_callback
 
     app_dir = None
 
@@ -65,8 +67,9 @@ class OSCRUI():
         self.widgets = WidgetStorage()
         self.league_api = None
         self.init_settings()
-        self.app, self.window = self.create_main_window()
         self.init_config()
+        reset_temp_folder(self.config['templog_folder_path'])
+        self.app, self.window = self.create_main_window()
         self.init_parser()
         self.cache_assets()
         self.setup_main_layout()
@@ -162,9 +165,9 @@ class OSCRUI():
         self.widgets.sidebar_tabber.setFixedWidth(self.sidebar_item_width)
         event.accept()
 
-    # -------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # GUI functions below
-    # -------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
 
     def create_main_window(self, argv=[]) -> tuple[QApplication, QWidget]:
         """
@@ -305,7 +308,7 @@ class OSCRUI():
         map_selector.setFont(self.theme_font('listbox'))
         map_selector.setSizePolicy(SMIXMIN)
         self.widgets.ladder_selector = map_selector
-        map_selector.currentTextChanged.connect(lambda new_text: self.slot_ladder(new_text))
+        map_selector.itemClicked.connect(lambda clicked_item: self.slot_ladder(clicked_item.text()))
         background_layout.addWidget(map_selector)
         all_layout.addWidget(background_frame, stretch=1)
         all_frame.setLayout(all_layout)
@@ -325,8 +328,8 @@ class OSCRUI():
         favorite_selector.setSizePolicy(SMIXMIN)
         self.widgets.favorite_ladder_selector = favorite_selector
         favorite_selector.addItems(self.settings.value('favorite_ladders', type=list))
-        favorite_selector.currentTextChanged.connect(
-                lambda new_text: self.slot_ladder(new_text))
+        favorite_selector.itemClicked.connect(
+                lambda clicked_item: self.slot_ladder(clicked_item.text()))
         background_layout.addWidget(favorite_selector)
         favorites_layout.addWidget(background_frame, stretch=1)
         favorites_frame.setLayout(favorites_layout)
@@ -712,7 +715,7 @@ class OSCRUI():
 
     def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):
         item = index.internalPointer()
-        color = plot_widget.add_bar(item.graph_data)
+        color = plot_widget.add_bar(item)
         if color is None:
             return
         name = item.data[0]
@@ -731,7 +734,7 @@ class OSCRUI():
         layout.setSpacing(0)
 
         ladder_table = QTableView(l_frame)
-        self.style_table(ladder_table, {'margin': '@margin'})
+        self.style_table(ladder_table, {'margin': '@margin'}, single_row_selection=True)
         self.widgets.ladder_table = ladder_table
         layout.addWidget(ladder_table, stretch=1)
 
@@ -747,9 +750,12 @@ class OSCRUI():
                 placeholder='name@handle', style_override={'margin-left': '@isp', 'margin-top': 0})
         search_bar.textChanged.connect(lambda text: self.apply_league_table_filter(text))
         control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
+        download_button = self.create_button('View Parse')
+        download_button.clicked.connect(self.download_and_view_combat)
+        control_layout.addWidget(download_button, 0, 3, alignment=AVCENTER)
         next_button = self.create_button('More', style_override={'margin-right': 0})
         next_button.clicked.connect(self.extend_ladder)
-        control_layout.addWidget(next_button, 0, 3, alignment=AVCENTER)
+        control_layout.addWidget(next_button, 0, 4, alignment=AVCENTER)
 
         layout.addLayout(control_layout)
 
@@ -930,157 +936,36 @@ class OSCRUI():
         split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'split_log_after', split_length_entry.text()))
         col_2.addWidget(split_length_entry, 3, 1, alignment=ALEFT)
+        overview_sort_label = self.create_label('Sort overview table by column:', 'label_subhead')
+        col_2.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
+        overview_sort_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        overview_sort_combo.addItems(TABLE_HEADER)
+        overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
+        overview_sort_combo.currentIndexChanged.connect(
+                lambda new_index: self.settings.setValue('overview_sort_column', new_index))
+        col_2.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
+        overview_sort_order_label = self.create_label('Overview table sort order:', 'label_subhead')
+        col_2.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
+        overview_sort_order_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        overview_sort_order_combo.addItems(('Descending', 'Ascending'))
+        overview_sort_order_combo.setCurrentText(self.settings.value('overview_sort_order'))
+        overview_sort_order_combo.currentTextChanged.connect(
+                lambda new_text: self.settings.setValue('overview_sort_order', new_text))
+        col_2.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
+        auto_scan_label = self.create_label('Scan log automatically:', 'label_subhead')
+        col_2.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
+        auto_scan_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        auto_scan_button.setStyleSheet(
+                self.get_style_class('QPushButton', 'toggle_button', override={'margin-top': 0}))
+        auto_scan_button.setFont(self.theme_font('app', '@font'))
+        auto_scan_button.set_func_r(lambda: self.settings.setValue('auto_scan', True))
+        auto_scan_button.set_func_l(lambda: self.settings.setValue('auto_scan', False))
+        if self.settings.value('auto_scan', type=bool):
+            auto_scan_button.flip()
+        col_2.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
 
         col_2_frame.setLayout(col_2)
 
         settings_frame.setLayout(settings_layout)
-
-    def browse_log(self, entry: QLineEdit):
-        """
-        Callback for browse button.
-
-        Parameters:
-        - :param entry: QLineEdit -> path entry line widget
-        """
-        current_path = entry.text()
-        if current_path != '':
-            path = self.browse_path(
-                    os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
-            if path != '':
-                entry.setText(format_path(path))
-
-    def save_combat(self, combat_num: int):
-        """
-        Callback for save button.
-
-        Parameters:
-        - :param combat_num: number of combat in self.combats
-        """
-        if not self.parser1.active_combat:
-            return
-        base_dir = os.path.dirname(self.entry.text())
-        if not base_dir:
-            base_dir = self.app_dir
-        path = self.browse_path(base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
-        if path:
-            self.parser1.export_combat(combat_num, path)
-
-    def navigate_log(self, direction: str):
-        """
-        Load older or newer combats.
-
-        Parameters:
-        - :param direction: "up" -> load newer combats; "down" -> load older combats
-        """
-        logfile_changed = self.parser1.navigate_log(direction)
-        selected_row = self.current_combats.currentRow()
-        self.current_combats.clear()
-        self.current_combats.addItems(self.parser1.analyzed_combats)
-        if logfile_changed:
-            self.current_combats.setCurrentRow(0)
-            self.current_combat_id = None
-            self.analyze_log_callback(0, parser_num=1)
-        else:
-            self.current_combats.setCurrentRow(selected_row)
-        self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
-        self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
-
-    def switch_analysis_tab(self, tab_index: int):
-        """
-        Callback for tab switch buttons; switches tab and sets active button.
-
-        Parameters:
-        - :param tab_index: index of the tab to switch to
-        """
-        self.widgets.analysis_tabber.setCurrentIndex(tab_index)
-        for index, button in enumerate(self.widgets.analysis_menu_buttons):
-            if not index == tab_index:
-                button.setChecked(False)
-            else:
-                button.setChecked(True)
-
-    def switch_overview_tab(self, tab_index: int):
-        """
-        Callback for tab switch buttons; switches tab and sets active button.
-
-        Parameters:
-        - :param tab_index: index of the tab to switch to
-        """
-        self.widgets.overview_tabber.setCurrentIndex(tab_index)
-        for index, button in enumerate(self.widgets.overview_menu_buttons):
-            if not index == tab_index:
-                button.setChecked(False)
-            else:
-                button.setChecked(True)
-
-    def switch_map_tab(self, tab_index: int):
-        """
-        Callback for tab switch buttons; switches tab and sets active button.
-
-        Parameters:
-        - :param tab_index: index of the tab to switch to
-        """
-        self.widgets.map_tabber.setCurrentIndex(tab_index)
-        for index, button in enumerate(self.widgets.map_menu_buttons):
-            if not index == tab_index:
-                button.setChecked(False)
-            else:
-                button.setChecked(True)
-
-    def switch_main_tab(self, tab_index: int):
-        """
-        Callback for main tab switch buttons. Switches main and sidebar tabs.
-
-        Parameters:
-        - :param tab_index: index of the tab to switch to
-        """
-        SIDEBAR_TAB_CONVERSION = {
-            0: 0,
-            1: 0,
-            2: 1,
-            3: 0
-        }
-        self.widgets.main_tabber.setCurrentIndex(tab_index)
-        self.widgets.sidebar_tabber.setCurrentIndex(SIDEBAR_TAB_CONVERSION[tab_index])
-
-    def favorite_button_callback(self):
-        """
-        Adds ladder to / removes ladder from favorites list. Updates settings.
-        """
-        # Add current ladder to favorites
-        if self.widgets.map_tabber.currentIndex() == 0:
-            current_ladder = self.widgets.ladder_selector.currentItem().text()
-            favorite_ladders = self.settings.value('favorite_ladders', type=list)
-            if current_ladder not in favorite_ladders:
-                favorite_ladders.append(current_ladder)
-                self.settings.setValue('favorite_ladders', favorite_ladders)
-                self.widgets.favorite_ladder_selector.addItem(current_ladder)
-        # Remove current ladder from favorites
-        else:
-            current_item = self.widgets.favorite_ladder_selector.currentItem()
-            current_ladder = current_item.text()
-            favorite_ladders = self.settings.value('favorite_ladders', type=list)
-            if current_ladder in favorite_ladders:
-                favorite_ladders.remove(current_ladder)
-                self.settings.setValue('favorite_ladders', favorite_ladders)
-                row = self.widgets.favorite_ladder_selector.row(current_item)
-                self.widgets.favorite_ladder_selector.takeItem(row)
-
-    def set_variable(self, var_to_be_set, index, value):
-        """
-        Assigns value at index to variable
-        """
-        var_to_be_set[index] = value
-
-    def set_graph_resolution_setting(self, setting_text: str):
-        """
-        Calculates inverse of setting_text and stores it to settings.
-
-        Parameters:
-        - :param setting_text: data points per second
-        """
-        try:
-            value = round(1 / int(setting_text), 1)
-            self.settings.setValue('graph_resolution', value)
-        except (ValueError, ZeroDivisionError):
-            return

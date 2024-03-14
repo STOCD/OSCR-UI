@@ -107,24 +107,26 @@ def get_css(self, style: dict) -> str:
     return css
 
 
-def theme_font(self, key, font_spec: tuple = ()) -> QFont:
+def theme_font(self, key, font_spec=()) -> QFont:
     """
     Returns QFont object with font specified in self.theme or font_spec. Adds default fallback font
     families.
 
     Parameters:
     - :param key: key in self.theme to access font tuple like: self.theme[key]['font']
-    - :param font_spec: font tuple consisting of family, sizee and weight (optional)
+    - :param font_spec: font tuple consisting of family, size and weight OR font shortcut (optional)
 
     :return: configured QFont object
     """
-    if len(font_spec) != 3:
-        try:
-            font = self.theme[key]['font']
-        except KeyError:
-            font = self.theme['app']['font']
-    else:
-        font = font_spec
+    try:
+        if len(font_spec) != 3 and isinstance(font_spec, tuple):
+            font_spec = self.theme[key]['font']
+        if isinstance(font_spec, str) and font_spec.startswith('@'):
+            font = self.theme['defaults'][font_spec[1:]]
+        else:
+            font = font_spec
+    except KeyError:
+        font = self.theme['app']['font']
     font_family = (font[0], *self.theme['app']['font-fallback'])
     try:
         font_weight = WEIGHT_CONVERSION[font[2]]

@@ -3,6 +3,7 @@ from typing import Callable, Iterable
 import numpy as np
 from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
 
 from OSCR import TABLE_HEADER
 from OSCR.combat import Combat
@@ -276,4 +277,9 @@ def create_overview_table(self, table_data) -> QTableView:
     style_table(self, table)
     for col in range(len(model._header)):
         table.horizontalHeader().resizeSection(col, table.horizontalHeader().sectionSize(col) + 5)
+    if self.settings.value('overview_sort_order') == 'Descending':
+        sort_order = Qt.SortOrder.AscendingOrder
+    else:
+        sort_order = Qt.SortOrder.DescendingOrder
+    table.sortByColumn(self.settings.value('overview_sort_column', type=int), sort_order)
     return table

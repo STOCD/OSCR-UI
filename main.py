@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.03b120'
+    version = '2024.03b140'
 
     # holds the style of the app
     theme = {
@@ -17,7 +17,6 @@ class Launcher():
             'oscr': '#c82934',
             'font': ('Overpass', 11, 'normal'),
             'heading': ('Overpass', 14, 'bold'),
-            'text': ('Overpass', 11, 'normal'),
             'subhead': ('Overpass', 12, 'medium'),
             'font-fallback': ('Yu Gothic UI', 'Nirmala UI', 'Microsoft YaHei UI', 'sans-serif'),
             'frame_thickness': 8,
@@ -64,6 +63,9 @@ class Launcher():
             'oscr': '#c82934',  # accent
             'loscr': '#20c82934',  # light accent (12.5% opacity)
             'font': ('Overpass', 11, 'normal'),
+            'heading': ('Overpass', 14, 'bold'),
+            'subhead': ('Overpass', 12, 'medium'),
+            'small_text': ('Overpass', 10, 'normal'),
             'fg': '#eeeeee',  # foreground (usually text)
             'mfg': '#bbbbbb',  # medium foreground
             'bc': '#888888',  # border color
@@ -99,14 +101,14 @@ class Launcher():
             'margin': (3, 0, 3, 0),
             'qproperty-indent': '0',  # disables auto-indent
             'border-style': 'none',
-            'font': ('Overpass', 11, 'normal')
+            'font': '@font'
         },
         # heading label
         'label_heading': {
             'color': '@fg',
             'qproperty-indent': '0',
             'border-style': 'none',
-            'font': ('Overpass', 14, 'bold')
+            'font': '@heading'
         },
         # label for subheading
         'label_subhead': {
@@ -114,7 +116,7 @@ class Launcher():
             'qproperty-indent': '0',
             'border-style': 'none',
             'margin-bottom': 3,
-            'font': ('Overpass', 12, 'medium')
+            'font': '@subhead'
         },
         # default button
         'button': {
@@ -220,7 +222,7 @@ class Launcher():
             'border-color': '@bc',
             'border-radius': '@br',
             'margin-top': '@csp',
-            'font': ('Overpass', 10, 'normal'),
+            'font': '@small_text',
             # cursor is inside the line
             ':focus': {
                 'border-color': '@oscr'
@@ -242,7 +244,7 @@ class Launcher():
             'border-color': '@bc',
             'border-radius': '@br',
             'margin': 0,
-            'font': ('Overpass', 10, 'normal'),
+            'font': '@small_text',
             'outline': '0',  # removes dotted line around clicked item
             '::item': {
                 'border-width': '@bw',
@@ -446,7 +448,7 @@ class Launcher():
             'border-bottom-width': '@sep',
             'border-bottom-style': 'solid',
             'border-bottom-color': '@bc',
-            'font': ('Overpass', 12, 'Medium'),
+            'font': '@subhead',
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
@@ -467,7 +469,7 @@ class Launcher():
             'background-color': '@bg',
             'padding': (2, 5, 0, 5),
             'color': '@fg',
-            'font': ('Overpass', 12, 'medium'),
+            'font': '@subhead',
             '::down-arrow': {
                 'image': 'url(assets/fat-arrow-down.svg)',
                 'width': '@margin',
@@ -594,6 +596,9 @@ class Launcher():
                 'graph_resolution': 0.2,
                 'combats_to_parse': 10,
                 'favorite_ladders': list(),
+                'overview_sort_column': 1,
+                'overview_sort_order': 'Descending',
+                'auto_scan': False
             }
         }
         return config

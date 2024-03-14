@@ -91,6 +91,10 @@ class LeagueTableModel(TableModel):
     """
     Model for league table
     """
+    def __init__(self, *ar, combatlog_id_list: list = [], **kw):
+        super().__init__(*ar, **kw)
+        self._combatlog_id_list = combatlog_id_list
+
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
@@ -119,11 +123,12 @@ class LeagueTableModel(TableModel):
             return self._cell_font
         return super().headerData(section, orientation, role)
 
-    def extend_data(self, index: list, rows: list):
+    def extend_data(self, index: list, rows: list, combatlog_ids: list):
         current_row_count = len(self._index)
         self.beginInsertRows(QModelIndex(), current_row_count, current_row_count + len(index) - 1)
         self._index.extend(index)
         self._data.extend(rows)
+        self._combatlog_id_list.extend(combatlog_ids)
         self.endInsertRows()
 
 
@@ -149,7 +154,8 @@ class SortingProxy(QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
         filter_value = self.name_filter
         if filter_value:
-            return filter_value in ''.join(self.sourceModel()._data[source_row][0:2])
+            full_name = ''.join(self.sourceModel()._data[source_row][0:2]).casefold()
+            return filter_value.casefold() in full_name
         return True
 
 

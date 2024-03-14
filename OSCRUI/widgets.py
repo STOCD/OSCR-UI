@@ -57,9 +57,12 @@ class FlipButton(QPushButton):
     """
     QPushButton with two sets of commands, texts and icons that alter on click.
     """
-    def __init__(self, r_text, l_text, parent, *ar, **kw):
+    def __init__(self, r_text, l_text, parent, checkable=False, *ar, **kw):
         super().__init__(r_text, parent, *ar, **kw)
         self._r = True
+        self._checkable = checkable
+        if checkable:
+            self.setCheckable(True)
         self._r_text = r_text
         self._l_text = l_text
         self.setText(r_text)
@@ -73,14 +76,20 @@ class FlipButton(QPushButton):
     def flip(self):
         if self._r:
             self._r_function()
-            self.setIcon(self._l_icon)
+            if self._l_icon is not None:
+                self.setIcon(self._l_icon)
             self.setText(self._l_text)
             self._r = not self._r
+            if self._checkable:
+                self.setChecked(True)
         else:
             self._l_function()
-            self.setIcon(self._r_icon)
+            if self._r_icon is not None:
+                self.setIcon(self._r_icon)
             self.setText(self._r_text)
             self._r = not self._r
+            if self._checkable:
+                self.setChecked(False)
 
     def set_icon_r(self, icon: QIcon):
         self._r_icon = icon
@@ -190,6 +199,7 @@ class AnalysisPlot(PlotWidget):
         super().__init__()
         self._bar_queue = list()
         self._legend_queue = list()
+        self._bar_item_queue = list()
         self._bar_position = 0
         self._colors = colors
         self._frozen = True
@@ -207,18 +217,19 @@ class AnalysisPlot(PlotWidget):
         self.hideButtons()
         self.setDefaultPadding(padding=0)
 
-    def add_bar(self, data):
+    def add_bar(self, item):
         """
         Adds plot item to plot widget and removes plot item if there are more than 5 currently
         displayed.
 
         Parameters:
-        - :param data: list or array containing the height of the bars
+        - :param item: object with property ".graph_data", containing the height of the bars
 
         :return: returns the color that the graph was created with for the legend
         """
-        if self._frozen:
+        if self._frozen or item in self._bar_item_queue:
             return
+        data = item.graph_data
         time_reference = np.arange(len(data))
         group_width = 0.9
         bar_width = group_width / 5
@@ -228,10 +239,12 @@ class AnalysisPlot(PlotWidget):
         bars = BarGraphItem(x=time_data, width=bar_width, height=data, brush=brush_color, pen=None)
         if len(self._bar_queue) >= 5:
             self.removeItem(self._bar_queue.pop(0))
+            self._bar_item_queue.pop(0)
             legend_item_to_remove = self._legend_queue.pop(0)
             self._legend_layout.removeWidget(legend_item_to_remove)
             legend_item_to_remove.setParent(None)
         self._bar_queue.append(bars)
+        self._bar_item_queue.append(item)
         self.addItem(bars)
         self._bar_position += 1
         if self._bar_position >= 5:
@@ -253,6 +266,7 @@ class AnalysisPlot(PlotWidget):
             self._legend_layout.removeWidget(legend_item)
             legend_item.setParent(None)
         self._legend_queue = list()
+        self._bar_item_queue = list()
         self._bar_position = 0
 
     def toggle_freeze(self, state):

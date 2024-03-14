@@ -295,13 +295,14 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     return table
 
 
-def style_table(self, table: QTableView, style_override: dict = {}):
+def style_table(self, table: QTableView, style_override: dict = {}, single_row_selection=False):
     """
     Styles the given table.
 
     Parameters:
     - :param table: table to be styled
     - :param style_override: style override for table
+    - :param single_row_selection: True when only one row should be selectable at once
     """
     table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
     table.setShowGrid(self.theme['s.c']['table_gridline'])
@@ -317,6 +318,9 @@ def style_table(self, table: QTableView, style_override: dict = {}):
     table.horizontalHeader().setSectionResizeMode(RFIXED)
     table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
+    if single_row_selection:
+        table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
 
 def show_warning(self, title: str, message: str):

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import sys
 
 from PySide6.QtWidgets import QFileDialog
@@ -112,6 +113,18 @@ def store_json(data: dict | list, path: str):
             json.dump(data, file)
     except OSError as e:
         sys.stdout.write(f'[Error] Data could not be saved: {e}')
+
+
+def reset_temp_folder(path: str):
+    '''
+    Deletes and re-creates folder housing temporary log files.
+    '''
+    if os.path.exists(path):
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            raise FileExistsError(f'Expected path to folder, got "{path}"')
+    os.mkdir(path)
 
 
 def sanitize_file_name(txt, chr_set='extended') -> str:

@@ -8,9 +8,8 @@ import OSCR_django_client
 from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
 from OSCR.utilities import logline_to_str
 from PySide6.QtWidgets import QMessageBox
-from PySide6.QtCore import Qt
 
-from .datafunctions import CustomThread
+from .datafunctions import analyze_log_callback, CustomThread
 from .datamodels import LeagueTableModel, SortingProxy
 from .style import theme_font
 from .textedit import format_datetime_str
@@ -86,8 +85,10 @@ def slot_ladder(self, selected_map):
     self.league_api.pages_loaded = 1
     table_index = list()
     table_data = list()
+    logfile_ids = list()
 
     for entry in ladder_data.results:
+        logfile_ids.append(entry.combatlog)
         row = entry.data
         table_index.append(entry.rank)
         table_data.append(
@@ -106,9 +107,8 @@ def slot_ladder(self, selected_map):
 
     model = LeagueTableModel(
         table_data, LADDER_HEADER, table_index, theme_font(self, "table_header"),
-        theme_font(self, "table"))
+        theme_font(self, "table"), combatlog_id_list=logfile_ids)
     sorting_proxy = SortingProxy()
-    sorting_proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
     sorting_proxy.setSourceModel(model)
     table = self.widgets.ladder_table
     table.setModel(sorting_proxy)
@@ -135,7 +135,9 @@ def extend_ladder(self):
         self.league_api.pages_loaded += 1
         table_index = list()
         table_data = list()
+        logfile_ids = list()
         for entry in ladder_data.results:
+            logfile_ids.append(entry.combatlog)
             row = entry.data
             table_index.append(entry.rank)
             table_data.append(
@@ -151,13 +153,29 @@ def extend_ladder(self):
                     row["debuff"],
                 )
             )
-        self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data)
+        self.widgets.ladder_table.model().sourceModel().extend_data(
+                table_index, table_data, logfile_ids)
 
 
-def download_and_view_combat(self, idx):
+def download_and_view_combat(self):
     """
     Download a combat log and view its contents in the overview / analysis pages.
     """
+    table = self.widgets.ladder_table
+    table_model = table.model().sourceModel()
+    selection = table.selectedIndexes()
+    original_index = table.model().mapToSource(selection[0])
+    row = original_index.row()
+    log_id = table_model._combatlog_id_list[row]
+    result = self.league_api.download(log_id)
+    result = gzip.decompress(result)
+    with tempfile.NamedTemporaryFile(
+            mode='w', encoding='utf-8', dir=self.config['templog_folder_path'],
+            delete=False) as file:
+        file.write(result.decode())
+    analyze_log_callback(self, path=file.name, parser_num=1, hidden_path=True)
+    self.switch_overview_tab(0)
+    self.switch_main_tab(0)
 
 
 def upload_callback(self):
@@ -170,7 +188,7 @@ def upload_callback(self):
     if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
         raise Exception("No data to upload")
 
-    with tempfile.NamedTemporaryFile(dir=self.app_dir, delete=False) as file:
+    with tempfile.NamedTemporaryFile(dir=self.config['templog_folder_path'], delete=False) as file:
         data = gzip.compress(
             "".join([logline_to_str(line) for line in self.parser1.active_combat.log_data]).encode()
         )

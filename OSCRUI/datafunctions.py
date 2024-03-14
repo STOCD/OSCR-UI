@@ -32,7 +32,7 @@ def init_parser(self):
     # self.parser2 = OSCR()
 
 
-def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
+def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, hidden_path=False):
     """
     Wrapper function for retrieving and showing data. Callback of "Analyse" and "Refresh" button.
 
@@ -40,6 +40,8 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
     - :param combat_id: id of older combat (0 -> latest combat in the file;
     len(...) - 1 -> oldest combat)
     - :param path: path to combat log file
+    - :param parser_num: 1 or 2; to select self.parser1 or self.parser2
+    - :param hidden_path: True when settings should not be updated with log path
     """
     if combat_id == -1 or combat_id == self.current_combat_id:
         return
@@ -56,7 +58,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1):
             show_warning(
                     self, 'Invalid Logfile', 'The Logfile you are trying to open does not exist.')
             return
-        if path != self.settings.value('log_path'):
+        if not hidden_path and path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
 
         proceed = get_data(self, combat=None, path=path)
