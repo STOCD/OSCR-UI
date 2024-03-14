@@ -319,7 +319,7 @@ def copy_analysis_callback(self):
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
-        magnitudes = [f'{magnitude:,.2f} [{''.join(player)}]' for magnitude, player in magnitudes]
+        magnitudes = [f"{magnitude:,.2f} [{''.join(player)}]" for magnitude, player in magnitudes]
         output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude / s':
@@ -335,6 +335,6 @@ def copy_analysis_callback(self):
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
-        magnitudes = [f'{magnitude:,.2f} [{''.join(player)}]' for magnitude, player in magnitudes]
+        magnitudes = [f"{magnitude:,.2f} [{''.join(player)}]" for magnitude, player in magnitudes]
         output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
