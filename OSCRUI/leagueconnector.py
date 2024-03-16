@@ -24,6 +24,7 @@ LADDER_HEADER = (
     "Date",
     "Max One Hit",
     "Debuff",
+    "Build",
 )
 
 
@@ -102,6 +103,7 @@ def slot_ladder(self, selected_map):
                 format_datetime_str(entry.var_date),
                 row["max_one_hit"],
                 row["debuff"],
+                row.get("build", "Unknown"),
             )
         )
 
@@ -151,6 +153,7 @@ def extend_ladder(self):
                     format_datetime_str(entry.var_date),
                     row["max_one_hit"],
                     row["debuff"],
+                    row.get("build", "Unknown"),
                 )
             )
         self.widgets.ladder_table.model().sourceModel().extend_data(
