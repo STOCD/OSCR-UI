@@ -43,4 +43,4 @@ jobs:
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: OSCR.zip
+          artifacts: dist/OSCR.zip
