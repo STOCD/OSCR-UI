@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sys
+import webbrowser
 
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QIcon
@@ -82,6 +83,14 @@ def load_icon_series(icons: dict, app_directory: str) -> dict[str, QIcon]:
     for icon_name, file_name in icons.items():
         icon_dict[icon_name] = QIcon(os.path.join(asset_path, file_name))
     return icon_dict
+
+
+def open_link(link: str = ''):
+    """
+    Opens provided link
+    """
+    if link:
+        webbrowser.open(link, new=2, autoraise=True)
 
 
 def fetch_json(path: str) -> dict | list:

@@ -59,6 +59,7 @@ def create_button(self, text, style: str = 'button', parent=None, style_override
         button.setFont(theme_font(self, style, style_override['font']))
     else:
         button.setFont(theme_font(self, style))
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
     button.setSizePolicy(SMAXMAX)
     if isinstance(toggle, bool):
         button.setCheckable(True)
@@ -68,7 +69,7 @@ def create_button(self, text, style: str = 'button', parent=None, style_override
 
 def create_icon_button(
         self, icon, tooltip: str = '', style: str = 'icon_button', parent=None,
-        style_override={}) -> QPushButton:
+        style_override={}, icon_size: tuple = ()) -> QPushButton:
     """
     Creates a button showing an icon according to style with parent.
 
@@ -78,6 +79,7 @@ def create_icon_button(
     - :param style: name of the style as in self.theme or style dict
     - :param parent: parent of the button (optional)
     - :param style_override: style dict to override default style (optional)
+    - :param icon_size: set icon size in case it should be different from the default
 
     :return: configured QPushButton
     """
@@ -86,8 +88,10 @@ def create_icon_button(
     if tooltip:
         button.setToolTip(tooltip)
     button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
-    icon_size = self.theme['s.c']['button_icon_size']
-    button.setIconSize(QSize(icon_size, icon_size))
+    if len(icon_size) != 2:
+        icon_size = [self.theme['s.c']['button_icon_size']] * 2
+    button.setIconSize(QSize(*icon_size))
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
     button.setSizePolicy(SMAXMAX)
     return button
 
@@ -248,6 +252,7 @@ def create_entry(
         entry.setFont(theme_font(self, style, style_override['font']))
     else:
         entry.setFont(theme_font(self, style))
+    entry.setCursor(Qt.CursorShape.IBeamCursor)
     entry.setSizePolicy(SMAXMAX)
     return entry
 

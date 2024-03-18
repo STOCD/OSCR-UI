@@ -13,6 +13,7 @@ from .datafunctions import analyze_log_callback, CustomThread
 from .datamodels import LeagueTableModel, SortingProxy
 from .style import theme_font
 from .textedit import format_datetime_str
+from .widgetbuilder import show_warning
 
 LADDER_HEADER = (
     "Name",
@@ -28,7 +29,7 @@ LADDER_HEADER = (
 )
 
 
-def establish_league_connection(self, fetch_maps: bool = False):
+def establish_league_connection(self):
     """
     Connects to the league server if not already connected.
 
@@ -37,9 +38,8 @@ def establish_league_connection(self, fetch_maps: bool = False):
     """
     if self.league_api is None:
         self.league_api = OSCRClient()
-        if fetch_maps:
-            map_fetch_thread = CustomThread(self.window, lambda: fetch_and_insert_maps(self))
-            map_fetch_thread.start()
+        map_fetch_thread = CustomThread(self.window, lambda: fetch_and_insert_maps(self))
+        map_fetch_thread.start()
 
 
 def fetch_and_insert_maps(self):
@@ -185,11 +185,11 @@ def upload_callback(self):
     """
     Helper function to grab the current combat and upload it to the backend.
     """
+    if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
+        show_warning(self, 'OSCR - Logfile Upload', 'No data to upload.')
+        return
 
     establish_league_connection(self)
-
-    if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
-        raise Exception("No data to upload")
 
     with tempfile.NamedTemporaryFile(dir=self.config['templog_folder_path'], delete=False) as file:
         data = gzip.compress(

@@ -215,7 +215,7 @@ def update_shown_columns_dmg(self):
     dout_table = self.widgets.analysis_table_dout
     dtaken_table = self.widgets.analysis_table_dtaken
     for i in range(self.settings.value('dmg_columns_length', type=int)):
-        state = self.settings.value(f'dmg_columns|{i}')
+        state = self.settings.value(f'dmg_columns|{i}', type=bool)
         if state:
             dout_table.showColumn(i + 1)
             dtaken_table.showColumn(i + 1)
@@ -231,7 +231,7 @@ def update_shown_columns_heal(self):
     hout_table = self.widgets.analysis_table_hout
     hin_table = self.widgets.analysis_table_hin
     for i in range(self.settings.value('heal_columns_length', type=int)):
-        state = self.settings.value(f'heal_columns|{i}')
+        state = self.settings.value(f'heal_columns|{i}', type=bool)
         if state:
             hout_table.showColumn(i + 1)
             hin_table.showColumn(i + 1)

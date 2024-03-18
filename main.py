@@ -6,7 +6,8 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3b161'
+    version = '2024.3b180'
+    __version__ = '0.0'
 
     # holds the style of the app
     theme = {
@@ -136,6 +137,16 @@ class Launcher():
             },
             ':disabled': {
                 'color': '@bc'
+            },
+            # Tooltip
+            '~QToolTip': {
+                'background-color': '@mbg',
+                'border-style': 'solid',
+                'border-color': '@lbg',
+                'border-width': '@bw',
+                'padding': (0, 0, 0, 0),
+                'color': '@fg',
+                'font': 'Overpass'
             }
         },
         # button for tab switching
@@ -551,6 +562,11 @@ class Launcher():
             'minimum_window_height': 1016,
             'settings_path': r'/.OSCR_settings.ini',
             'templog_folder_path': r'/~temp_log_files',
+            'link_website': '',
+            'link_github': 'https://github.com/STOCD/OSCR-UI',
+            'link_downloads': 'https://github.com/STOCD/OSCR-UI/releases',
+            'link_stobuilds': 'https://discord.gg/stobuilds',
+            'link_stocd': 'https://github.com/STOCD',
             'default_settings': {
                 'log_path': '',
                 'geometry': None,
@@ -607,8 +623,9 @@ class Launcher():
     def launch():
         args = {}
         exit_code = OSCRUI(
-                version=Launcher.version, theme=Launcher.theme, args=args,
-                path=Launcher.base_path(), config=Launcher.app_config()).run()
+                theme=Launcher.theme, args=args,
+                path=Launcher.base_path(), config=Launcher.app_config(),
+                versions=(Launcher.__version__, Launcher.version)).run()
         sys.exit(exit_code)
 
 

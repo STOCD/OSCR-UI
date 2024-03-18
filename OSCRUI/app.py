@@ -1,8 +1,8 @@
 
 import os
 
-from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QTabWidget
-from PySide6.QtWidgets import QTableView
+from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget
+from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings
 from PySide6.QtGui import QIntValidator
@@ -10,11 +10,11 @@ from PySide6.QtGui import QIntValidator
 from OSCR import HEAL_TREE_HEADER, TABLE_HEADER, TREE_HEADER
 
 from .leagueconnector import OSCRClient
-from .iofunctions import get_asset_path, load_icon_series, load_icon, reset_temp_folder
+from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link, reset_temp_folder
 from .textedit import format_path
 from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
 from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
-from .widgetbuilder import SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
+from .widgetbuilder import SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 from signal import signal, SIGINT, SIG_DFL
@@ -39,6 +39,8 @@ class OSCRUI():
 
     app_dir = None
 
+    versions = ('', '')  # (release version, dev version)
+
     config = {}  # see main.py for contents
 
     settings: QSettings  # see main.py for defaults
@@ -48,7 +50,7 @@ class OSCRUI():
 
     league_api: OSCRClient
 
-    def __init__(self, version, theme, args, path, config) -> None:
+    def __init__(self, theme, args, path, config, versions) -> None:
         """
         Creates new Instance of OSCR.
 
@@ -59,7 +61,7 @@ class OSCRUI():
         - :param path: absolute path to main.py file
         - :param config: app configuration (!= settings these are not changed by the user)
         """
-        self.version = version
+        self.versions = versions
         self.theme = theme
         self.args = args
         self.app_dir = path
@@ -102,7 +104,9 @@ class OSCRUI():
             'export-parse': 'export-parse.svg',
             'copy': 'copy.svg',
             'ladder': 'ladder.svg',
-            'star': 'star.svg'
+            'star': 'star.svg',
+            'stocd': 'section31badge.png',
+            'stobuilds': 'stobuildslogo.png'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -461,6 +465,59 @@ class OSCRUI():
 
         frame.setLayout(left_layout)
 
+    def setup_left_sidebar_about(self):
+        """
+        Sets up the about tab of the left sidebar
+        """
+        frame = self.widgets.sidebar_tab_frames[2]
+        m = self.theme['defaults']['margin']
+        left_layout = QVBoxLayout()
+        left_layout.setContentsMargins(m, m, m, m)
+        left_layout.setSpacing(0)
+        left_layout.setAlignment(ATOP)
+
+        head_label = self.create_label('About OSCR:', 'label_heading')
+        left_layout.addWidget(head_label)
+        about_label = self.create_label(
+                'Open Source Combatlog Reader (OSCR), developed by the STO Community '
+                'Developers in cooperation with the STO Builds Discord.')
+        about_label.setWordWrap(True)
+        left_layout.addWidget(about_label)
+        version_label = self.create_label(
+                f'Current Version: {self.versions[0]} ({self.versions[1]})', 'label_subhead',
+                style_override={'margin-bottom': '@isp'})
+        left_layout.addWidget(version_label)
+        link_button_style = {
+            'default': {},
+            'Website': {'callback': lambda: open_link(self.config['link_website'])},
+            'Github': {'callback': lambda: open_link(self.config['link_github'])},
+            'Downloads': {
+                'callback': lambda: open_link(self.config['link_downloads'])}
+        }
+        button_layout, buttons = self.create_button_series(
+                frame, link_button_style, 'button', seperator='•', ret=True)
+        buttons[0].setToolTip(self.config['link_website'])
+        buttons[1].setToolTip(self.config['link_github'])
+        buttons[2].setToolTip(self.config['link_downloads'])
+        left_layout.addLayout(button_layout)
+        left_layout.addSpacerItem(QSpacerItem(1, 1, hData=SMIN, vData=SEXPAND))
+        logo_layout = QGridLayout()
+        logo_layout.setContentsMargins(0, 0, 0, 0)
+        logo_layout.setColumnStretch(1, 1)
+        logo_size = [self.theme['s.c']['button_icon_size'] * 4] * 2
+        stocd_logo = self.create_icon_button(
+                self.icons['stocd'], self.config['link_stocd'],
+                style_override={'border-style': 'none'}, icon_size=logo_size)
+        stocd_logo.clicked.connect(lambda: open_link(self.config['link_stocd']))
+        logo_layout.addWidget(stocd_logo, 0, 0)
+        left_layout.addLayout(logo_layout)
+        stobuilds_logo = self.create_icon_button(
+                self.icons['stobuilds'], self.config['link_stobuilds'],
+                style_override={'border-style': 'none'}, icon_size=logo_size)
+        stobuilds_logo.clicked.connect(lambda: open_link(self.config['link_stobuilds']))
+        logo_layout.addWidget(stobuilds_logo, 0, 2)
+        frame.setLayout(left_layout)
+
     def setup_left_sidebar_tabber(self, frame: QFrame):
         """
         Sets up the sidebar used to select parses and combats
@@ -470,15 +527,18 @@ class OSCRUI():
         """
         log_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
         league_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
+        about_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
         sidebar_tabber = QTabWidget(frame)
         sidebar_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
         sidebar_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
         sidebar_tabber.setSizePolicy(SMAXMIN)
         sidebar_tabber.addTab(log_frame, 'Log')
         sidebar_tabber.addTab(league_frame, 'League')
+        sidebar_tabber.addTab(about_frame, 'About')
         self.widgets.sidebar_tabber = sidebar_tabber
         self.widgets.sidebar_tab_frames.append(log_frame)
         self.widgets.sidebar_tab_frames.append(league_frame)
+        self.widgets.sidebar_tab_frames.append(about_frame)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -487,6 +547,7 @@ class OSCRUI():
 
         self.setup_left_sidebar_log()
         self.setup_left_sidebar_league()
+        self.setup_left_sidebar_about()
 
     def setup_main_tabber(self, frame: QFrame):
         """
@@ -517,8 +578,7 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
-        self.widgets.main_menu_buttons[2].clicked.connect(
-                lambda: self.establish_league_connection(True))
+        self.widgets.main_menu_buttons[2].clicked.connect(self.establish_league_connection)
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
@@ -750,13 +810,13 @@ class OSCRUI():
                 placeholder='name@handle', style_override={'margin-left': '@isp', 'margin-top': 0})
         search_bar.textChanged.connect(lambda text: self.apply_league_table_filter(text))
         control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
-        download_button = self.create_button('View Parse')
-        download_button.clicked.connect(self.download_and_view_combat)
-        control_layout.addWidget(download_button, 0, 3, alignment=AVCENTER)
-        next_button = self.create_button('More', style_override={'margin-right': 0})
-        next_button.clicked.connect(self.extend_ladder)
-        control_layout.addWidget(next_button, 0, 4, alignment=AVCENTER)
-
+        control_button_style = {
+            'View Parse': {'callback': self.download_and_view_combat},
+            'More': {'callback': self.extend_ladder, 'style': {'margin-right': 0}}
+        }
+        control_button_layout = self.create_button_series(
+                l_frame, control_button_style, 'button', seperator='•')
+        control_layout.addLayout(control_button_layout, 0, 3, alignment=AVCENTER)
         layout.addLayout(control_layout)
 
         l_frame.setLayout(layout)

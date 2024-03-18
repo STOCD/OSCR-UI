@@ -116,7 +116,7 @@ def switch_main_tab(self, tab_index: int):
         0: 0,
         1: 0,
         2: 1,
-        3: 0
+        3: 2
     }
     self.widgets.main_tabber.setCurrentIndex(tab_index)
     self.widgets.sidebar_tabber.setCurrentIndex(SIDEBAR_TAB_CONVERSION[tab_index])
