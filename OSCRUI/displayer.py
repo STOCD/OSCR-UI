@@ -297,4 +297,3 @@ def update_live_display(self, data: dict):
         cells.append(list(player_data.values()))
     if len(index) > 0 and len(cells) > 0:
         self.widgets.live_parser_table.model().replace_data(index, cells)
-        self.widgets.live_parser_table.resizeColumnsToContents()
