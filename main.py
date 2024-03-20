@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3b180'
+    version = '2024.3b200'
     __version__ = '0.0'
 
     # holds the style of the app
@@ -537,6 +537,85 @@ class Launcher():
             'padding': 0,
             'margin': 0
         },
+        'live_parser': {
+            'background-color': '@bg',
+            'border-style': 'solid',
+            'border-color': '@oscr',
+            'border-width': '@sep',
+            'border-radius': '@br',
+            'margin': 0,
+            'padding': 0
+        },
+        'live_table': {
+            'color': '@fg',
+            'background-color': '@bg',
+            'border-width': '@bw',
+            'border-style': 'solid',
+            'border-color': '@bc',
+            'gridline-color': 'rgba(0,0,0,0)',  # -> s.c: table_gridline
+            'outline': '0',  # removes dotted line around clicked item
+            'margin': 10,
+            'font': ('Roboto Mono', 10, 'Medium'),
+            '::item': {
+                'padding': (0, 5, 0, 5),
+                'border-width': '@bw',
+                'border-style': 'solid',
+                'border-color': '@bg',
+                'border-right-width': '@bw',
+                'border-right-style': 'solid',
+                'border-right-color': '@bc',
+            },
+            '::item:alternate': {
+                'padding': (0, 5, 0, 5),
+                'background-color': '@mbg',
+                'border-width': '@bw',
+                'border-style': 'solid',
+                'border-color': '@mbg',
+                'border-right-width': '@bw',
+                'border-right-style': 'solid',
+                'border-right-color': '@bc',
+            }
+        },
+        # heading of the table; ::section refers to the individual buttons
+        'live_table_header': {
+            'color': '@bg',
+            'background-color': '@mbg',
+            'border': 'none',
+            'border-bottom-width': '@sep',
+            'border-bottom-style': 'solid',
+            'border-bottom-color': '@bc',
+            'outline': '0',  # removes dotted line around clicked item
+            'font': ('Overpass', 10, 'Medium'),
+            '::section': {
+                'background-color': '@mbg',
+                'color': '@fg',
+                'padding': (0, 0, 0, 0),  # (0, -8, -3, 6), # don't ask
+                'border': 'none',
+                'margin': 0
+            },
+        },
+        # index of the table (vertical header); ::section refers to the individual buttons
+        'live_table_index': {
+            'color': '@bg',
+            'background-color': '@mbg',
+            'border': 'none',
+            'border-right-width': '@sep',
+            'border-right-style': 'solid',
+            'border-right-color': '@bc',
+            'outline': '0',  # removes dotted line around clicked item
+            '::section': {
+                'background-color': '@mbg',
+                'color': '@fg',
+                'padding': (0, 3, 0, 3),
+                'border': 'none',
+                'margin': 0
+            },
+        },
+        'resize_handle': {
+            'border-style': 'none',
+            'background-color': 'none',
+            'image': 'url(assets/resize.svg)',
+        },
         # other style decisions
         's.c': {
             'sidebar_item_width': 0.2,
@@ -569,7 +648,9 @@ class Launcher():
             'link_stocd': 'https://github.com/STOCD',
             'default_settings': {
                 'log_path': '',
+                'sto_log_path': '',
                 'geometry': None,
+                'live_geometry': None,
                 'dmg_columns|0': True,
                 'dmg_columns|1': True,
                 'dmg_columns|2': True,
@@ -614,7 +695,12 @@ class Launcher():
                 'favorite_ladders': list(),
                 'overview_sort_column': 1,
                 'overview_sort_order': 'Descending',
-                'auto_scan': False
+                'auto_scan': False,
+                'live_columns|0': True,
+                'live_columns|1': False,
+                'live_columns|2': True,
+                'live_columns|3': False,
+                'live_columns|4': False,
             }
         }
         return config

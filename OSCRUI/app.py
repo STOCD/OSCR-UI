@@ -1,4 +1,3 @@
-
 import os
 
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget
@@ -7,7 +6,7 @@ from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings
 from PySide6.QtGui import QIntValidator
 
-from OSCR import HEAL_TREE_HEADER, TABLE_HEADER, TREE_HEADER
+from OSCR import HEAL_TREE_HEADER, LIVE_TABLE_HEADER, TABLE_HEADER, TREE_HEADER
 
 from .leagueconnector import OSCRClient
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link, reset_temp_folder
@@ -23,16 +22,19 @@ signal(SIGINT, SIG_DFL)
 
 class OSCRUI():
 
-    from .callbacks import browse_log, favorite_button_callback, navigate_log, save_combat
+    from .callbacks import browse_log, browse_sto_logpath, favorite_button_callback
+    from .callbacks import navigate_log, save_combat, set_sto_logpath_setting
     from .callbacks import switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab
-    from .datafunctions import analyze_log_callback, copy_analysis_callback, copy_summary_callback
-    from .datafunctions import init_parser, update_shown_columns_dmg, update_shown_columns_heal
+    from .datafunctions import activate_live_parser, analyze_log_callback, copy_analysis_callback
+    from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
+    from .datafunctions import update_shown_columns_heal
     from .displayer import create_legend_item
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
+    from .subwindows import live_parser_toggle, split_dialog
     from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
     from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
-    from .widgetbuilder import split_dialog, create_entry
+    from .widgetbuilder import create_entry
     from .leagueconnector import apply_league_table_filter, download_and_view_combat
     from .leagueconnector import establish_league_connection, extend_ladder, slot_ladder
     from .leagueconnector import upload_callback
@@ -68,6 +70,8 @@ class OSCRUI():
         self.config = config
         self.widgets = WidgetStorage()
         self.league_api = None
+        self.live_parser_window = None
+        self.live_parser = None
         self.init_settings()
         self.init_config()
         reset_temp_folder(self.config['templog_folder_path'])
@@ -106,7 +110,8 @@ class OSCRUI():
             'ladder': 'ladder.svg',
             'star': 'star.svg',
             'stocd': 'section31badge.png',
-            'stobuilds': 'stobuildslogo.png'
+            'stobuilds': 'stobuildslogo.png',
+            'close': 'close.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -462,6 +467,12 @@ class OSCRUI():
 
         parser2_button.setEnabled(False)
         save_button.setEnabled(False)
+
+        live_parser_button = self.create_button(
+                'Live Parser', 'tab_button', style_override={'margin-top': '@isp'}, toggle=False)
+        live_parser_button.clicked[bool].connect(self.live_parser_toggle)
+        left_layout.addWidget(live_parser_button, alignment=AHCENTER)
+        self.widgets.live_parser_button = live_parser_button
 
         frame.setLayout(left_layout)
 
@@ -938,14 +949,32 @@ class OSCRUI():
                     lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
             heal_hider_layout.addWidget(bt, stretch=1)
         heal_seperator = self.create_frame(
-            dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
+            heal_hider_frame, 'hr', style_override={'background-color': '@lbg'},
+            size_policy=SMINMIN)
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
         apply_button_2 = self.create_button('Apply', 'button', heal_hider_frame)
         apply_button_2.clicked.connect(self.update_shown_columns_heal)
         heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
+
         col_1_2.addWidget(heal_hider_frame, alignment=ATOP)
+        live_hider_label = self.create_label(
+                'Live Parser columns:', 'label_subhead', col_1_frame, {'margin-top': '@isp'})
+        col_1_2.addWidget(live_hider_label)
+        live_hider_layout = QVBoxLayout()
+        live_hider_frame = self.create_frame(
+                col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
+        for i, head in enumerate(LIVE_TABLE_HEADER):
+            bt = self.create_button(
+                    head, 'toggle_button', live_hider_frame,
+                    toggle=self.settings.value(f'live_columns|{i}', type=bool))
+            bt.setSizePolicy(SMINMAX)
+            bt.clicked[bool].connect(
+                    lambda state, i=i: self.settings.setValue(f'live_columns|{i}', state))
+            live_hider_layout.addWidget(bt, stretch=1)
+        live_hider_frame.setLayout(live_hider_layout)
+        col_1_2.addWidget(live_hider_frame, alignment=ATOP)
         col_1.addLayout(col_1_2, stretch=1)
 
         col_1_frame.setLayout(col_1)
@@ -1017,14 +1046,24 @@ class OSCRUI():
         auto_scan_label = self.create_label('Scan log automatically:', 'label_subhead')
         col_2.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
         auto_scan_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
-        auto_scan_button.setStyleSheet(
-                self.get_style_class('QPushButton', 'toggle_button', override={'margin-top': 0}))
+        auto_scan_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         auto_scan_button.setFont(self.theme_font('app', '@font'))
         auto_scan_button.set_func_r(lambda: self.settings.setValue('auto_scan', True))
         auto_scan_button.set_func_l(lambda: self.settings.setValue('auto_scan', False))
         if self.settings.value('auto_scan', type=bool):
             auto_scan_button.flip()
         col_2.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
+        sto_log_path_button = self.create_button(
+                'STO Logfile:', style_override={'margin': 0, 'font': '@subhead'})
+        col_2.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
+        sto_log_path_entry = self.create_entry(
+                self.settings.value('sto_log_path'), style_override={'margin-top': 0})
+        sto_log_path_entry.setSizePolicy(SMIXMAX)
+        sto_log_path_entry.editingFinished.connect(
+                lambda: self.set_sto_logpath_setting(sto_log_path_entry))
+        col_2.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
+        sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
 
         col_2_frame.setLayout(col_2)
 

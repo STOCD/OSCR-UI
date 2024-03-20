@@ -283,3 +283,16 @@ def create_overview_table(self, table_data) -> QTableView:
         sort_order = Qt.SortOrder.DescendingOrder
     table.sortByColumn(self.settings.value('overview_sort_column', type=int), sort_order)
     return table
+
+
+def update_live_display(self, data: dict):
+    """
+    Updates display of live parser to show the new data.
+    """
+    index = list()
+    cells = list()
+    for player, player_data in data.items():
+        index.append(player)
+        cells.append(list(player_data.values()))
+    if len(index) > 0 and len(cells) > 0:
+        self.widgets.live_parser_table.model().replace_data(index, cells)

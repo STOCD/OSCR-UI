@@ -1,9 +1,9 @@
 import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
 from PySide6.QtCore import QRect, Slot
-from PySide6.QtGui import QIcon, QPixmap, QPainter, QFont
-from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QTableView, QTabWidget
-from PySide6.QtWidgets import QTreeView, QWidget
+from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
+from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QTableView
+from PySide6.QtWidgets import QTabWidget, QTreeView, QWidget
 
 from .widgetbuilder import SMINMIN
 
@@ -46,6 +46,9 @@ class WidgetStorage():
         self.favorite_ladder_selector: QListWidget
         self.season_ladder_selector: QListWidget
         self.ladder_table: QTableView
+
+        self.live_parser_table: QTableView
+        self.live_parser_button: QPushButton
 
     @property
     def analysis_table(self):
@@ -274,3 +277,16 @@ class AnalysisPlot(PlotWidget):
         Freezes when unfrozen, unfreezes when frozen
         """
         self._frozen = not self._frozen
+
+
+class SizeGrip(QSizeGrip):
+    """
+    Overrides mouse event functions to stop event propagation
+    """
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        super().mousePressEvent(event)
+        event.accept()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        super().mouseMoveEvent(event)
+        event.accept()

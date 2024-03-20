@@ -1,7 +1,9 @@
 import os
 
-from PySide6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QFileDialog, QLineEdit
 
+from OSCR import split_log_by_combat, split_log_by_lines
+from .iofunctions import browse_path
 from .textedit import format_path
 
 
@@ -158,3 +160,56 @@ def set_graph_resolution_setting(self, setting_text: str):
         self.settings.setValue('graph_resolution', value)
     except (ValueError, ZeroDivisionError):
         return
+
+
+def set_sto_logpath_setting(self, entry: QLineEdit):
+    """
+    Formats and stores new logpath to settings.
+
+    Parameters:
+    - :param entry: the entry that holds the path
+    """
+    formatted_path = format_path(entry.text())
+    self.settings.setValue('sto_log_path', formatted_path)
+    entry.setText(formatted_path)
+
+
+def browse_sto_logpath(self, entry: QLineEdit):
+    """
+    Opens prompt to select new logpath and stores it to settings.
+
+    Parameters:
+    - :param entry: the entry that holds the path
+    """
+    current_path = entry.text()
+    if not current_path:
+        current_path = self.app_dir
+    new_path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
+    if new_path:
+        formatted_path = format_path(new_path)
+        self.settings.setValue('sto_log_path', formatted_path)
+        entry.setText(formatted_path)
+
+
+def auto_split_callback(self, path: str):
+    """
+    Callback for auto split button
+    """
+    folder_path = QFileDialog.getExistingDirectory(
+            self.window, 'Select Folder', os.path.dirname(path))
+    if folder_path:
+        split_log_by_lines(
+                path, folder_path, self.settings.value('split_log_after', type=int),
+                self.settings.value('combat_distance', type=int))
+
+
+def combat_split_callback(self, path: str, first_num: str, last_num: str):
+    """
+    Callback for combat split button
+    """
+    target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
+    if target_path:
+        split_log_by_combat(
+                path, target_path, int(first_num), int(last_num),
+                self.settings.value('seconds_between_combats', type=int),
+                self.settings.value('excluded_event_ids', type=list))

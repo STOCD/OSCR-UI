@@ -11,9 +11,9 @@ from PySide6.QtWidgets import QMessageBox
 
 from .datafunctions import analyze_log_callback, CustomThread
 from .datamodels import LeagueTableModel, SortingProxy
+from .subwindows import show_warning
 from .style import theme_font
 from .textedit import format_datetime_str
-from .widgetbuilder import show_warning
 
 LADDER_HEADER = (
     "Name",

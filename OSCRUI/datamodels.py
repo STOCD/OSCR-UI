@@ -132,6 +132,32 @@ class LeagueTableModel(TableModel):
         self.endInsertRows()
 
 
+class LiveParserTableModel(TableModel):
+    """
+    Model for LiveParser Table
+    """
+    def data(self, index, role):
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self._data[index.row()][index.column()]
+
+        if role == Qt.ItemDataRole.FontRole:
+            return self._cell_font
+
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return AVCENTER + ARIGHT
+
+    def replace_data(self, index: list, rows: list):
+        current_row_count = len(self._index)
+        self.beginRemoveRows(QModelIndex(), 0, current_row_count - 1)
+        self._index = []
+        self._data = []
+        self.endRemoveRows()
+        self.beginInsertRows(QModelIndex(), 0, len(index) - 1)
+        self._index = index
+        self._data = rows
+        self.endInsertRows()
+
+
 class SortingProxy(QSortFilterProxyModel):
     def __init__(self):
         super().__init__()

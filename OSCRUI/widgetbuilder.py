@@ -1,17 +1,12 @@
 from types import FunctionType, BuiltinFunctionType, MethodType
-import os
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QIntValidator
-from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFileDialog, QFrame
-from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit
-from PySide6.QtWidgets import QMessageBox, QPushButton, QSizePolicy, QSpacerItem, QTableView
+from PySide6.QtWidgets import QAbstractItemView, QComboBox, QFrame
+from PySide6.QtWidgets import QHBoxLayout, QHeaderView, QLabel, QLineEdit
+from PySide6.QtWidgets import QPushButton, QSizePolicy, QTableView
 from PySide6.QtWidgets import QTreeView, QVBoxLayout
 
-from .iofunctions import browse_path
-from OSCR import split_log_by_combat, split_log_by_lines
 from .style import get_style, get_style_class, merge_style, theme_font
-from .textedit import format_path
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -34,7 +29,9 @@ ACENTER = Qt.AlignmentFlag.AlignCenter
 AVCENTER = Qt.AlignmentFlag.AlignVCenter
 AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
-RFIXED = QHeaderView.ResizeMode.Fixed
+RRESIZE = QHeaderView.ResizeMode.Fixed
+RRESIZE = QHeaderView.ResizeMode.ResizeToContents
+
 
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
@@ -290,7 +287,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
     table.header().setStyleSheet(get_style_class(self, 'QHeaderView', 'tree_table_header'))
-    table.header().setSectionResizeMode(RFIXED)
+    table.header().setSectionResizeMode(RRESIZE)
     table.header().setMinimumSectionSize(1)
     table.header().setSectionsClickable(True)
     table.header().setStretchLastSection(False)
@@ -320,183 +317,9 @@ def style_table(self, table: QTableView, style_override: dict = {}, single_row_s
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
     table.horizontalHeader().setSortIndicatorShown(False)
-    table.horizontalHeader().setSectionResizeMode(RFIXED)
-    table.verticalHeader().setSectionResizeMode(RFIXED)
+    table.horizontalHeader().setSectionResizeMode(RRESIZE)
+    table.verticalHeader().setSectionResizeMode(RRESIZE)
     table.setSizePolicy(SMINMIN)
     if single_row_selection:
         table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-
-
-def show_warning(self, title: str, message: str):
-    """
-    Displays a warning in form of a message box
-
-    Parameters:
-    - :param title: title of the warning
-    - :param message: message to be displayed
-    """
-    error = QMessageBox()
-    error.setIcon(QMessageBox.Icon.Warning),
-    error.setText(message)
-    error.setWindowTitle(title)
-    error.setStandardButtons(QMessageBox.StandardButton.Ok)
-    error.setWindowIcon(self.icons['oscr'])
-    error.exec()
-
-
-def log_size_warning(self):
-    """
-    Warns user about oversized logfile.
-
-    :return: "cancel", "split dialog", "continue"
-    """
-    dialog = QMessageBox()
-    dialog.setIcon(QMessageBox.Icon.Warning)
-    message = (
-            'The combatlog file you are trying to open will impair the performance of the app '
-            'due to its size. It is advised to split the log. \n\nClick "Split Dialog" to split '
-            'the file, "Cancel" to abort combatlog analysis or "Continue" to analyze the log '
-            'nevertheless.')
-    dialog.setText(message)
-    dialog.setWindowTitle('Open Source Combalog Reader')
-    dialog.setWindowIcon(self.icons['oscr'])
-    dialog.addButton('Cancel', QMessageBox.ButtonRole.RejectRole)
-    default_button = dialog.addButton('Split Dialog', QMessageBox.ButtonRole.ActionRole)
-    dialog.addButton('Continue', QMessageBox.ButtonRole.AcceptRole)
-    dialog.setDefaultButton(default_button)
-    clicked = dialog.exec()
-    if clicked == 1:
-        return 'split dialog'
-    elif clicked == 2:
-        return 'continue'
-    else:
-        return 'cancel'
-
-
-def split_dialog(self):
-    """
-    Opens dialog to split the current logfile.
-    """
-    main_layout = QVBoxLayout()
-    thick = self.theme['app']['frame_thickness']
-    item_spacing = self.theme['defaults']['isp']
-    main_layout.setContentsMargins(thick, thick, thick, thick)
-    content_frame = create_frame(self)
-    main_layout.addWidget(content_frame)
-    current_logpath = self.entry.text()
-    vertical_layout = QVBoxLayout()
-    vertical_layout.setContentsMargins(thick, thick, thick, thick)
-    vertical_layout.setSpacing(item_spacing)
-    log_layout = QHBoxLayout()
-    log_layout.setContentsMargins(0, 0, 0, 0)
-    log_layout.setSpacing(item_spacing)
-    current_log_heading = create_label(self, 'Selected Logfile:', 'label_subhead')
-    log_layout.addWidget(current_log_heading, alignment=ALEFT)
-    current_log_label = create_label(self, format_path(current_logpath), 'label')
-    log_layout.addWidget(current_log_label, alignment=AVCENTER)
-    log_layout.addSpacerItem(QSpacerItem(1, 1, hData=SEXPAND, vData=SMAX))
-    vertical_layout.addLayout(log_layout)
-    seperator_1 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_1.setFixedHeight(self.theme['hr']['height'])
-    vertical_layout.addWidget(seperator_1)
-    grid_layout = QGridLayout()
-    grid_layout.setContentsMargins(0, 0, 0, 0)
-    grid_layout.setVerticalSpacing(0)
-    grid_layout.setHorizontalSpacing(item_spacing)
-    vertical_layout.addLayout(grid_layout)
-    auto_split_heading = create_label(self, 'Split Log Automatically:', 'label_heading')
-    grid_layout.addWidget(auto_split_heading, 0, 0, alignment=ALEFT)
-    label_text = (
-            'Automatically splits the logfile at the next combat end after '
-            f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has '
-            ' been split. The new files are written to the selected folder. It is advised to '
-            'select an empty folder to ensure all files are saved correctly.')
-    auto_split_text = create_label(self, label_text, 'label')
-    auto_split_text.setWordWrap(True)
-    auto_split_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(auto_split_text, 1, 0, alignment=ALEFT)
-    auto_split_button = create_button(self, 'Auto Split')
-    auto_split_button.clicked.connect(lambda: auto_split_callback(self, current_logpath))
-    grid_layout.addWidget(auto_split_button, 1, 2, alignment=ARIGHT | ABOTTOM)
-    grid_layout.setRowMinimumHeight(2, item_spacing)
-    seperator_3 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_3.setFixedHeight(self.theme['hr']['height'])
-    grid_layout.addWidget(seperator_3, 3, 0, 1, 3)
-    grid_layout.setRowMinimumHeight(4, item_spacing)
-    range_split_heading = create_label(self, 'Export Range of Combats:', 'label_heading')
-    grid_layout.addWidget(range_split_heading, 5, 0, alignment=ALEFT)
-    label_text = (
-            'Exports combats including and between lower and upper limit to selected file. '
-            'Both limits refer to the indexed list of all combats in the file starting with 1. '
-            'An upper limit larger than the total number of combats or of "-1", is treated as '
-            'being equal to the total number of combats.')
-    range_split_text = create_label(self, label_text, 'label')
-    range_split_text.setWordWrap(True)
-    range_split_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(range_split_text, 6, 0, alignment=ALEFT)
-    range_limit_layout = QGridLayout()
-    range_limit_layout.setContentsMargins(0, 0, 0, 0)
-    range_limit_layout.setSpacing(0)
-    range_limit_layout.setRowStretch(0, 1)
-    lower_range_label = create_label(self, 'Lower Limit:', 'label')
-    range_limit_layout.addWidget(lower_range_label, 1, 0, alignment=AVCENTER)
-    upper_range_label = create_label(self, 'Upper Limit:', 'label')
-    range_limit_layout.addWidget(upper_range_label, 2, 0, alignment=AVCENTER)
-    lower_range_entry = QLineEdit()
-    lower_validator = QIntValidator()
-    lower_validator.setBottom(1)
-    lower_range_entry.setValidator(lower_validator)
-    lower_range_entry.setText('1')
-    lower_range_entry.setStyleSheet(
-            get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
-    lower_range_entry.setFixedWidth(self.sidebar_item_width // 7)
-    range_limit_layout.addWidget(lower_range_entry, 1, 1, alignment=AVCENTER)
-    upper_range_entry = QLineEdit()
-    upper_validator = QIntValidator()
-    upper_validator.setBottom(-1)
-    upper_range_entry.setValidator(upper_validator)
-    upper_range_entry.setText('1')
-    upper_range_entry.setStyleSheet(
-            get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
-    upper_range_entry.setFixedWidth(self.sidebar_item_width // 7)
-    range_limit_layout.addWidget(upper_range_entry, 2, 1, alignment=AVCENTER)
-    grid_layout.addLayout(range_limit_layout, 6, 1)
-    range_split_button = create_button(self, 'Export Combats')
-    range_split_button.clicked.connect(
-            lambda le=lower_range_entry, ue=upper_range_entry:
-            combat_split_callback(self, current_logpath, le.text(), ue.text()))
-    grid_layout.addWidget(range_split_button, 6, 2, alignment=ARIGHT | ABOTTOM)
-
-    content_frame.setLayout(vertical_layout)
-
-    dialog = QDialog(self.window)
-    dialog.setLayout(main_layout)
-    dialog.setWindowTitle('OSCR - Split Logfile')
-    dialog.setStyleSheet(get_style(self, 'dialog_window'))
-    dialog.setSizePolicy(SMAXMAX)
-    dialog.exec()
-
-
-def auto_split_callback(self, path: str):
-    """
-    Callback for auto split button
-    """
-    folder_path = QFileDialog.getExistingDirectory(
-            self.window, 'Select Folder', os.path.dirname(path))
-    if folder_path:
-        split_log_by_lines(
-                path, folder_path, self.settings.value('split_log_after', type=int),
-                self.settings.value('combat_distance', type=int))
-
-
-def combat_split_callback(self, path: str, first_num: str, last_num: str):
-    """
-    Callback for combat split button
-    """
-    target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
-    if target_path:
-        split_log_by_combat(
-                path, target_path, int(first_num), int(last_num),
-                self.settings.value('seconds_between_combats', type=int),
-                self.settings.value('excluded_event_ids', type=list))
