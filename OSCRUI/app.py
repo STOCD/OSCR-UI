@@ -394,6 +394,10 @@ class OSCRUI():
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
             'Browse ...': {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
+            'Default': {
+                'callback': lambda: self.entry.setText(self.settings.value('sto_log_path')),
+                'align': AHCENTER
+            },
             'Scan': {'callback': lambda: self.analyze_log_callback(
                     path=self.entry.text(), parser_num=1), 'align': ARIGHT}
         }

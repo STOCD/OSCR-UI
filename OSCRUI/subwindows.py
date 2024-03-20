@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QIntValidator, QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QDialog
@@ -175,8 +177,15 @@ def live_parser_toggle(self, activate):
     - :param activate: True when parser should be shown; False when open parser should be closed.
     """
     if activate:
+        log_path = self.settings.value('sto_log_path')
+        if not log_path or not os.path.isfile(log_path):
+            show_warning(
+                    self, 'Invalid Logfile', 'Make sure to set the STO Logfile setting to '
+                    'a valid logfile before starting the live parser.')
+            self.widgets.live_parser_button.setChecked(False)
+            return
         self.live_parser = LiveParser(
-                self.settings.value('sto_log_path'),
+                log_path,
                 update_callback=lambda data: update_live_display(self, data))
         create_live_parser_window(self)
     else:

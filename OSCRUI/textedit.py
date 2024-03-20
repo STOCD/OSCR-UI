@@ -102,6 +102,8 @@ def compensate_text(text: str) -> str:
 
 
 def format_path(path: str):
+    if len(path) < 2:
+        return path
     path = path.replace(chr(92), '/')
     if path[1] == ':' and path[0] >= 'a' and path[0] <= 'z':
         path = path[0].capitalize() + path[1:]
