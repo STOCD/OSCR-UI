@@ -1,9 +1,10 @@
 from types import FunctionType, BuiltinFunctionType, MethodType
+from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QAbstractItemView, QComboBox, QFrame
 from PySide6.QtWidgets import QHBoxLayout, QHeaderView, QLabel, QLineEdit
-from PySide6.QtWidgets import QPushButton, QSizePolicy, QTableView
+from PySide6.QtWidgets import QPushButton, QSizePolicy, QSlider, QTableView
 from PySide6.QtWidgets import QTreeView, QVBoxLayout
 
 from .style import get_style, get_style_class, merge_style, theme_font
@@ -223,6 +224,8 @@ def create_combo_box(self, parent, style: str = 'combobox', style_override: dict
     else:
         combo_box.setFont(theme_font(self, style))
     combo_box.setSizePolicy(SMINMAX)
+    combo_box.setCursor(Qt.CursorShape.PointingHandCursor)
+    combo_box.view().setCursor(Qt.CursorShape.PointingHandCursor)
     return combo_box
 
 
@@ -252,6 +255,51 @@ def create_entry(
     entry.setCursor(Qt.CursorShape.IBeamCursor)
     entry.setSizePolicy(SMAXMAX)
     return entry
+
+
+def create_annotated_slider(
+        self, default_value: int = 1, min: int = 0, max: int = 3,
+        style: str = 'slider', style_override_slider: dict = {}, style_override_label: dict = {},
+        callback: Callable = lambda v: v) -> QHBoxLayout:
+    """
+    Creates Slider with label to display the current value.
+
+    Parameters:
+    - :param default_value: start value for the slider
+    - :param min: lowest value of the slider
+    - :param max: highest value of the slider
+    - :param style: key for self.theme -> default style
+    - :param style_override_slider: style dict to override default style
+    - :param style_override_label: style dict to override default style
+    - :param callback: callable to be attached to the valueChanged signal of the slider; will be
+    passed value the slider was moved to; must return value that the label should be set to
+
+    :return: layout with slider
+    """
+    def label_updater(new_value):
+        if isinstance(callback, CALLABLE):
+            new_text = callback(new_value)
+            slider_label.setText(str(new_text))
+
+    layout = QHBoxLayout()
+    layout.setContentsMargins(0, 0, 0, 3)
+    layout.setSpacing(self.theme['defaults']['margin'])
+    slider_label = create_label(
+            self, '', style, style_override=style_override_label)
+    layout.addWidget(slider_label, alignment=AVCENTER)
+    slider = QSlider(Qt.Orientation.Horizontal)
+    slider.setRange(min, max)
+    slider.setSingleStep(1)
+    slider.setPageStep(1)
+    slider.setValue(default_value)
+    slider.setTickPosition(QSlider.TickPosition.NoTicks)
+    slider.setFocusPolicy(Qt.FocusPolicy.WheelFocus)
+    slider.setSizePolicy(SMINMAX)
+    slider.setStyleSheet(get_style_class(self, 'QSlider', style, style_override_slider))
+    slider.valueChanged.connect(label_updater)
+    layout.addWidget(slider, stretch=1, alignment=AVCENTER)
+    label_updater(default_value)
+    return layout
 
 
 def resize_tree_table(tree: QTreeView):

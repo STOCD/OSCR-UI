@@ -3,7 +3,7 @@ import os
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PySide6.QtCore import QSize, QSettings
+from PySide6.QtCore import QSize, QSettings, Qt
 from PySide6.QtGui import QIntValidator
 
 from OSCR import HEAL_TREE_HEADER, LIVE_TABLE_HEADER, TABLE_HEADER, TREE_HEADER
@@ -23,8 +23,9 @@ signal(SIGINT, SIG_DFL)
 class OSCRUI():
 
     from .callbacks import browse_log, browse_sto_logpath, favorite_button_callback
-    from .callbacks import navigate_log, save_combat, set_sto_logpath_setting
-    from .callbacks import switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab
+    from .callbacks import navigate_log, save_combat, set_graph_resolution_setting
+    from .callbacks import set_sto_logpath_setting, set_parser_opacity_setting, switch_analysis_tab
+    from .callbacks import switch_main_tab, switch_map_tab, switch_overview_tab
     from .datafunctions import activate_live_parser, analyze_log_callback, copy_analysis_callback
     from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
     from .datafunctions import update_shown_columns_heal
@@ -32,9 +33,9 @@ class OSCRUI():
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
     from .subwindows import live_parser_toggle, split_dialog
-    from .widgetbuilder import create_frame, create_label, create_button_series, create_icon_button
-    from .widgetbuilder import create_analysis_table, create_button, create_combo_box, style_table
-    from .widgetbuilder import create_entry
+    from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
+    from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
+    from .widgetbuilder import create_icon_button, create_label, style_table
     from .leagueconnector import apply_league_table_filter, download_and_view_combat
     from .leagueconnector import establish_league_connection, extend_ladder, slot_ladder
     from .leagueconnector import upload_callback
@@ -995,9 +996,10 @@ class OSCRUI():
         combat_delta_entry = self.create_entry(
                 self.settings.value('seconds_between_combats', type=str),
                 combat_delta_validator, style_override={'margin-top': 0})
+        combat_delta_entry.setSizePolicy(SMIXMAX)
         combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'seconds_between_combats', combat_delta_entry.text()))
-        col_2.addWidget(combat_delta_entry, 0, 1, alignment=ALEFT)
+        col_2.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
         combat_num_label = self.create_label('Number of combats to isolate:', 'label_subhead')
         col_2.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
         combat_num_validator = QIntValidator()
@@ -1005,20 +1007,17 @@ class OSCRUI():
         combat_num_entry = self.create_entry(
                 self.settings.value('combats_to_parse', type=str), combat_num_validator,
                 style_override={'margin-top': 0})
+        combat_num_entry.setSizePolicy(SMIXMAX)
         combat_num_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'combats_to_parse', combat_num_entry.text()))
-        col_2.addWidget(combat_num_entry, 1, 1, alignment=ALEFT)
+        col_2.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
         graph_resolution_label = self.create_label(
-                'Graph resolution (data points per second):', 'label_subhead')
+                'Graph resolution (interval in seconds):', 'label_subhead')
         col_2.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
-        graph_resolution_validator = QIntValidator(1, 5)
-        default_graph_resolution = f"{1 / self.settings.value('graph_resolution', type=float):.0f}"
-        graph_resolution_entry = self.create_entry(
-                default_graph_resolution, graph_resolution_validator,
-                style_override={'margin-top': 0})
-        graph_resolution_entry.editingFinished.connect(
-                lambda: self.set_graph_resolution_setting(graph_resolution_entry.text()))
-        col_2.addWidget(graph_resolution_entry, 2, 1, alignment=ALEFT)
+        graph_resolution_layout = self.create_annotated_slider(
+                self.settings.value('graph_resolution', type=float) * 10, 1, 20,
+                callback=self.set_graph_resolution_setting)
+        col_2.addLayout(graph_resolution_layout, 2, 1, alignment=ALEFT)
         split_length_label = self.create_label('Auto Split After Lines:', 'label_subhead')
         col_2.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
         split_length_validator = QIntValidator()
@@ -1026,9 +1025,10 @@ class OSCRUI():
         split_length_entry = self.create_entry(
                 self.settings.value('split_log_after', type=str), split_length_validator,
                 style_override={'margin-top': 0})
+        split_length_entry.setSizePolicy(SMIXMAX)
         split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'split_log_after', split_length_entry.text()))
-        col_2.addWidget(split_length_entry, 3, 1, alignment=ALEFT)
+        col_2.addWidget(split_length_entry, 3, 1, alignment=AVCENTER)
         overview_sort_label = self.create_label('Sort overview table by column:', 'label_subhead')
         col_2.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
         overview_sort_combo = self.create_combo_box(
@@ -1068,6 +1068,14 @@ class OSCRUI():
                 lambda: self.set_sto_logpath_setting(sto_log_path_entry))
         col_2.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
         sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
+        opacity_label = self.create_label('Live Parser Opacity:', 'label_subhead')
+        col_2.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
+        opacity_slider_layout = self.create_annotated_slider(
+                default_value=round(self.settings.value('live_parser_opacity', type=float) * 20, 0),
+                min=1, max=20,
+                style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
+                callback=self.set_parser_opacity_setting)
+        col_2.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
 
         col_2_frame.setLayout(col_2)
 

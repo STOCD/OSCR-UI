@@ -148,18 +148,31 @@ def favorite_button_callback(self):
             self.widgets.favorite_ladder_selector.takeItem(row)
 
 
-def set_graph_resolution_setting(self, setting_text: str):
+def set_graph_resolution_setting(self, new_value: int):
     """
-    Calculates inverse of setting_text and stores it to settings.
+    Calculates new_value / 10 and stores it to settings.
 
     Parameters:
-    - :param setting_text: data points per second
+    - :param new_value: data points per second
     """
     try:
-        value = round(1 / int(setting_text), 1)
-        self.settings.setValue('graph_resolution', value)
+        setting_value = round(new_value / 10, 1)
+        self.settings.setValue('graph_resolution', setting_value)
+        return setting_value
     except (ValueError, ZeroDivisionError):
         return
+
+
+def set_parser_opacity_setting(self, new_value: int):
+    """
+    Calculates new_value / 10 and stores it to settings.
+
+    Parameters:
+    - :param new_value: data points per second
+    """
+    setting_value = f'{new_value / 20:.2f}'
+    self.settings.setValue('live_parser_opacity', setting_value)
+    return setting_value
 
 
 def set_sto_logpath_setting(self, entry: QLineEdit):

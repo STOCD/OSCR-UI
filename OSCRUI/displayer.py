@@ -157,6 +157,7 @@ def create_horizontal_bar_graph(self, table: list[list], bar_widget: PlotWidget)
     left_axis.setTickFont(theme_font(self, 'app'))
     bar_widget.setDefaultPadding(padding=0.01)
 
+    table.sort(key=lambda line: line[3], reverse=True)
     y_annotations = (tuple((index + 1, line[0] + line[1]) for index, line in enumerate(table)),)
     bar_widget.getAxis('left').setTicks(y_annotations)
     x = tuple(line[3] for line in table)
@@ -296,3 +297,4 @@ def update_live_display(self, data: dict):
         cells.append(list(player_data.values()))
     if len(index) > 0 and len(cells) > 0:
         self.widgets.live_parser_table.model().replace_data(index, cells)
+        self.widgets.live_parser_table.resizeColumnsToContents()

@@ -213,7 +213,7 @@ def create_live_parser_window(self):
             | Qt.WindowType.SubWindow
             | Qt.WindowType.FramelessWindowHint)
     live_window.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
-    live_window.setWindowOpacity(0.85)
+    live_window.setWindowOpacity(self.settings.value('live_parser_opacity', type=float))
     if self.settings.value('live_geometry'):
         live_window.restoreGeometry(self.settings.value('live_geometry'))
     live_window.closeEvent = lambda close_event: live_parser_close_callback(self, close_event)
@@ -240,7 +240,7 @@ def create_live_parser_window(self):
     table.setMinimumWidth(self.sidebar_item_width * 0.25)
     table.setMinimumHeight(self.sidebar_item_width * 0.25)
     model = LiveParserTableModel(
-            [[''] * 5] * 5, LIVE_TABLE_HEADER, [''] * 5, theme_font(self, 'live_table_header'),
+            [[''] * 7] * 5, LIVE_TABLE_HEADER, [''] * 5, theme_font(self, 'live_table_header'),
             theme_font(self, 'live_table'))
     table.setModel(model)
     for index in range(len(LIVE_TABLE_HEADER)):

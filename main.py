@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3b201'
+    version = '2024.3b202'
     __version__ = '0.0'
 
     # holds the style of the app
@@ -275,6 +275,34 @@ class Launcher():
             },
             '::item:hover': {
                 'background-color': '@loscr',
+            },
+        },
+        # horizontal sliding selector
+        'slider': {
+            'font': ('Roboto Mono', 11, 'Normal'),
+            'color': '@fg',
+            'margin-bottom': 3,
+            '::groove:horizontal': {
+                'border-style': 'none',
+                'background-color': '@lbg',
+                'border-radius': '@bw',
+                'height': 5
+            },
+            '::handle:horizontal': {
+                'border-style': 'solid',
+                'border-width': '@bw',
+                'border-color': '@bc',
+                'border-radius': '@br',
+                'background-color': '@bc',
+                'width': 8,
+                'margin-top': -7,
+                'margin-bottom': -7
+            },
+            '::handle:horizontal:hover': {
+                'border-color': '@oscr'
+            },
+            '::handle:horizontal:pressed': {
+                'background-color': '#666666'
             },
         },
         # holds sub-pages
@@ -701,6 +729,9 @@ class Launcher():
                 'live_columns|2': True,
                 'live_columns|3': False,
                 'live_columns|4': False,
+                'live_columns|5': False,
+                'live_columns|6': False,
+                'live_parser_opacity': 0.85
             }
         }
         return config
