@@ -1,11 +1,11 @@
 import os
 import sys
 
-from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER, LiveParser
+from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER
 from PySide6.QtCore import Qt, QThread, Signal
 
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
-from .displayer import create_overview, update_live_display
+from .displayer import create_overview
 from .subwindows import log_size_warning, show_warning, split_dialog
 from .textedit import format_damage_tree_data, format_heal_tree_data
 

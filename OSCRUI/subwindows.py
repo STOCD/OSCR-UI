@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QMessageBox, QSpacerItem, QTableView, QWidget
 from PySide6.QtWidgets import QVBoxLayout
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
-from .callbacks import auto_split_callback, combat_split_callback
+from .callbacks import auto_split_callback, combat_split_callback, copy_live_data_callback
 from .displayer import create_live_graph, update_live_display
 from .datamodels import LiveParserTableModel
 from .style import get_style, get_style_class, theme_font
@@ -215,7 +215,7 @@ def create_live_parser_window(self):
             | Qt.WindowType.WindowDoesNotAcceptFocus
             | Qt.WindowType.SubWindow
             | Qt.WindowType.FramelessWindowHint)
-    live_window.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+    # live_window.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
     live_window.setWindowOpacity(self.settings.value('live_parser_opacity', type=float))
     if self.settings.value('live_geometry'):
         live_window.restoreGeometry(self.settings.value('live_geometry'))
@@ -274,6 +274,7 @@ def create_live_parser_window(self):
     copy_button = copy_button = create_icon_button(
             self, self.icons['copy'], 'Copy Result', style_override={'margin-bottom': '@margin'},
             icon_size=[self.theme['s.c']['button_icon_size'] * 0.8] * 2)
+    copy_button.clicked.connect(lambda: copy_live_data_callback(self))
     bottom_layout.addWidget(copy_button, 0, 0, alignment=ARIGHT | AVCENTER)
     activate_button = FlipButton('Activate', 'Deactivate', live_window, checkable=True)
     activate_button.setStyleSheet(self.get_style_class(
