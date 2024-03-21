@@ -9,12 +9,12 @@ from PySide6.QtWidgets import QVBoxLayout
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
 from .callbacks import auto_split_callback, combat_split_callback
-from .displayer import update_live_display
+from .displayer import create_live_graph, update_live_display
 from .datamodels import LiveParserTableModel
 from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
 from .widgetbuilder import create_button, create_frame, create_icon_button, create_label
-from .widgetbuilder import ABOTTOM, ALEFT, ARIGHT, AVCENTER, RRESIZE
+from .widgetbuilder import ABOTTOM, ALEFT, ARIGHT, AVCENTER, RFIXED
 from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMIN
 from .widgets import FlipButton, SizeGrip
 
@@ -180,13 +180,16 @@ def live_parser_toggle(self, activate):
         log_path = self.settings.value('sto_log_path')
         if not log_path or not os.path.isfile(log_path):
             show_warning(
-                    self, 'Invalid Logfile', 'Make sure to set the STO Logfile setting to '
-                    'a valid logfile before starting the live parser.')
+                    self, 'Invalid Logfile', 'Make sure to set the STO Logfile setting in the '
+                    'settings tab to a valid logfile before starting the live parser.')
             self.widgets.live_parser_button.setChecked(False)
             return
-        self.live_parser = LiveParser(
-                log_path,
-                update_callback=lambda data: update_live_display(self, data))
+        FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
+        graph_active = self.settings.value('live_graph_active', type=bool)
+        data_buffer = []
+        data_field = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
+        self.live_parser = LiveParser(log_path, update_callback=lambda data: update_live_display(
+                self, data, graph_active, data_buffer, data_field))
         create_live_parser_window(self)
     else:
         try:
@@ -224,6 +227,16 @@ def create_live_parser_window(self):
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(0)
 
+    graph_colors = None
+    graph_column = None
+    if self.settings.value('live_graph_active', type=bool):
+        graph_frame, curves = create_live_graph(self)
+        layout.addWidget(graph_frame, stretch=1)
+        self.widgets.live_parser_curves = curves
+        FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
+        graph_column = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
+        graph_colors = self.theme['plot']['color_cycler'][:5]
+
     table = QTableView()
     table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
     table.setShowGrid(self.theme['s.c']['table_gridline'])
@@ -233,21 +246,22 @@ def create_live_parser_window(self):
     table.horizontalHeader().setStyleSheet(
             get_style_class(self, 'QHeaderView', 'live_table_header'))
     table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'live_table_index'))
-    table.horizontalHeader().setSectionResizeMode(RRESIZE)
-    table.verticalHeader().setSectionResizeMode(RRESIZE)
+    table.horizontalHeader().setSectionResizeMode(RFIXED)
+    table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
     table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
     table.setMinimumWidth(self.sidebar_item_width * 0.25)
     table.setMinimumHeight(self.sidebar_item_width * 0.25)
     model = LiveParserTableModel(
-            [[''] * 7] * 5, LIVE_TABLE_HEADER, [''] * 5, theme_font(self, 'live_table_header'),
-            theme_font(self, 'live_table'))
+            [[0] * len(LIVE_TABLE_HEADER)], LIVE_TABLE_HEADER, [''],
+            theme_font(self, 'live_table_header'), theme_font(self, 'live_table'),
+            legend_col=graph_column, colors=graph_colors)
     table.setModel(model)
+    table.resizeColumnsToContents()
+    table.resizeRowsToContents()
     for index in range(len(LIVE_TABLE_HEADER)):
         if not self.settings.value(f'live_columns|{index}', type=bool):
             table.hideColumn(index)
-    table.resizeColumnsToContents()
-    table.resizeRowsToContents()
     self.widgets.live_parser_table = table
     layout.addWidget(table, stretch=1)
 

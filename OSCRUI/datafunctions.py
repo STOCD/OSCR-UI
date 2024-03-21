@@ -92,17 +92,6 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
     self.widgets.overview_tabber.setCurrentIndex(0)
 
 
-def activate_live_parser(self):
-    """
-    Activates the live parser
-    """
-    live_parser = LiveParser(
-            self.settings.value('sto_log_path'), start_callback=lambda: sys.stdout.write('start\n'),
-            update_callback=lambda data: update_live_display(self, data))
-    live_thread = CustomThread(self.window, live_parser.start)
-    live_thread.start()
-
-
 def copy_summary_callback(self):
     """
     Callback to set the combat summary of the active combat to the user's clippboard

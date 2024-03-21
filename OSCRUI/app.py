@@ -26,7 +26,7 @@ class OSCRUI():
     from .callbacks import navigate_log, save_combat, set_graph_resolution_setting
     from .callbacks import set_sto_logpath_setting, set_parser_opacity_setting, switch_analysis_tab
     from .callbacks import switch_main_tab, switch_map_tab, switch_overview_tab
-    from .datafunctions import activate_live_parser, analyze_log_callback, copy_analysis_callback
+    from .datafunctions import analyze_log_callback, copy_analysis_callback
     from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
     from .datafunctions import update_shown_columns_heal
     from .displayer import create_legend_item
@@ -1076,6 +1076,28 @@ class OSCRUI():
                 style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
                 callback=self.set_parser_opacity_setting)
         col_2.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
+        live_graph_active_label = self.create_label('LiveParser Graph:', 'label_subhead')
+        col_2.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
+        live_graph_active_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        live_graph_active_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        live_graph_active_button.setFont(self.theme_font('app', '@font'))
+        live_graph_active_button.set_func_r(
+                lambda: self.settings.setValue('live_graph_active', True))
+        live_graph_active_button.set_func_l(
+                lambda: self.settings.setValue('live_graph_active', False))
+        if self.settings.value('live_graph_active', type=bool):
+            live_graph_active_button.flip()
+        col_2.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
+        live_graph_field_label = self.create_label('LiveParser Graph Field:', 'label_subhead')
+        col_2.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
+        live_graph_field_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        live_graph_field_combo.addItems(self.config['live_graph_fields'])
+        live_graph_field_combo.setCurrentIndex(self.settings.value('live_graph_field', type=int))
+        live_graph_field_combo.currentIndexChanged.connect(
+                lambda new_index: self.settings.setValue('live_graph_field', new_index))
+        col_2.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
 
         col_2_frame.setLayout(col_2)
 

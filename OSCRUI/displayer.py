@@ -9,7 +9,7 @@ from OSCR import TABLE_HEADER
 from OSCR.combat import Combat
 
 from .datamodels import OverviewTableModel, SortingProxy
-from .widgetbuilder import ACENTER, AVCENTER, SMINMIN
+from .widgetbuilder import ACENTER, AVCENTER, SMINMIN, SMIXMAX
 from .widgetbuilder import create_frame, create_label, style_table
 from .widgets import CustomPlotAxis
 from .style import get_style, theme_font
@@ -50,8 +50,7 @@ def setup_plot(plot_function: Callable) -> Callable:
         if legend_data is not None:
             legend_frame = create_legend(self, legend_data)
             inner_layout.addWidget(legend_frame, alignment=ACENTER)
-        frame = create_frame(self, None, 'plot_widget')
-        frame.setSizePolicy(SMINMIN)
+        frame = create_frame(self, None, 'plot_widget', size_policy=SMINMIN)
         frame.setLayout(inner_layout)
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(0, 0, 0, 0)
@@ -286,14 +285,76 @@ def create_overview_table(self, table_data) -> QTableView:
     return table
 
 
-def update_live_display(self, data: dict):
+def create_live_graph(self) -> tuple[QFrame, list]:
+    """
+    Creates and styles live graph.
+
+    :return: Frame containing the graph and list of curves that will be used to plot the data
+    """
+    plot_widget = PlotWidget()
+    plot_widget.setAxisItems({'left': CustomPlotAxis('left')})
+    plot_widget.setAxisItems({'bottom': CustomPlotAxis('bottom', unit='s')})
+    plot_widget.setStyleSheet(get_style(self, 'plot_widget_nullifier'))
+    plot_widget.setBackground(None)
+    plot_widget.setMouseEnabled(False, False)
+    plot_widget.setMenuEnabled(False)
+    plot_widget.hideButtons()
+    plot_widget.setDefaultPadding(padding=0)
+    plot_widget.setXRange(-9, 0, padding=0)
+    left_axis = plot_widget.getAxis('left')
+    left_axis.setTickFont(theme_font(self, 'plot_widget'))
+    left_axis.setTextPen(color=self.theme['defaults']['fg'])
+    left_axis.setTickDensity(3)
+    bottom_axis = plot_widget.getAxis('bottom')
+    bottom_axis.setTickFont(theme_font(self, 'plot_widget'))
+    bottom_axis.setTextPen(color=self.theme['defaults']['fg'])
+
+    curves = list()
+    for color_index in range(5):
+        color = self.theme['plot']['color_cycler'][color_index]
+        curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
+
+    frame = create_frame(
+            self, None, 'plot_widget', size_policy=SMIXMAX,
+            style_override={'margin-left': '@margin', 'margin-bottom': 0})
+    frame.setMinimumWidth(self.sidebar_item_width * 0.25)
+    frame.setMinimumHeight(self.sidebar_item_width * 0.25)
+    layout = QHBoxLayout()
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.addWidget(plot_widget, stretch=1)
+    frame.setLayout(layout)
+    return frame, curves
+
+
+def update_live_display(
+        self, data: dict, graph_active: bool = False, graph_data_buffer: list = [],
+        graph_data_field: int = 0):
     """
     Updates display of live parser to show the new data.
+
+    Parameters:
+    - :param data: dictionary containing the new data
+    - :param graph_active: Set to True to update the graph as well
+    - :param graph_data_buffer: contains the past graph data
     """
     index = list()
     cells = list()
     for player, player_data in data.items():
         index.append(player)
         cells.append(list(player_data.values()))
+    if graph_active:
+        if len(graph_data_buffer) == 0:
+            graph_data_buffer.extend(([0] * 10, [0] * 10, [0] * 10, [0] * 10, [0] * 10))
+        zipper = zip(graph_data_buffer, cells, self.widgets.live_parser_curves)
+        time_data = list(range(-9, 1))
+        for buffer_item, player_data, curve in zipper:
+            buffer_item.pop(0)
+            buffer_item.append(player_data[graph_data_field])
+            if len(cells) > 0:
+                curve.setData(time_data, buffer_item)
+
     if len(index) > 0 and len(cells) > 0:
-        self.widgets.live_parser_table.model().replace_data(index, cells)
+        table = self.widgets.live_parser_table
+        table.model().replace_data(index, cells)
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()

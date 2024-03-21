@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
 from PySide6.QtCore import QRect, Qt, Slot
 from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
@@ -49,6 +50,7 @@ class WidgetStorage():
 
         self.live_parser_table: QTableView
         self.live_parser_button: QPushButton
+        self.live_parser_curves: list
 
     @property
     def analysis_table(self):

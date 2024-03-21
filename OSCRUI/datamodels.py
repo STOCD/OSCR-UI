@@ -1,9 +1,10 @@
 from typing import Iterable
+import sys
 
 from OSCR import TreeItem
 from PySide6.QtCore import QAbstractItemModel, QAbstractTableModel, QItemSelectionModel
 from PySide6.QtCore import QItemSelection, QModelIndex, QSortFilterProxyModel, Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QColor, QFont
 
 ARIGHT = Qt.AlignmentFlag.AlignRight
 ALEFT = Qt.AlignmentFlag.AlignLeft
@@ -136,9 +137,29 @@ class LiveParserTableModel(TableModel):
     """
     Model for LiveParser Table
     """
+    def __init__(self, *args, legend_col=None, colors=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._legend_column = legend_col
+        if colors is not None:
+            self._colors = [QColor.fromString(color) for color in colors]
+        else:
+            self._colors = None
+
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
-            return self._data[index.row()][index.column()]
+            column = index.column()
+            data = self._data[index.row()][column]
+            if column in (0, 4):
+                return f'{data:,.2f}'
+            elif column == 1:
+                return f'{data:.1f}s'
+            elif column == 2:
+                if data == 0:
+                    return '---.--%'
+                return f'{data:,.2f}%'
+            elif column == 3:
+                return f'{data:,.2f}%'
+            return str(data)
 
         if role == Qt.ItemDataRole.FontRole:
             return self._cell_font
@@ -146,16 +167,40 @@ class LiveParserTableModel(TableModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return AVCENTER + ARIGHT
 
+        if role == Qt.ItemDataRole.DecorationRole:
+            if self._legend_column is not None and index.column() == self._legend_column:
+                row = index.row()
+                if row <= len(self._colors):
+                    return self._colors[row]
+            return None
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return self._header[section]
+
+            if orientation == Qt.Orientation.Vertical:
+                try:
+                    return self._index[section]
+                except IndexError:
+                    sys.stdout.write(f'Section:{section}|Data{self._data}|Index{self._index}\n')
+
+        if role == Qt.ItemDataRole.FontRole:
+            return self._header_font
+
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return ACENTER
+
+            if orientation == Qt.Orientation.Vertical:
+                return AVCENTER + ARIGHT
+
     def replace_data(self, index: list, rows: list):
-        current_row_count = len(self._index)
-        self.beginRemoveRows(QModelIndex(), 0, current_row_count - 1)
-        self._index = []
-        self._data = []
-        self.endRemoveRows()
-        self.beginInsertRows(QModelIndex(), 0, len(index) - 1)
+        self.beginResetModel()
         self._index = index
         self._data = rows
-        self.endInsertRows()
+        self.endResetModel()
 
 
 class SortingProxy(QSortFilterProxyModel):

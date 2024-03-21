@@ -30,8 +30,7 @@ ACENTER = Qt.AlignmentFlag.AlignCenter
 AVCENTER = Qt.AlignmentFlag.AlignVCenter
 AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
-RRESIZE = QHeaderView.ResizeMode.Fixed
-RRESIZE = QHeaderView.ResizeMode.ResizeToContents
+RFIXED = QHeaderView.ResizeMode.Fixed
 
 
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
@@ -335,7 +334,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
     table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
     table.header().setStyleSheet(get_style_class(self, 'QHeaderView', 'tree_table_header'))
-    table.header().setSectionResizeMode(RRESIZE)
+    table.header().setSectionResizeMode(RFIXED)
     table.header().setMinimumSectionSize(1)
     table.header().setSectionsClickable(True)
     table.header().setStretchLastSection(False)
@@ -365,8 +364,8 @@ def style_table(self, table: QTableView, style_override: dict = {}, single_row_s
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
     table.horizontalHeader().setSortIndicatorShown(False)
-    table.horizontalHeader().setSectionResizeMode(RRESIZE)
-    table.verticalHeader().setSectionResizeMode(RRESIZE)
+    table.horizontalHeader().setSectionResizeMode(RFIXED)
+    table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
     if single_row_selection:
         table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)

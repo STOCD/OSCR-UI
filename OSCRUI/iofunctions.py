@@ -24,11 +24,11 @@ def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', s
     Format: "<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]"
     Example: "Logfile (*.log);;Any File (*.*)"
     """
-    if default_path is None:
-        default_path = self.settings.value('base_path')
+    if default_path is None or default_path == '':
+        default_path = self.app_dir
     default_path = os.path.abspath(default_path)
     if not os.path.exists(default_path):
-        default_path = self.settings.value('base_path')
+        default_path = self.app_dir
     if save:
         f = QFileDialog.getSaveFileName(self.window, 'Save Log', default_path, types)[0]
     else:

@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3b203'
+    version = '2024.3b210'
     __version__ = '0.0'
 
     # holds the style of the app
@@ -674,6 +674,7 @@ class Launcher():
             'link_downloads': 'https://github.com/STOCD/OSCR-UI/releases',
             'link_stobuilds': 'https://discord.gg/stobuilds',
             'link_stocd': 'https://github.com/STOCD',
+            'live_graph_fields': ('DPS', 'Debuff', 'Attacks-in Share', 'HPS'),
             'default_settings': {
                 'log_path': '',
                 'sto_log_path': '',
@@ -731,7 +732,9 @@ class Launcher():
                 'live_columns|4': False,
                 'live_columns|5': False,
                 'live_columns|6': False,
-                'live_parser_opacity': 0.85
+                'live_parser_opacity': 0.85,
+                'live_graph_active': False,
+                'live_graph_field': 0
             }
         }
         return config

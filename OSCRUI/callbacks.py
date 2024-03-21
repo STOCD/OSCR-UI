@@ -16,12 +16,12 @@ def browse_log(self, entry: QLineEdit):
     """
     current_path = entry.text()
     if current_path != '':
-        path = self.browse_path(
-                os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
-        if path != '':
-            entry.setText(format_path(path))
-            if self.settings.value('auto_scan', type=bool):
-                self.analyze_log_callback(path=path, parser_num=1)
+        current_path = os.path.dirname(current_path)
+    path = self.browse_path(current_path, 'Logfile (*.log);;Any File (*.*)')
+    if path != '':
+        entry.setText(format_path(path))
+        if self.settings.value('auto_scan', type=bool):
+            self.analyze_log_callback(path=path, parser_num=1)
 
 
 def save_combat(self, combat_num: int):
