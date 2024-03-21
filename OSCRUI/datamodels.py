@@ -170,7 +170,7 @@ class LiveParserTableModel(TableModel):
         if role == Qt.ItemDataRole.DecorationRole:
             if self._legend_column is not None and index.column() == self._legend_column:
                 row = index.row()
-                if row <= len(self._colors):
+                if row < len(self._colors):
                     return self._colors[row]
             return None
 
