@@ -294,7 +294,7 @@ class SizeGrip(QSizeGrip):
         event.accept()
 
 
-class LiveParserWindow(QWidget):
+class LiveParserWindow(QFrame):
     """
     Subclass of QWidget providing two custom signals: update_table and update_graph
     """

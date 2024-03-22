@@ -211,7 +211,7 @@ def live_parser_toggle(self, activate):
 
 def create_live_parser_window(self):
     live_window = LiveParserWindow()
-    live_window.setStyleSheet(self.get_style('live_parser'))
+    live_window.setStyleSheet(get_style(self, 'live_parser'))
     live_window.setWindowFlags(
             live_window.windowFlags()
             | Qt.WindowType.WindowStaysOnTopHint
