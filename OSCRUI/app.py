@@ -3,8 +3,8 @@ import os
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PySide6.QtCore import QSize, QSettings, Qt
-from PySide6.QtGui import QIntValidator
+from PySide6.QtCore import QSize, QSettings
+from PySide6.QtGui import QFontDatabase, QIntValidator
 
 from OSCR import HEAL_TREE_HEADER, LIVE_TABLE_HEADER, TABLE_HEADER, TREE_HEADER
 
@@ -186,6 +186,12 @@ class OSCRUI():
         :return: QApplication, QWidget
         """
         app = QApplication(argv)
+        font_database = QFontDatabase()
+        font_database.addApplicationFont(get_asset_path('Overpass-Bold.ttf', self.app_dir))
+        font_database.addApplicationFont(get_asset_path('Overpass-Medium.ttf', self.app_dir))
+        font_database.addApplicationFont(get_asset_path('Overpass-Regular.ttf', self.app_dir))
+        font_database.addApplicationFont(get_asset_path('RobotoMono-Regular.ttf', self.app_dir))
+        font_database.addApplicationFont(get_asset_path('RobotoMono-Medium.ttf', self.app_dir))
         app.setStyleSheet(self.create_style_sheet(self.theme['app']['style']))
         window = QWidget()
         window.setWindowIcon(load_icon('oscr_icon_small.png', self.app_dir))
