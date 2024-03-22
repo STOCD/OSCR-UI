@@ -1,7 +1,6 @@
 import numpy as np
-import sys
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
-from PySide6.QtCore import QRect, Qt, Slot
+from PySide6.QtCore import QRect, Qt, Signal, Slot
 from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
 from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QTableView
 from PySide6.QtWidgets import QTabWidget, QTreeView, QWidget
@@ -293,3 +292,11 @@ class SizeGrip(QSizeGrip):
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         super().mouseMoveEvent(event)
         event.accept()
+
+
+class LiveParserWindow(QWidget):
+    """
+    Subclass of QWidget providing two custom signals: update_table and update_graph
+    """
+    update_table = Signal(tuple)
+    update_graph = Signal(list)

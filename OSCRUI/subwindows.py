@@ -4,19 +4,19 @@ from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QIntValidator, QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QDialog
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit
-from PySide6.QtWidgets import QMessageBox, QSpacerItem, QTableView, QWidget
+from PySide6.QtWidgets import QMessageBox, QSpacerItem, QTableView
 from PySide6.QtWidgets import QVBoxLayout
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
 from .callbacks import auto_split_callback, combat_split_callback, copy_live_data_callback
-from .displayer import create_live_graph, update_live_display
+from .displayer import create_live_graph, update_live_display, update_live_graph, update_live_table
 from .datamodels import LiveParserTableModel
 from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
 from .widgetbuilder import create_button, create_frame, create_icon_button, create_label
 from .widgetbuilder import ABOTTOM, ALEFT, ARIGHT, AVCENTER, RFIXED
 from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMIN
-from .widgets import FlipButton, SizeGrip
+from .widgets import FlipButton, LiveParserWindow, SizeGrip
 
 
 def show_warning(self, title: str, message: str):
@@ -200,6 +200,9 @@ def live_parser_toggle(self, activate):
             self.live_parser.stop()
         except AttributeError:
             pass
+        self.live_parser_window.update_table.disconnect()
+        self.live_parser_window.update_graph.disconnect()
+        self.live_parser_window.deleteLater()
         self.live_parser_window = None
         self.live_parser = None
         self.widgets.live_parser_table = None
@@ -207,7 +210,7 @@ def live_parser_toggle(self, activate):
 
 
 def create_live_parser_window(self):
-    live_window = QWidget()
+    live_window = LiveParserWindow()
     live_window.setStyleSheet(self.get_style('live_parser'))
     live_window.setWindowFlags(
             live_window.windowFlags()
@@ -296,8 +299,10 @@ def create_live_parser_window(self):
 
     layout.addLayout(bottom_layout)
     live_window.setLayout(layout)
-    live_window.show()
+    live_window.update_table.connect(lambda data: update_live_table(self, data))
+    live_window.update_graph.connect(update_live_graph)
     self.live_parser_window = live_window
+    live_window.show()
 
 
 def live_parser_close_callback(self, event):

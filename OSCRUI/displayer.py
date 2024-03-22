@@ -3,7 +3,7 @@ from typing import Callable, Iterable
 import numpy as np
 from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 
 from OSCR import TABLE_HEADER
 from OSCR.combat import Combat
@@ -339,6 +339,7 @@ def update_live_display(
     """
     index = list()
     cells = list()
+    curves = list()
     for player, player_data in data.items():
         index.append(player)
         cells.append(list(player_data.values()))
@@ -346,15 +347,40 @@ def update_live_display(
         if len(graph_data_buffer) == 0:
             graph_data_buffer.extend(([0] * 10, [0] * 10, [0] * 10, [0] * 10, [0] * 10))
         zipper = zip(graph_data_buffer, cells, self.widgets.live_parser_curves)
-        time_data = list(range(-9, 1))
         for buffer_item, player_data, curve in zipper:
             buffer_item.pop(0)
             buffer_item.append(player_data[graph_data_field])
-            if len(cells) > 0:
-                curve.setData(time_data, buffer_item)
+            curves.append((curve, buffer_item))
+        if len(curves) > 0:
+            self.live_parser_window.update_graph.emit(curves)
 
     if len(index) > 0 and len(cells) > 0:
-        table = self.widgets.live_parser_table
-        table.model().replace_data(index, cells)
-        table.resizeColumnsToContents()
-        table.resizeRowsToContents()
+        self.live_parser_window.update_table.emit((index, cells))
+
+
+@Slot()
+def update_live_table(self, data: tuple):
+    """
+    Updates the table of the live parser with the supplied data
+
+    Parameters:
+    - :param data: tuple containing two lists, that contain the index and cell values respectively
+    """
+    table = self.widgets.live_parser_table
+    table.model().replace_data(*data)
+    table.resizeColumnsToContents()
+    table.resizeRowsToContents()
+
+
+@Slot()
+def update_live_graph(curve_data: list):
+    """
+    Updates the graph of the live parser with the supplied data
+
+    Parameters:
+    - :param curve_data: list containing pairs of curve items and data lists; curve items will be
+    updated with the data
+    """
+    time_data = list(range(-9, 1))
+    for curve, data_points in curve_data:
+        curve.setData(time_data, data_points)
