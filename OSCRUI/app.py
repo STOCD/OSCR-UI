@@ -1064,8 +1064,9 @@ class OSCRUI():
         if self.settings.value('auto_scan', type=bool):
             auto_scan_button.flip()
         col_2.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
-        sto_log_path_button = self.create_button(
-                'STO Logfile:', style_override={'margin': 0, 'font': '@subhead'})
+        sto_log_path_button = self.create_button('STO Logfile:', style_override={
+                'margin': 0, 'font': '@subhead', 'border-color': '@bc', 'border-style': 'solid',
+                'border-width': '@bw'})
         col_2.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
         sto_log_path_entry = self.create_entry(
                 self.settings.value('sto_log_path'), style_override={'margin-top': 0})

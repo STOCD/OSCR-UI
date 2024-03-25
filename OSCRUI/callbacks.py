@@ -240,6 +240,6 @@ def copy_live_data_callback(self):
         visible_columns.append(self.settings.value(f'live_columns|{i}', type=bool))
     output = list()
     for player_name, row in zip(index_data, cell_data):
-        output.append(f"{player_name}: {row[0]:,.2f}")
-    output = '< OSCR > DPS: ' + ' | '.join(output)
+        output.append(f"{player_name}: {row[0]:,.2f} ({row[1]:.1f}s)")
+    output = '< OSCR > DPS (Combat time): ' + ' | '.join(output)
     self.app.clipboard().setText(output)
