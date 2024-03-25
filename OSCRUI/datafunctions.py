@@ -100,10 +100,14 @@ def copy_summary_callback(self):
     if not self.parser1.active_combat:
         return
 
+    duration = self.parser1.active_combat.duration
+    duration = f"{duration.total_seconds()/60:02.0f}:{duration.total_seconds()%60:02.0f}"
+
     parts = [
         "OSCR",
         f"{self.parser1.active_combat.map}",
         f"{self.parser1.active_combat.difficulty}",
+        duration,
         "DPS",
     ]
     players = sorted(
