@@ -152,6 +152,13 @@ class OSCRUI():
                 settings[setting_key] = setting
         settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
+    
+    @property
+    def live_parser_settings(self) -> dict:
+        """
+        Returns settings relevant to the LiveParser
+        """
+        return {'seconds_between_combats': self.settings.value('seconds_between_combats', type=int)}
 
     @property
     def sidebar_item_width(self) -> int:
