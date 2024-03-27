@@ -122,6 +122,10 @@ def switch_main_tab(self, tab_index: int):
     }
     self.widgets.main_tabber.setCurrentIndex(tab_index)
     self.widgets.sidebar_tabber.setCurrentIndex(SIDEBAR_TAB_CONVERSION[tab_index])
+    if tab_index == 0:
+        self.widgets.overview_table_button.show()
+    else:
+        self.widgets.overview_table_button.hide()
 
 
 def favorite_button_callback(self):
@@ -243,3 +247,17 @@ def copy_live_data_callback(self):
         output.append(f"{player_name}: {row[0]:,.2f} ({row[1]:.1f}s)")
     output = '< OSCR > DPS (Combat time): ' + ' | '.join(output)
     self.app.clipboard().setText(output)
+
+
+def expand_overview_table(self):
+    """
+    Shows the overview table
+    """
+    self.widgets.overview_table_frame.show()
+
+
+def collapse_overview_table(self):
+    """
+    Hides the overview table
+    """
+    self.widgets.overview_table_frame.hide()

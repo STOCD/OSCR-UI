@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3b260'
+    version = '2024.3b270'
     __version__ = '0.1'
 
     # holds the style of the app
@@ -53,7 +53,7 @@ class Launcher():
                 # top left corner of table
                 'QTableCornerButton::section': {
                     'background-color': '#1a1a1a'
-                }
+                },
             }
         },
         # shortcuts, @bg -> means bg in this sub-dictionary
@@ -195,10 +195,21 @@ class Launcher():
             'background': 'none',
             'border': 'none',
             'border-radius': 3,
-            'margin': (4, 2, 1, 4),
+            'margin': 0,
             'padding': (2, 0, 2, 0),
             ':hover': {
                 'background-color': 'rgba(136,136,136,.2)'
+            },
+            # Tooltip
+            '~QToolTip': {
+                'background-color': '@mbg',
+                'border-style': 'solid',
+                'border-color': '@lbg',
+                'border-width': '@bw',
+                'padding': (0, 0, 0, 0),
+                'margin': (0, 0, 0, 0),
+                'color': '@fg',
+                'font': 'Overpass'
             }
         },
         # button that holds icon
@@ -354,7 +365,7 @@ class Launcher():
             'border-color': '@bc',
             'gridline-color': 'rgba(0,0,0,0)',  # -> s.c: table_gridline
             'outline': '0',  # removes dotted line around clicked item
-            'margin': (0, 10, 10, 0),
+            'margin': (0, 0, 10, 0),
             'font': ('Roboto Mono', 12, 'Medium'),
             '::item': {
                 'padding': (0, 5, 0, 5),
@@ -444,7 +455,7 @@ class Launcher():
             'background-color': '@bg',
             'alternate-background-color': '@mbg',
             'color': '@fg',
-            'margin': (10, 10, 10, 0),
+            'margin': (5, 0, 15, 0),
             'outline': '0',  # removes dotted line around clicked item
             'font': ('Overpass', 12, 'Normal'),
             '::item': {
@@ -544,7 +555,7 @@ class Launcher():
             'border-style': 'solid',
             'border-width': '@bw',
             'border-color': '@bc',
-            'margin': (10, 10, 10, 0),
+            'margin': (10, 0, 10, 0),
             'padding': 10,
             'font': ('Overpass', 10, 'bold')
         },
@@ -650,6 +661,8 @@ class Launcher():
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
+            'overview_graph_stretch': 12,
+            'overview_table_stretch': 3
         }
     }
 
@@ -734,7 +747,8 @@ class Launcher():
                 'live_columns|6': False,
                 'live_parser_opacity': 0.85,
                 'live_graph_active': False,
-                'live_graph_field': 0
+                'live_graph_field': 0,
+                'first_overview_tab': 0,
             }
         }
         return config

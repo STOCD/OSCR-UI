@@ -54,13 +54,12 @@ def setup_plot(plot_function: Callable) -> Callable:
         frame.setLayout(inner_layout)
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(0, 0, 0, 0)
-        # if stretch ever needs to be variable, create argument for decorator
-        outer_layout.addWidget(frame, stretch=11)
+        outer_layout.addWidget(frame)
         return outer_layout
     return plot_wrapper
 
 
-def _create_overview(combat: Combat) -> tuple:
+def extract_overview_data(combat: Combat) -> tuple:
     '''
     converts dictionary containing player data to table data for the front page
     '''
@@ -88,8 +87,10 @@ def create_overview(self):
     for frame in self.widgets.overview_tab_frames:
         if frame.layout():
             QWidget().setLayout(frame.layout())
+    if self.widgets.overview_table_frame.layout():
+        QWidget().setLayout(self.widgets.overview_table_frame.layout())
 
-    time_data, DPS_graph_data, DMG_graph_data, current_table = _create_overview(
+    time_data, DPS_graph_data, DMG_graph_data, current_table = extract_overview_data(
             self.parser1.active_combat)
 
     line_layout = create_line_graph(self, DPS_graph_data, time_data)
@@ -101,8 +102,15 @@ def create_overview(self):
     bar_layout = create_horizontal_bar_graph(self, current_table)
     self.widgets.overview_tab_frames[0].setLayout(bar_layout)
 
-    tbl = create_overview_table(self, current_table)
-    bar_layout.addWidget(tbl, stretch=4)
+    table_layout = QVBoxLayout()
+    table_layout.setContentsMargins(0, 0, 0 ,0)
+    table = create_overview_table(self, current_table)
+    table_layout.addWidget(table)
+    self.widgets.overview_table_frame.setLayout(table_layout)
+    table.resizeColumnsToContents()
+    horizontal_header = table.horizontalHeader()
+    for col in range(len(TABLE_HEADER)):
+        horizontal_header.resizeSection(col, horizontal_header.sectionSize(col) + 5)
 
 
 @setup_plot
@@ -275,8 +283,6 @@ def create_overview_table(self, table_data) -> QTableView:
     table = QTableView(self.widgets.overview_tab_frames[0])
     table.setModel(sort)
     style_table(self, table)
-    for col in range(len(model._header)):
-        table.horizontalHeader().resizeSection(col, table.horizontalHeader().sectionSize(col) + 5)
     if self.settings.value('overview_sort_order') == 'Descending':
         sort_order = Qt.SortOrder.AscendingOrder
     else:

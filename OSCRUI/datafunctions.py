@@ -4,6 +4,7 @@ import sys
 from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER
 from PySide6.QtCore import Qt, QThread, Signal
 
+from .callbacks import switch_main_tab, switch_overview_tab
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
 from .displayer import create_overview
 from .subwindows import log_size_warning, show_warning, split_dialog
@@ -88,8 +89,8 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
     create_overview(self)
 
     # reset tabber
-    self.widgets.main_tabber.setCurrentIndex(0)
-    self.widgets.overview_tabber.setCurrentIndex(0)
+    switch_main_tab(self, 0)
+    switch_overview_tab(self, self.settings.value('first_overview_tab', type=int))
 
 
 def copy_summary_callback(self):
