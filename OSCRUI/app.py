@@ -84,8 +84,9 @@ class OSCRUI():
         self.window.show()
         if self.settings.value('auto_scan', type=bool):
             QTimer.singleShot(
-                    100, self.window,
-                    lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1))
+                    100,
+                    lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1)
+            )
 
     def run(self) -> int:
         """
