@@ -28,6 +28,8 @@ class WidgetStorage():
         self.overview_menu_buttons: list[QPushButton] = list()
         self.overview_tabber: QTabWidget
         self.overview_tab_frames: list[QFrame] = list()
+        self.overview_table_frame: QFrame
+        self.overview_table_button: FlipButton
 
         self.analysis_menu_buttons: list[QPushButton] = list()
         self.analysis_copy_combobox: QComboBox
@@ -71,27 +73,31 @@ class FlipButton(QPushButton):
         self._r_text = r_text
         self._l_text = l_text
         self.setText(r_text)
-        self._r_function = self._f
-        self._l_function = self._f
+        self.r_function = self._f
+        self.l_function = self._f
         self._r_icon = None
         self._l_icon = None
+        self._r_tooltip = ''
+        self._l_tooltip = ''
         self.clicked.connect(self.flip)
 
     @Slot()
     def flip(self):
         if self._r:
-            self._r_function()
+            self.r_function()
             if self._l_icon is not None:
                 self.setIcon(self._l_icon)
             self.setText(self._l_text)
+            self.setToolTip(self._l_tooltip)
             self._r = not self._r
             if self._checkable:
                 self.setChecked(True)
         else:
-            self._l_function()
+            self.l_function()
             if self._r_icon is not None:
                 self.setIcon(self._r_icon)
             self.setText(self._r_text)
+            self.setToolTip(self._r_tooltip)
             self._r = not self._r
             if self._checkable:
                 self.setChecked(False)
@@ -116,17 +122,23 @@ class FlipButton(QPushButton):
         if not self._r:
             self.setText(text)
 
-    def set_func_r(self, func):
-        self._r_function = func
+    def set_tooltip_r(self, text):
+        self._r_tooltip = text
+        if self._r:
+            self.setToolTip(text)
 
-    def set_func_l(self, func):
-        self._l_function = func
+    def set_tooltip_l(self, text):
+        self._l_tooltip = text
+        if not self._r:
+            self.setToolTip(text)
 
     def configure(self, settings):
         self.set_icon_r(settings['icon_r'])
         self.set_icon_l(settings['icon_l'])
-        self.set_func_r(settings['func_r'])
-        self.set_func_l(settings['func_l'])
+        self.r_function = settings['func_r']
+        self.l_function = settings['func_l']
+        self.set_tooltip_r(settings['tooltip_r'])
+        self.set_tooltip_l(settings['tooltip_l'])
 
     def _f(self):
         return

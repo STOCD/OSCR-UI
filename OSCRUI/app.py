@@ -22,10 +22,11 @@ signal(SIGINT, SIG_DFL)
 
 class OSCRUI():
 
-    from .callbacks import browse_log, browse_sto_logpath, favorite_button_callback
-    from .callbacks import navigate_log, save_combat, set_graph_resolution_setting
-    from .callbacks import set_sto_logpath_setting, set_parser_opacity_setting, switch_analysis_tab
-    from .callbacks import switch_main_tab, switch_map_tab, switch_overview_tab
+    from .callbacks import (
+            browse_log, browse_sto_logpath, collapse_overview_table, expand_overview_table,
+            favorite_button_callback, navigate_log, save_combat, set_graph_resolution_setting,
+            set_sto_logpath_setting, set_parser_opacity_setting, switch_analysis_tab,
+            switch_main_tab, switch_map_tab, switch_overview_tab)
     from .datafunctions import analyze_log_callback, copy_analysis_callback
     from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
     from .datafunctions import update_shown_columns_heal
@@ -112,7 +113,11 @@ class OSCRUI():
             'star': 'star.svg',
             'stocd': 'section31badge.png',
             'stobuilds': 'stobuildslogo.png',
-            'close': 'close.svg'
+            'close': 'close.svg',
+            'expand-top': 'expand-top.svg',
+            'collapse-top': 'collapse-top.svg',
+            'expand-bottom': 'expand-bottom.svg',
+            'collapse-bottom': 'collapse-bottom.svg',
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -152,6 +157,13 @@ class OSCRUI():
                 settings[setting_key] = setting
         settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
+    
+    @property
+    def live_parser_settings(self) -> dict:
+        """
+        Returns settings relevant to the LiveParser
+        """
+        return {'seconds_between_combats': self.settings.value('seconds_between_combats', type=int)}
 
     @property
     def sidebar_item_width(self) -> int:
@@ -227,22 +239,45 @@ class OSCRUI():
         right.hide()
         content_layout.addWidget(right, 0, 4)
 
+        csp = self.theme['defaults']['csp']
+        col_1 = QVBoxLayout()
+        col_1.setContentsMargins(csp, csp, csp, csp)
+        content_layout.addLayout(col_1, 0, 1)
+        col_3 = QVBoxLayout()
+        col_3.setContentsMargins(csp, csp, csp, csp)
+        content_layout.addLayout(col_3, 0, 3)
         icon_size = self.theme['s.c']['button_icon_size']
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
-            'icon_l': self.icons['expand-left'], 'func_l': left.show
+            'icon_l': self.icons['expand-left'], 'func_l': left.show,
+            'tooltip_r': 'Collapse Sidebar', 'tooltip_l': 'Expand Sidebar'
         }
         right_flip_config = {
             'icon_r': self.icons['expand-right'], 'func_r': right.show,
-            'icon_l': self.icons['collapse-right'], 'func_l': right.hide
+            'icon_l': self.icons['collapse-right'], 'func_l': right.hide,
+            'tooltip_r': 'Expand', 'tooltip_l': 'Collapse'
         }
-        for col, config in ((1, left_flip_config), (3, right_flip_config)):
+        for col, config in ((col_1, left_flip_config), (col_3, right_flip_config)):
             flip_button = FlipButton('', '', main_frame)
             flip_button.configure(config)
             flip_button.setIconSize(QSize(icon_size, icon_size))
             flip_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
             flip_button.setSizePolicy(SMAXMAX)
-            content_layout.addWidget(flip_button, 0, col, alignment=ATOP)
+            col.addWidget(flip_button, alignment=ATOP)
+
+        table_flip_config = {
+            'icon_r': self.icons['collapse-bottom'], 'tooltip_r': 'Collapse Table',
+            'func_r': self.collapse_overview_table,
+            'icon_l': self.icons['expand-bottom'], 'tooltip_l': 'Expand_Table',
+            'func_l': self.expand_overview_table
+        }
+        table_button = FlipButton('', '', main_frame)
+        table_button.configure(table_flip_config)
+        table_button.setIconSize(QSize(icon_size, icon_size))
+        table_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
+        table_button.setSizePolicy(SMAXMAX)
+        col_1.addWidget(table_button, alignment=ABOTTOM)
+        self.widgets.overview_table_button = table_button
 
         center = self.create_frame(main_frame, 'frame')
         center.setSizePolicy(SMINMIN)
@@ -613,9 +648,9 @@ class OSCRUI():
         Sets up the frame housing the combatlog overview
         """
         o_frame = self.widgets.main_tab_frames[0]
-        bar_frame = self.create_frame(None, 'frame')
-        dps_graph_frame = self.create_frame(None, 'frame')
-        dmg_graph_frame = self.create_frame(None, 'frame')
+        bar_frame = self.create_frame()
+        dps_graph_frame = self.create_frame()
+        dmg_graph_frame = self.create_frame()
         self.widgets.overview_tab_frames.append(bar_frame)
         self.widgets.overview_tab_frames.append(dps_graph_frame)
         self.widgets.overview_tab_frames.append(dmg_graph_frame)
@@ -632,7 +667,7 @@ class OSCRUI():
         o_tabber.addTab(bar_frame, 'BAR')
         o_tabber.addTab(dps_graph_frame, 'DPS')
         o_tabber.addTab(dmg_graph_frame, 'DMG')
-        layout.addWidget(o_tabber)
+        layout.addWidget(o_tabber, stretch=self.theme['s.c']['overview_graph_stretch'])
 
         switch_layout.setColumnStretch(0, 1)
         switch_frame = self.create_frame(o_frame, 'frame')
@@ -654,7 +689,7 @@ class OSCRUI():
         switch_frame.setLayout(switcher)
         self.widgets.overview_menu_buttons = buttons
         icon_layout = QHBoxLayout()
-        icon_layout.setContentsMargins(0, 0, self.theme['defaults']['margin'], 0)
+        icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Result')
         copy_button.clicked.connect(self.copy_summary_callback)
@@ -664,6 +699,9 @@ class OSCRUI():
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
+        table_frame = self.create_frame(size_policy=SMINMIN)
+        layout.addWidget(table_frame, stretch=self.theme['s.c']['overview_table_stretch'])
+        self.widgets.overview_table_frame = table_frame
         o_frame.setLayout(layout)
         self.widgets.overview_tabber = o_tabber
 
@@ -720,7 +758,7 @@ class OSCRUI():
         switch_frame.setLayout(switcher)
         self.widgets.analysis_menu_buttons = buttons
         copy_layout = QHBoxLayout()
-        copy_layout.setContentsMargins(0, 0, self.theme['defaults']['margin'], 0)
+        copy_layout.setContentsMargins(0, 0, 0, 0)
         copy_layout.setSpacing(self.theme['defaults']['csp'])
         copy_combobox = self.create_combo_box(switch_frame)
         copy_combobox.addItems(('Selection', 'Max One Hit', 'Magnitude', 'Magnitude / s'))
@@ -816,7 +854,7 @@ class OSCRUI():
         layout.setSpacing(0)
 
         ladder_table = QTableView(l_frame)
-        self.style_table(ladder_table, {'margin': '@margin'}, single_row_selection=True)
+        self.style_table(ladder_table, {'margin-top': '@isp'}, single_row_selection=True)
         self.widgets.ladder_table = ladder_table
         layout.addWidget(ladder_table, stretch=1)
 
@@ -1059,13 +1097,14 @@ class OSCRUI():
         auto_scan_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         auto_scan_button.setFont(self.theme_font('app', '@font'))
-        auto_scan_button.set_func_r(lambda: self.settings.setValue('auto_scan', True))
-        auto_scan_button.set_func_l(lambda: self.settings.setValue('auto_scan', False))
+        auto_scan_button.r_function = lambda: self.settings.setValue('auto_scan', True)
+        auto_scan_button.l_function = lambda: self.settings.setValue('auto_scan', False)
         if self.settings.value('auto_scan', type=bool):
             auto_scan_button.flip()
         col_2.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
-        sto_log_path_button = self.create_button(
-                'STO Logfile:', style_override={'margin': 0, 'font': '@subhead'})
+        sto_log_path_button = self.create_button('STO Logfile:', style_override={
+                'margin': 0, 'font': '@subhead', 'border-color': '@bc', 'border-style': 'solid',
+                'border-width': '@bw'})
         col_2.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
         sto_log_path_entry = self.create_entry(
                 self.settings.value('sto_log_path'), style_override={'margin-top': 0})
@@ -1088,9 +1127,9 @@ class OSCRUI():
         live_graph_active_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_graph_active_button.setFont(self.theme_font('app', '@font'))
-        live_graph_active_button.set_func_r(
+        live_graph_active_button.r_function = (
                 lambda: self.settings.setValue('live_graph_active', True))
-        live_graph_active_button.set_func_l(
+        live_graph_active_button.l_function = (
                 lambda: self.settings.setValue('live_graph_active', False))
         if self.settings.value('live_graph_active', type=bool):
             live_graph_active_button.flip()
@@ -1104,6 +1143,16 @@ class OSCRUI():
         live_graph_field_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('live_graph_field', new_index))
         col_2.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
+        overview_tab_label = self.create_label('Default Overview Tab:', 'label_subhead')
+        col_2.addWidget(overview_tab_label, 11, 0, alignment=ARIGHT)
+        overview_tab_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        overview_tab_combo.addItems(('DPS Bar', 'DPS Graph', 'Damage Graph'))
+        overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
+        overview_tab_combo.currentIndexChanged.connect(
+            lambda new_index: self.settings.setValue('first_overview_tab', new_index))
+        col_2.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
+        
 
         col_2_frame.setLayout(col_2)
 

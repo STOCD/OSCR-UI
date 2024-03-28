@@ -189,7 +189,8 @@ def live_parser_toggle(self, activate):
         data_buffer = []
         data_field = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
         self.live_parser = LiveParser(log_path, update_callback=lambda data: update_live_display(
-                self, data, graph_active, data_buffer, data_field))
+                self, data, graph_active, data_buffer, data_field),
+                settings=self.live_parser_settings)
         create_live_parser_window(self)
     else:
         try:

@@ -185,6 +185,8 @@ def upload_callback(self):
     """
     Helper function to grab the current combat and upload it to the backend.
     """
+    show_warning(self, 'OSCR', 'Uploads are temporarily disabled.')
+    return
     if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
         show_warning(self, 'OSCR - Logfile Upload', 'No data to upload.')
         return
