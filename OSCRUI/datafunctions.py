@@ -299,7 +299,7 @@ def copy_analysis_callback(self):
                 output.append(f"{formatted_row_name}: {' | '.join(formatted_row)}")
             output_string = '\n'.join(output)
             self.app.clipboard().setText(output_string)
-    elif copy_mode == 'Max One Hit':
+    elif copy_mode == 'Global Max One Hit':
         if current_tab <= 1:
             max_one_hit_col = 4
             prefix = 'Max One Hit'
@@ -319,6 +319,27 @@ def copy_analysis_callback(self):
                          f'({"".join(max_one_hit_item.get_data(0))} – '
                          f'{max_one_hit_ability})')
         self.app.clipboard().setText(output_string)
+    elif copy_mode == 'Max One Hit':
+        if current_tab <= 1:
+            max_one_hit_col = 4
+            prefix = 'Max One Hit'
+        else:
+            max_one_hit_col = 7
+            prefix = 'Max One Heal'
+        selection = current_table.selectedIndexes()
+        if selection:
+            selected_row = selection[0].internalPointer()
+            if selected_row._children:
+                max_one_hit_item = max(
+                        selected_row._children, key=lambda child: child.get_data(max_one_hit_col))
+                max_one_hit = max_one_hit_item.get_data(max_one_hit_col)
+                max_one_hit_ability = max_one_hit_item.get_data(0)
+                if isinstance(max_one_hit_ability, tuple):
+                    max_one_hit_ability = ''.join(max_one_hit_ability)
+                output_string = (f'< OSCR > {prefix}: {max_one_hit:,.2f} '
+                                 f'({"".join(selected_row.get_data(0))} – '
+                                 f'{max_one_hit_ability})')
+                self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude':
         if current_tab == 0:
             prefix = 'Total Damage Out'
