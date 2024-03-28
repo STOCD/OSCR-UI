@@ -284,8 +284,8 @@ def create_live_parser_window(self):
     activate_button.setStyleSheet(self.get_style_class(
             'QPushButton', 'toggle_button', {'margin': (1, 8, 10, 8)}))
     activate_button.setFont(self.theme_font('app', '@subhead'))
-    activate_button.set_func_r(lambda: self.live_parser.start())
-    activate_button.set_func_l(lambda: self.live_parser.stop())
+    activate_button.r_function = lambda: self.live_parser.start()
+    activate_button.l_function = lambda: self.live_parser.stop()
     bottom_layout.addWidget(activate_button, 0, 1, alignment=AVCENTER)
     close_button = create_icon_button(
             self, self.icons['close'], 'Close Live Parser',
