@@ -3,7 +3,7 @@ import os
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PySide6.QtCore import QSize, QSettings
+from PySide6.QtCore import QSize, QSettings, QTimer
 from PySide6.QtGui import QFontDatabase, QIntValidator
 
 from OSCR import HEAL_TREE_HEADER, LIVE_TABLE_HEADER, TABLE_HEADER, TREE_HEADER
@@ -82,6 +82,11 @@ class OSCRUI():
         self.cache_assets()
         self.setup_main_layout()
         self.window.show()
+        if self.settings.value('auto_scan', type=bool):
+            QTimer.singleShot(
+                    100,
+                    lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1)
+            )
 
     def run(self) -> int:
         """
@@ -761,7 +766,8 @@ class OSCRUI():
         copy_layout.setContentsMargins(0, 0, 0, 0)
         copy_layout.setSpacing(self.theme['defaults']['csp'])
         copy_combobox = self.create_combo_box(switch_frame)
-        copy_combobox.addItems(('Selection', 'Max One Hit', 'Magnitude', 'Magnitude / s'))
+        copy_combobox.addItems(
+                ('Selection', 'Global Max One Hit', 'Max One Hit', 'Magnitude', 'Magnitude / s'))
         copy_layout.addWidget(copy_combobox)
         self.widgets.analysis_copy_combobox = copy_combobox
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Data')

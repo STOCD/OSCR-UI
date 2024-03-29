@@ -93,32 +93,39 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
     switch_overview_tab(self, self.settings.value('first_overview_tab', type=int))
 
 
-def copy_summary_callback(self):
+def copy_summary_callback(self, parser_num: int = 1):
     """
     Callback to set the combat summary of the active combat to the user's clippboard
-    """
 
-    if not self.parser1.active_combat:
+    Parameters:
+    - :param parser_num: which parser to take the data from
+    """
+    if parser_num == 2:
+        parser = self.parser2
+    else:
+        parser = self.parser1
+
+    if not parser.active_combat:
         return
 
-    duration = self.parser1.active_combat.duration
-    duration = f"{duration.total_seconds()/60:02.0f}:{duration.total_seconds()%60:02.0f}"
+    duration = self.parser1.active_combat.duration.total_seconds()
+    combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
 
-    parts = [
-        "OSCR",
-        f"{self.parser1.active_combat.map}",
-        f"{self.parser1.active_combat.difficulty}",
-        duration,
-        "DPS",
-    ]
+    summary = f'< OSCR > {parser.active_combat.map}'
+    difficulty = parser.active_combat.difficulty
+    if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
+        summary += f' ({difficulty}) - DPS [{combat_time}]: '
+    else:
+        summary += f' - DPS [{combat_time}]: '
     players = sorted(
-        self.parser1.active_combat.player_dict.items(),
+        self.parser1.active_combat.player_dict.values(),
         reverse=True,
-        key=lambda player: player[1].DPS,
+        key=lambda player: player.DPS,
     )
+    parts = list()
     for player in players:
-        parts.append(f"{player[1].handle} {player[1].DPS:,.0f}")
-    summary = " | ".join(parts)
+        parts.append(f"{player.handle} {player.DPS:,.0f}")
+    summary += " | ".join(parts)
 
     self.app.clipboard().setText(summary)
 
@@ -292,7 +299,7 @@ def copy_analysis_callback(self):
                 output.append(f"{formatted_row_name}: {' | '.join(formatted_row)}")
             output_string = '\n'.join(output)
             self.app.clipboard().setText(output_string)
-    elif copy_mode == 'Max One Hit':
+    elif copy_mode == 'Global Max One Hit':
         if current_tab <= 1:
             max_one_hit_col = 4
             prefix = 'Max One Hit'
@@ -312,6 +319,27 @@ def copy_analysis_callback(self):
                          f'({"".join(max_one_hit_item.get_data(0))} – '
                          f'{max_one_hit_ability})')
         self.app.clipboard().setText(output_string)
+    elif copy_mode == 'Max One Hit':
+        if current_tab <= 1:
+            max_one_hit_col = 4
+            prefix = 'Max One Hit'
+        else:
+            max_one_hit_col = 7
+            prefix = 'Max One Heal'
+        selection = current_table.selectedIndexes()
+        if selection:
+            selected_row = selection[0].internalPointer()
+            if selected_row._children:
+                max_one_hit_item = max(
+                        selected_row._children, key=lambda child: child.get_data(max_one_hit_col))
+                max_one_hit = max_one_hit_item.get_data(max_one_hit_col)
+                max_one_hit_ability = max_one_hit_item.get_data(0)
+                if isinstance(max_one_hit_ability, tuple):
+                    max_one_hit_ability = ''.join(max_one_hit_ability)
+                output_string = (f'< OSCR > {prefix}: {max_one_hit:,.2f} '
+                                 f'({"".join(selected_row.get_data(0))} – '
+                                 f'{max_one_hit_ability})')
+                self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude':
         if current_tab == 0:
             prefix = 'Total Damage Out'
@@ -325,7 +353,7 @@ def copy_analysis_callback(self):
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
-        magnitudes = [f"{magnitude:,.2f} [{''.join(player)}]" for magnitude, player in magnitudes]
+        magnitudes = [f"[{''.join(player)}] {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude / s':
@@ -341,6 +369,6 @@ def copy_analysis_callback(self):
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
-        magnitudes = [f"{magnitude:,.2f} [{''.join(player)}]" for magnitude, player in magnitudes]
+        magnitudes = [f"[{''.join(player)}] {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
