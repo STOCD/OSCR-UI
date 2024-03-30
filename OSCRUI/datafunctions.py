@@ -4,7 +4,7 @@ import sys
 from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER
 from PySide6.QtCore import Qt, QThread, Signal
 
-from .callbacks import switch_main_tab, switch_overview_tab
+from .callbacks import switch_main_tab, switch_overview_tab, trim_logfile
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
 from .displayer import create_overview
 from .subwindows import log_size_warning, show_warning, split_dialog
@@ -148,6 +148,9 @@ def get_data(self, combat: int | None = None, path: str | None = None):
             if action == 'split dialog':
                 split_dialog(self)
                 return False
+            elif action == 'trim':
+                trim_logfile(self)
+                self.parser1.analyze_log_file()
             elif action == 'continue':
                 self.parser1.analyze_massive_log_file()
             else:

@@ -2,7 +2,7 @@ import os
 
 from PySide6.QtWidgets import QFileDialog, QLineEdit
 
-from OSCR import LIVE_TABLE_HEADER, split_log_by_combat, split_log_by_lines
+from OSCR import LIVE_TABLE_HEADER, OSCR, split_log_by_combat, split_log_by_lines
 from .iofunctions import browse_path
 from .textedit import format_path
 
@@ -261,3 +261,16 @@ def collapse_overview_table(self):
     Hides the overview table
     """
     self.widgets.overview_table_frame.hide()
+
+
+def trim_logfile(self):
+    """
+    Removes all combats but the most recent one from a logfile
+    """
+    log_path = os.path.abspath(self.entry.text())
+    temp_parser = OSCR(log_path, self.parser_settings)
+    if os.path.getsize(log_path) > 125 * 1024 * 1024:
+        temp_parser.analyze_massive_log_file()
+    else:
+        temp_parser.analyze_log_file()
+    temp_parser.export_combat(0, log_path)

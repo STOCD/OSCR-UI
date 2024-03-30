@@ -8,7 +8,8 @@ from PySide6.QtWidgets import QMessageBox, QSpacerItem, QTableView
 from PySide6.QtWidgets import QVBoxLayout
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
-from .callbacks import auto_split_callback, combat_split_callback, copy_live_data_callback
+from .callbacks import (
+        auto_split_callback, combat_split_callback, copy_live_data_callback, trim_logfile)
 from .displayer import create_live_graph, update_live_display, update_live_graph, update_live_table
 from .datamodels import LiveParserTableModel
 from .style import get_style, get_style_class, theme_font
@@ -54,12 +55,15 @@ def log_size_warning(self):
     dialog.setWindowIcon(self.icons['oscr'])
     dialog.addButton('Cancel', QMessageBox.ButtonRole.RejectRole)
     default_button = dialog.addButton('Split Dialog', QMessageBox.ButtonRole.ActionRole)
+    dialog.addButton('Trim', QMessageBox.ButtonRole.ActionRole)
     dialog.addButton('Continue', QMessageBox.ButtonRole.AcceptRole)
     dialog.setDefaultButton(default_button)
     clicked = dialog.exec()
     if clicked == 1:
         return 'split dialog'
     elif clicked == 2:
+        return 'trim'
+    elif clicked == 3:
         return 'continue'
     else:
         return 'cancel'
@@ -96,8 +100,27 @@ def split_dialog(self):
     grid_layout.setVerticalSpacing(0)
     grid_layout.setHorizontalSpacing(item_spacing)
     vertical_layout.addLayout(grid_layout)
+
+    trim_heading = create_label(self, 'Trim Logfile:', 'label_heading')
+    grid_layout.addWidget(trim_heading, 0, 0, alignment=ALEFT)
+    label_text = (
+            'Removes all combats but the most recent one from the selected logfile. '
+            'All previous combats will be lost!')
+    trim_text = create_label(self, label_text, 'label')
+    trim_text.setWordWrap(True)
+    trim_text.setFixedWidth(self.sidebar_item_width)
+    grid_layout.addWidget(trim_text, 1, 0, alignment=ALEFT)
+    trim_button = create_button(self, 'Trim')
+    trim_button.clicked.connect(lambda: trim_logfile(self))
+    grid_layout.addWidget(trim_button, 1, 2, alignment=ARIGHT | ABOTTOM)
+    grid_layout.setRowMinimumHeight(2, item_spacing)
+    seperator_8 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
+    seperator_8.setFixedHeight(self.theme['hr']['height'])
+    grid_layout.addWidget(seperator_8, 3, 0, 1, 3)
+    grid_layout.setRowMinimumHeight(4, item_spacing)
+
     auto_split_heading = create_label(self, 'Split Log Automatically:', 'label_heading')
-    grid_layout.addWidget(auto_split_heading, 0, 0, alignment=ALEFT)
+    grid_layout.addWidget(auto_split_heading, 5, 0, alignment=ALEFT)
     label_text = (
             'Automatically splits the logfile at the next combat end after '
             f'{self.settings.value("split_log_after", type=int):,} lines until the entire file has '
@@ -106,17 +129,17 @@ def split_dialog(self):
     auto_split_text = create_label(self, label_text, 'label')
     auto_split_text.setWordWrap(True)
     auto_split_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(auto_split_text, 1, 0, alignment=ALEFT)
+    grid_layout.addWidget(auto_split_text, 6, 0, alignment=ALEFT)
     auto_split_button = create_button(self, 'Auto Split')
     auto_split_button.clicked.connect(lambda: auto_split_callback(self, current_logpath))
-    grid_layout.addWidget(auto_split_button, 1, 2, alignment=ARIGHT | ABOTTOM)
-    grid_layout.setRowMinimumHeight(2, item_spacing)
-    seperator_3 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_3.setFixedHeight(self.theme['hr']['height'])
-    grid_layout.addWidget(seperator_3, 3, 0, 1, 3)
-    grid_layout.setRowMinimumHeight(4, item_spacing)
+    grid_layout.addWidget(auto_split_button, 6, 2, alignment=ARIGHT | ABOTTOM)
+    grid_layout.setRowMinimumHeight(7, item_spacing)
+    seperator_8 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
+    seperator_8.setFixedHeight(self.theme['hr']['height'])
+    grid_layout.addWidget(seperator_8, 8, 0, 1, 3)
+    grid_layout.setRowMinimumHeight(9, item_spacing)
     range_split_heading = create_label(self, 'Export Range of Combats:', 'label_heading')
-    grid_layout.addWidget(range_split_heading, 5, 0, alignment=ALEFT)
+    grid_layout.addWidget(range_split_heading, 10, 0, alignment=ALEFT)
     label_text = (
             'Exports combats including and between lower and upper limit to selected file. '
             'Both limits refer to the indexed list of all combats in the file starting with 1. '
@@ -125,7 +148,7 @@ def split_dialog(self):
     range_split_text = create_label(self, label_text, 'label')
     range_split_text.setWordWrap(True)
     range_split_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(range_split_text, 6, 0, alignment=ALEFT)
+    grid_layout.addWidget(range_split_text, 11, 0, alignment=ALEFT)
     range_limit_layout = QGridLayout()
     range_limit_layout.setContentsMargins(0, 0, 0, 0)
     range_limit_layout.setSpacing(0)
@@ -152,12 +175,12 @@ def split_dialog(self):
             get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
     upper_range_entry.setFixedWidth(self.sidebar_item_width // 7)
     range_limit_layout.addWidget(upper_range_entry, 2, 1, alignment=AVCENTER)
-    grid_layout.addLayout(range_limit_layout, 6, 1)
+    grid_layout.addLayout(range_limit_layout, 11, 1)
     range_split_button = create_button(self, 'Export Combats')
     range_split_button.clicked.connect(
             lambda le=lower_range_entry, ue=upper_range_entry:
             combat_split_callback(self, current_logpath, le.text(), ue.text()))
-    grid_layout.addWidget(range_split_button, 6, 2, alignment=ARIGHT | ABOTTOM)
+    grid_layout.addWidget(range_split_button, 11, 2, alignment=ARIGHT | ABOTTOM)
 
     content_frame.setLayout(vertical_layout)
 
