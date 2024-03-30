@@ -111,7 +111,7 @@ def copy_summary_callback(self, parser_num: int = 1):
     duration = self.parser1.active_combat.duration.total_seconds()
     combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
 
-    summary = f'< OSCR > {parser.active_combat.map}'
+    summary = f'{{ OSCR }} {parser.active_combat.map}'
     difficulty = parser.active_combat.difficulty
     if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
         summary += f' ({difficulty}) - DPS [{combat_time}]: '
@@ -290,7 +290,7 @@ def copy_analysis_callback(self):
                 if column != 0:
                     cell_data = selected_cell.internalPointer().get_data(column)
                     selection_dict[row_name][column] = cell_data
-            output = ['< OSCR >']
+            output = ['{ OSCR }']
             for row_name, row_data in selection_dict.items():
                 formatted_row = list()
                 for col, value in row_data.items():
@@ -315,7 +315,7 @@ def copy_analysis_callback(self):
         max_one_hit_ability = max_one_hit_ability.get_data(0)
         if isinstance(max_one_hit_ability, tuple):
             max_one_hit_ability = ''.join(max_one_hit_ability)
-        output_string = (f'< OSCR > {prefix}: {max_one_hit:,.2f} '
+        output_string = (f'{{ OSCR }} {prefix}: {max_one_hit:,.2f} '
                          f'({"".join(max_one_hit_item.get_data(0))} – '
                          f'{max_one_hit_ability})')
         self.app.clipboard().setText(output_string)
@@ -336,7 +336,7 @@ def copy_analysis_callback(self):
                 max_one_hit_ability = max_one_hit_item.get_data(0)
                 if isinstance(max_one_hit_ability, tuple):
                     max_one_hit_ability = ''.join(max_one_hit_ability)
-                output_string = (f'< OSCR > {prefix}: {max_one_hit:,.2f} '
+                output_string = (f'{{ OSCR }} {prefix}: {max_one_hit:,.2f} '
                                  f'({"".join(selected_row.get_data(0))} – '
                                  f'{max_one_hit_ability})')
                 self.app.clipboard().setText(output_string)
@@ -354,7 +354,7 @@ def copy_analysis_callback(self):
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"[{''.join(player)}] {magnitude:,.2f}" for magnitude, player in magnitudes]
-        output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
+        output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude / s':
         if current_tab == 0:
@@ -370,5 +370,5 @@ def copy_analysis_callback(self):
             magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"[{''.join(player)}] {magnitude:,.2f}" for magnitude, player in magnitudes]
-        output_string = (f'< OSCR > {prefix}: {" | ".join(magnitudes)}')
+        output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)

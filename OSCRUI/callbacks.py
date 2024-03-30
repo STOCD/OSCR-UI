@@ -245,7 +245,7 @@ def copy_live_data_callback(self):
     output = list()
     for player_name, row in zip(index_data, cell_data):
         output.append(f"{player_name}: {row[0]:,.2f} ({row[1]:.1f}s)")
-    output = '< OSCR > DPS (Combat time): ' + ' | '.join(output)
+    output = '{ OSCR } DPS (Combat time): ' + ' | '.join(output)
     self.app.clipboard().setText(output)
 
 
