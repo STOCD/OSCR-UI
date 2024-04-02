@@ -144,7 +144,10 @@ def get_data(self, combat: int | None = None, path: str | None = None):
         try:
             self.parser1.analyze_log_file()
         except FileExistsError:
-            action = log_size_warning(self)
+            if self.settings.value('log_size_warning', type=bool):
+                action = log_size_warning(self)
+            else:
+                action = 'continue'
             if action == 'split dialog':
                 split_dialog(self)
                 return False
