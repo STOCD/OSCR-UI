@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.3b301'
+    version = '2024.04b020'
     __version__ = '0.1'
 
     # holds the style of the app
@@ -661,7 +661,7 @@ class Launcher():
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
-            'overview_graph_stretch': 12,
+            'overview_graph_stretch': 11,
             'overview_table_stretch': 3
         }
     }
@@ -749,6 +749,7 @@ class Launcher():
                 'live_graph_active': False,
                 'live_graph_field': 0,
                 'first_overview_tab': 0,
+                'log_size_warning': True,
             }
         }
         return config

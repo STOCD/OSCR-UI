@@ -103,7 +103,7 @@ def create_overview(self):
     self.widgets.overview_tab_frames[0].setLayout(bar_layout)
 
     table_layout = QVBoxLayout()
-    table_layout.setContentsMargins(0, 0, 0 ,0)
+    table_layout.setContentsMargins(0, 0, 0, 0)
     table = create_overview_table(self, current_table)
     table_layout.addWidget(table)
     self.widgets.overview_table_frame.setLayout(table_layout)
@@ -306,7 +306,7 @@ def create_live_graph(self) -> tuple[QFrame, list]:
     plot_widget.setMenuEnabled(False)
     plot_widget.hideButtons()
     plot_widget.setDefaultPadding(padding=0)
-    plot_widget.setXRange(-9, 0, padding=0)
+    plot_widget.setXRange(-14, 0, padding=0)
     left_axis = plot_widget.getAxis('left')
     left_axis.setTickFont(theme_font(self, 'plot_widget'))
     left_axis.setTextPen(color=self.theme['defaults']['fg'])
@@ -320,9 +320,8 @@ def create_live_graph(self) -> tuple[QFrame, list]:
         color = self.theme['plot']['color_cycler'][color_index]
         curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
 
-    frame = create_frame(
-            self, None, 'plot_widget', size_policy=SMIXMAX,
-            style_override={'margin-left': '@margin', 'margin-bottom': 0})
+    frame = create_frame(self, None, 'plot_widget', size_policy=SMIXMAX, style_override={
+            'margin-left': '@margin', 'margin-right': '@margin', 'margin-bottom': 0})
     frame.setMinimumWidth(self.sidebar_item_width * 0.25)
     frame.setMinimumHeight(self.sidebar_item_width * 0.25)
     layout = QHBoxLayout()
@@ -351,7 +350,7 @@ def update_live_display(
         cells.append(list(player_data.values()))
     if graph_active:
         if len(graph_data_buffer) == 0:
-            graph_data_buffer.extend(([0] * 10, [0] * 10, [0] * 10, [0] * 10, [0] * 10))
+            graph_data_buffer.extend(([0] * 15, [0] * 15, [0] * 15, [0] * 15, [0] * 15))
         zipper = zip(graph_data_buffer, cells, self.widgets.live_parser_curves)
         for buffer_item, player_data, curve in zipper:
             buffer_item.pop(0)
@@ -387,6 +386,6 @@ def update_live_graph(curve_data: list):
     - :param curve_data: list containing pairs of curve items and data lists; curve items will be
     updated with the data
     """
-    time_data = list(range(-9, 1))
+    time_data = list(range(-14, 1))
     for curve, data_points in curve_data:
         curve.setData(time_data, data_points)

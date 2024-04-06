@@ -162,7 +162,7 @@ class OSCRUI():
                 settings[setting_key] = setting
         settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
-    
+
     @property
     def live_parser_settings(self) -> dict:
         """
@@ -1158,7 +1158,19 @@ class OSCRUI():
         overview_tab_combo.currentIndexChanged.connect(
             lambda new_index: self.settings.setValue('first_overview_tab', new_index))
         col_2.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
-        
+        size_warning_label = self.create_label('Logfile Size Warning:', 'label_subhead')
+        col_2.addWidget(size_warning_label, 12, 0, alignment=ARIGHT)
+        size_warning_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        size_warning_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        size_warning_button.setFont(self.theme_font('app', '@font'))
+        size_warning_button.r_function = (
+                lambda: self.settings.setValue('log_size_warning', True))
+        size_warning_button.l_function = (
+                lambda: self.settings.setValue('log_size_warning', False))
+        if self.settings.value('log_size_warning', type=bool):
+            size_warning_button.flip()
+        col_2.addWidget(size_warning_button, 12, 1, alignment=ALEFT)
 
         col_2_frame.setLayout(col_2)
 
