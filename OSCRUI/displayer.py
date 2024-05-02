@@ -133,6 +133,8 @@ def create_grouped_bar_plot(
 
     group_width = 0.18
     player_num = len(data)
+    if player_num == 0:
+        return
     bar_width = group_width / player_num
     relative_bar_positions = np.linspace(0 + bar_width / 2, group_width - bar_width / 2, player_num)
     bar_position_offsets = relative_bar_positions - np.median(relative_bar_positions)

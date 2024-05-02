@@ -1,5 +1,4 @@
 import os
-import sys
 
 from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER
 from PySide6.QtCore import Qt, QThread, Signal
@@ -124,7 +123,7 @@ def copy_summary_callback(self, parser_num: int = 1):
     )
     parts = list()
     for player in players:
-        parts.append(f"{player.handle} {player.DPS:,.0f}")
+        parts.append(f"`{player.handle}` {player.DPS:,.0f}")
     summary += " | ".join(parts)
 
     self.app.clipboard().setText(summary)
@@ -302,7 +301,7 @@ def copy_analysis_callback(self):
                 for col, value in row_data.items():
                     formatted_row.append(f'[{current_header[col]}] {format_function(value, col)}')
                 formatted_row_name = ''.join(row_name) if isinstance(row_name, tuple) else row_name
-                output.append(f"{formatted_row_name}: {' | '.join(formatted_row)}")
+                output.append(f"`{formatted_row_name}`: {' | '.join(formatted_row)}")
             output_string = '\n'.join(output)
             self.app.clipboard().setText(output_string)
     elif copy_mode == 'Global Max One Hit':
@@ -322,7 +321,7 @@ def copy_analysis_callback(self):
         if isinstance(max_one_hit_ability, tuple):
             max_one_hit_ability = ''.join(max_one_hit_ability)
         output_string = (f'{{ OSCR }} {prefix}: {max_one_hit:,.2f} '
-                         f'({"".join(max_one_hit_item.get_data(0))} – '
+                         f'(`{"".join(max_one_hit_item.get_data(0))}` – '
                          f'{max_one_hit_ability})')
         self.app.clipboard().setText(output_string)
     elif copy_mode == 'Max One Hit':
@@ -343,7 +342,7 @@ def copy_analysis_callback(self):
                 if isinstance(max_one_hit_ability, tuple):
                     max_one_hit_ability = ''.join(max_one_hit_ability)
                 output_string = (f'{{ OSCR }} {prefix}: {max_one_hit:,.2f} '
-                                 f'({"".join(selected_row.get_data(0))} – '
+                                 f'(`{"".join(selected_row.get_data(0))}` – '
                                  f'{max_one_hit_ability})')
                 self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude':
@@ -359,7 +358,7 @@ def copy_analysis_callback(self):
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
-        magnitudes = [f"[{''.join(player)}] {magnitude:,.2f}" for magnitude, player in magnitudes]
+        magnitudes = [f"`[{''.join(player)}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
     elif copy_mode == 'Magnitude / s':
@@ -375,6 +374,6 @@ def copy_analysis_callback(self):
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
-        magnitudes = [f"[{''.join(player)}] {magnitude:,.2f}" for magnitude, player in magnitudes]
+        magnitudes = [f"`[{''.join(player)}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)

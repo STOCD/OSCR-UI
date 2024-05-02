@@ -172,10 +172,22 @@ def set_parser_opacity_setting(self, new_value: int):
     Calculates new_value / 10 and stores it to settings.
 
     Parameters:
-    - :param new_value: data points per second
+    - :param new_value: 20 times the opacity percentage
     """
     setting_value = f'{new_value / 20:.2f}'
     self.settings.setValue('live_parser_opacity', setting_value)
+    return setting_value
+
+
+def set_ui_scale_setting(self, new_value: int):
+    """
+    Calculates new_value / 50 and stores it to settings.
+
+    Parameters:
+    - :param new_value: 50 times the ui scale percentage
+    """
+    setting_value = f'{new_value / 50:.2f}'
+    self.settings.setValue('ui_scale', setting_value)
     return setting_value
 
 
@@ -244,7 +256,7 @@ def copy_live_data_callback(self):
         visible_columns.append(self.settings.value(f'live_columns|{i}', type=bool))
     output = list()
     for player_name, row in zip(index_data, cell_data):
-        output.append(f"{player_name}: {row[0]:,.2f} ({row[1]:.1f}s)")
+        output.append(f"`{player_name}`: {row[0]:,.2f} ({row[1]:.1f}s)")
     output = '{ OSCR } DPS (Combat time): ' + ' | '.join(output)
     self.app.clipboard().setText(output)
 

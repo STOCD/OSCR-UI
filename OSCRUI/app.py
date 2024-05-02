@@ -24,9 +24,9 @@ class OSCRUI():
 
     from .callbacks import (
             browse_log, browse_sto_logpath, collapse_overview_table, expand_overview_table,
-            favorite_button_callback, navigate_log, save_combat, set_graph_resolution_setting,
-            set_sto_logpath_setting, set_parser_opacity_setting, switch_analysis_tab,
-            switch_main_tab, switch_map_tab, switch_overview_tab)
+            favorite_button_callback, navigate_log, save_combat, set_parser_opacity_setting,
+            set_graph_resolution_setting, set_sto_logpath_setting, set_ui_scale_setting,
+            switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab)
     from .datafunctions import analyze_log_callback, copy_analysis_callback
     from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
     from .datafunctions import update_shown_columns_heal
@@ -146,6 +146,7 @@ class OSCRUI():
         self.current_combat_path = ''
         self.config['templog_folder_path'] = os.path.abspath(
                 self.app_dir + self.config['templog_folder_path'])
+        self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
 
     @property
     def parser_settings(self) -> dict:
@@ -211,11 +212,11 @@ class OSCRUI():
         font_database.addApplicationFont(get_asset_path('RobotoMono-Medium.ttf', self.app_dir))
         app.setStyleSheet(self.create_style_sheet(self.theme['app']['style']))
         window = QWidget()
+        window.setMinimumSize(
+                self.config['ui_scale'] * self.config['minimum_window_width'],
+                self.config['ui_scale'] * self.config['minimum_window_height'])
         window.setWindowIcon(load_icon('oscr_icon_small.png', self.app_dir))
         window.setWindowTitle('Open Source Combatlog Reader')
-        window.setMinimumSize(
-                int(self.config['minimum_window_width']),
-                int(self.config['minimum_window_height']))
         if self.settings.value('geometry'):
             window.restoreGeometry(self.settings.value('geometry'))
         window.closeEvent = self.main_window_close_callback
@@ -1171,6 +1172,12 @@ class OSCRUI():
         if self.settings.value('log_size_warning', type=bool):
             size_warning_button.flip()
         col_2.addWidget(size_warning_button, 12, 1, alignment=ALEFT)
+        ui_scale_label = self.create_label('UI Scale:', 'label_subhead')
+        col_2.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
+        ui_scale_slider_layout = self.create_annotated_slider(
+                default_value=round(self.settings.value('ui_scale', type=float) * 50, 0),
+                min=25, max=75, callback=self.set_ui_scale_setting)
+        col_2.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
 
         col_2_frame.setLayout(col_2)
 
