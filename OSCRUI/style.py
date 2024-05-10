@@ -91,6 +91,7 @@ def get_css(self, style: dict) -> str:
     values.
     """
     css = str()
+    ui_scale = self.config['ui_scale']
     for key, val in style.items():
         if isinstance(val, str) and val[0] == '@':
             v = self.theme['defaults'][val[1:]]
@@ -99,9 +100,9 @@ def get_css(self, style: dict) -> str:
         if key.startswith(':') or key.startswith('~') or key == 'font':
             continue
         elif isinstance(v, int):
-            css += f'{key}:{v}px;'
+            css += f'{key}:{v * ui_scale}px;'
         elif isinstance(v, tuple):
-            css += f'''{key}:{'px '.join(map(str, v))}px;'''
+            css += f'''{key}:{'px '.join(map(lambda s: str(s * ui_scale), v))}px;'''
         else:
             css += f'{key}:{v};'
     return css
@@ -128,11 +129,12 @@ def theme_font(self, key, font_spec=()) -> QFont:
     except KeyError:
         font = self.theme['app']['font']
     font_family = (font[0], *self.theme['app']['font-fallback'])
+    font_size = int(font[1] * self.config['ui_scale'])
     try:
         font_weight = WEIGHT_CONVERSION[font[2]]
     except KeyError:
         font_weight = QFont.Weight.Normal
-    return QFont(font_family, font[1], font_weight)
+    return QFont(font_family, font_size, font_weight)
 
 
 def create_style_sheet(self, d: dict) -> str:

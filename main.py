@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.04b020'
+    version = '2024.05b020'
     __version__ = '0.1'
 
     # holds the style of the app
@@ -661,7 +661,7 @@ class Launcher():
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
-            'overview_graph_stretch': 11,
+            'overview_graph_stretch': 10,
             'overview_table_stretch': 3
         }
     }
@@ -688,6 +688,7 @@ class Launcher():
             'link_stobuilds': 'https://discord.gg/stobuilds',
             'link_stocd': 'https://github.com/STOCD',
             'live_graph_fields': ('DPS', 'Debuff', 'Attacks-in Share', 'HPS'),
+            'ui_scale': 1,
             'default_settings': {
                 'log_path': '',
                 'sto_log_path': '',
@@ -750,6 +751,7 @@ class Launcher():
                 'live_graph_field': 0,
                 'first_overview_tab': 0,
                 'log_size_warning': True,
+                'ui_scale': 1,
             }
         }
         return config
