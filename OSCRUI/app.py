@@ -147,6 +147,8 @@ class OSCRUI():
         self.config['templog_folder_path'] = os.path.abspath(
                 self.app_dir + self.config['templog_folder_path'])
         self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
+        self.config['icon_size'] = round(
+                self.config['ui_scale'] * self.theme['s.c']['button_icon_size'])
 
     @property
     def parser_settings(self) -> dict:
@@ -252,7 +254,7 @@ class OSCRUI():
         col_3 = QVBoxLayout()
         col_3.setContentsMargins(csp, csp, csp, csp)
         content_layout.addLayout(col_3, 0, 3)
-        icon_size = self.theme['s.c']['button_icon_size']
+        icon_size = self.config['icon_size']
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
@@ -567,7 +569,7 @@ class OSCRUI():
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setColumnStretch(1, 1)
-        logo_size = [self.theme['s.c']['button_icon_size'] * 4] * 2
+        logo_size = [self.config['icon_size'] * 4] * 2
         stocd_logo = self.create_icon_button(
                 self.icons['stocd'], self.config['link_stocd'],
                 style_override={'border-style': 'none'}, icon_size=logo_size)

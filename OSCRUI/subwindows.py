@@ -273,6 +273,8 @@ def create_live_parser_window(self):
     table.horizontalHeader().setStyleSheet(
             get_style_class(self, 'QHeaderView', 'live_table_header'))
     table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'live_table_index'))
+    table.verticalHeader().setDefaultSectionSize(1)
+    table.horizontalHeader().setMinimumHeight(1)
     table.horizontalHeader().setSectionResizeMode(RFIXED)
     table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
@@ -300,7 +302,7 @@ def create_live_parser_window(self):
 
     copy_button = copy_button = create_icon_button(
             self, self.icons['copy'], 'Copy Result', style_override={'margin-bottom': '@margin'},
-            icon_size=[self.theme['s.c']['button_icon_size'] * 0.8] * 2)
+            icon_size=[self.config['icon_size'] * 0.8] * 2)
     copy_button.clicked.connect(lambda: copy_live_data_callback(self))
     bottom_layout.addWidget(copy_button, 0, 0, alignment=ARIGHT | AVCENTER)
     activate_button = FlipButton('Activate', 'Deactivate', live_window, checkable=True)
@@ -313,7 +315,7 @@ def create_live_parser_window(self):
     close_button = create_icon_button(
             self, self.icons['close'], 'Close Live Parser',
             style_override={'margin-bottom': '@margin'},
-            icon_size=[self.theme['s.c']['button_icon_size'] * 0.8] * 2)
+            icon_size=[self.config['icon_size'] * 0.8] * 2)
     close_button.clicked.connect(lambda: live_parser_toggle(self, False))
     bottom_layout.addWidget(close_button, 0, 2, alignment=ALEFT | AVCENTER)
 

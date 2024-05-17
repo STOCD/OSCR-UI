@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.05b020'
+    version = '2024.05b170'
     __version__ = '0.1'
 
     # holds the style of the app
@@ -420,7 +420,7 @@ class Launcher():
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'padding': (0, 0, 0, 0),  # (0, -8, -3, 6), # don't ask
+                'padding': (0, 0, 0, 0),
                 'border': 'none',
                 'margin': 0
             },
@@ -689,6 +689,7 @@ class Launcher():
             'link_stocd': 'https://github.com/STOCD',
             'live_graph_fields': ('DPS', 'Debuff', 'Attacks-in Share', 'HPS'),
             'ui_scale': 1,
+            'icon_size': 24,
             'default_settings': {
                 'log_path': '',
                 'sto_log_path': '',
