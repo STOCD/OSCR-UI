@@ -5,14 +5,14 @@ import os
 import tempfile
 
 import OSCR_django_client
-from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
 from OSCR.utilities import logline_to_str
+from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
 from PySide6.QtWidgets import QMessageBox
 
-from .datafunctions import analyze_log_callback, CustomThread
+from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
-from .subwindows import show_warning
 from .style import theme_font
+from .subwindows import show_warning
 from .textedit import format_datetime_str
 
 LADDER_HEADER = (
@@ -50,8 +50,9 @@ def fetch_and_insert_maps(self):
     if ladders is not None:
         self.widgets.ladder_selector.clear()
         for ladder in ladders.results:
-            solo = "[Solo] " if ladder.is_solo else ""
-            key = f"{solo}{ladder.metric} - {ladder.name} ({ladder.difficulty})"
+            solo = "[Solo]" if ladder.is_solo else ""
+            variant = f"[{ladder.variant_name}] " if ladder.variant_name != "Default" else ""
+            key = f"{variant}{ladder.name} ({ladder.difficulty}) {solo}"
             self.league_api.ladder_dict[key] = ladder
             self.widgets.ladder_selector.addItem(key)
 
@@ -108,8 +109,13 @@ def slot_ladder(self, selected_map):
         )
 
     model = LeagueTableModel(
-        table_data, LADDER_HEADER, table_index, theme_font(self, "table_header"),
-        theme_font(self, "table"), combatlog_id_list=logfile_ids)
+        table_data,
+        LADDER_HEADER,
+        table_index,
+        theme_font(self, "table_header"),
+        theme_font(self, "table"),
+        combatlog_id_list=logfile_ids,
+    )
     sorting_proxy = SortingProxy()
     sorting_proxy.setSourceModel(model)
     table = self.widgets.ladder_table
@@ -130,7 +136,8 @@ def extend_ladder(self):
         return
 
     ladder_data = self.league_api.ladder_entries(
-            self.league_api.current_ladder_id, self.league_api.pages_loaded + 1)
+        self.league_api.current_ladder_id, self.league_api.pages_loaded + 1
+    )
     if ladder_data is not None:
         if len(ladder_data.results) < 50:
             self.league_api.entire_ladder_loaded = True
@@ -156,8 +163,7 @@ def extend_ladder(self):
                     row.get("build", "Unknown"),
                 )
             )
-        self.widgets.ladder_table.model().sourceModel().extend_data(
-                table_index, table_data, logfile_ids)
+        self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data, logfile_ids)
 
 
 def download_and_view_combat(self):
@@ -173,8 +179,8 @@ def download_and_view_combat(self):
     result = self.league_api.download(log_id)
     result = gzip.decompress(result)
     with tempfile.NamedTemporaryFile(
-            mode='w', encoding='utf-8', dir=self.config['templog_folder_path'],
-            delete=False) as file:
+        mode="w", encoding="utf-8", dir=self.config["templog_folder_path"], delete=False
+    ) as file:
         file.write(result.decode())
     analyze_log_callback(self, path=file.name, parser_num=1, hidden_path=True)
     self.switch_overview_tab(0)
@@ -185,15 +191,13 @@ def upload_callback(self):
     """
     Helper function to grab the current combat and upload it to the backend.
     """
-    show_warning(self, 'OSCR', 'Uploads are temporarily disabled.')
-    return
     if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
-        show_warning(self, 'OSCR - Logfile Upload', 'No data to upload.')
+        show_warning(self, "OSCR - Logfile Upload", "No data to upload.")
         return
 
     establish_league_connection(self)
 
-    with tempfile.NamedTemporaryFile(dir=self.config['templog_folder_path'], delete=False) as file:
+    with tempfile.NamedTemporaryFile(dir=self.config["templog_folder_path"], delete=False) as file:
         data = gzip.compress(
             "".join([logline_to_str(line) for line in self.parser1.active_combat.log_data]).encode()
         )
@@ -209,8 +213,7 @@ class OSCRClient:
 
         # TODO: This is a test domain and not for production.
         if not address:
-            self.address = "https://oscr-server.vercel.app"
-            # self.address = "http://127.0.0.1:8000"
+            self.address = "http://127.0.0.1:8000"
 
         self.api_client = OSCR_django_client.api_client.ApiClient()
         self.api_client.configuration.host = self.address
