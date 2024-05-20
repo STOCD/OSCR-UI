@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, QSize, Qt
 from PySide6.QtGui import QIntValidator, QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QDialog
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit
@@ -15,8 +15,8 @@ from .datamodels import LiveParserTableModel
 from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
 from .widgetbuilder import create_button, create_frame, create_icon_button, create_label
-from .widgetbuilder import ABOTTOM, ALEFT, ARIGHT, AVCENTER, RFIXED
-from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMIN
+from .widgetbuilder import ABOTTOM, AHCENTER, ALEFT, ARIGHT, AVCENTER, RFIXED
+from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMAX, SMINMIN
 from .widgets import FlipButton, LiveParserWindow, SizeGrip
 
 
@@ -189,6 +189,65 @@ def split_dialog(self):
     dialog.setWindowTitle('OSCR - Split Logfile')
     dialog.setStyleSheet(get_style(self, 'dialog_window'))
     dialog.setSizePolicy(SMAXMAX)
+    dialog.exec()
+
+
+def uploadresult_dialog(self, result):
+    """
+    Shows a dialog that informs about the result of the triggered upload.
+
+    Paramters:
+    - :param result: dict containing result
+    """
+    dialog = QDialog(self.window)
+    main_layout = QVBoxLayout()
+    thick = self.theme['app']['frame_thickness']
+    main_layout.setContentsMargins(thick, thick, thick, thick)
+    content_frame = create_frame(self)
+    main_layout.addWidget(content_frame)
+    content_layout = QGridLayout()
+    content_layout.setContentsMargins(thick, thick, thick, thick)
+    content_layout.setSpacing(0)
+    margin = {'margin-bottom': self.theme['defaults']['isp']}
+    title_label = create_label(self, 'Upload Results:', 'label_heading', style_override=margin)
+    content_layout.addWidget(title_label, 0, 0, 1, 4, alignment=ALEFT)
+    icon_size = QSize(self.config['icon_size'] / 1.5, self.config['icon_size'] / 1.5)
+    for row, line in enumerate(result, 1):
+        if row % 2 == 1:
+            table_style = {'background-color': '@mbg', 'padding': (5, 3, 3, 3), 'margin': 0}
+            icon_table_style = {'background-color': '@mbg', 'padding': (3, 3, 3, 3), 'margin': 0}
+        else:
+            table_style = {'background-color': '@bg', 'padding': (5, 3, 3, 3), 'margin': 0}
+            icon_table_style = {'background-color': '@bg', 'padding': (3, 3, 3, 3), 'margin': 0}
+        if line['updated']:
+            icon = self.icons['check'].pixmap(icon_size)
+        else:
+            icon = self.icons['dash'].pixmap(icon_size)
+        status_label = create_label(self, '', style_override=icon_table_style)
+        status_label.setPixmap(icon)
+        status_label.setSizePolicy(SMINMIN)
+        content_layout.addWidget(status_label, row, 0)
+        name_label = create_label(self, line['name'], style_override=table_style)
+        name_label.setSizePolicy(SMINMAX)
+        content_layout.addWidget(name_label, row, 1)
+        value_label = create_label(self, str(line['value']), style_override=table_style)
+        value_label.setSizePolicy(SMINMAX)
+        value_label.setAlignment(ARIGHT)
+        content_layout.addWidget(value_label, row, 2)
+        detail_label = create_label(self, line['detail'], style_override=table_style)
+        detail_label.setSizePolicy(SMINMAX)
+        content_layout.addWidget(detail_label, row, 3)
+    top_margin = {'margin-top': self.theme['defaults']['isp']}
+    close_button = create_button(self, 'Close', style_override=top_margin)
+    close_button.clicked.connect(dialog.close)
+    content_layout.addWidget(close_button, row + 1, 0, 1, 4, alignment=AHCENTER)
+    content_frame.setLayout(content_layout)
+
+    dialog.setLayout(main_layout)
+    dialog.setWindowTitle('OSCR - Upload Results')
+    dialog.setStyleSheet(get_style(self, 'dialog_window'))
+    dialog.setSizePolicy(SMAXMAX)
+    dialog.setFixedSize(dialog.sizeHint())
     dialog.exec()
 
 

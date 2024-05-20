@@ -123,6 +123,8 @@ class OSCRUI():
             'collapse-top': 'collapse-top.svg',
             'expand-bottom': 'expand-bottom.svg',
             'collapse-bottom': 'collapse-bottom.svg',
+            'check': 'check.svg',
+            'dash': 'dash.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
