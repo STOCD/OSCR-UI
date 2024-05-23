@@ -32,8 +32,10 @@ AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
 RFIXED = QHeaderView.ResizeMode.Fixed
 
-
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
+
+SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 
 
 def create_button(self, text, style: str = 'button', parent=None, style_override={}, toggle=None):

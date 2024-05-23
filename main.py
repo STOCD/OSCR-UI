@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.05b230'
+    version = '2024.05b231'
     __version__ = '0.1'
 
     # holds the style of the app
@@ -484,11 +484,11 @@ class Launcher():
             },
             # down-pointing arrow
             '::branch:open:has-children': {
-                'image': 'url(assets/arrow-down.svg)'
+                'image': 'url(assets/chevron-down.svg)'
             },
             # right-pointing arrow
             '::branch:closed:has-children': {
-                'image': 'url(assets/arrow-right.svg)'
+                'image': 'url(assets/chevron-right.svg)'
             }
         },
         # header of the analysis table; ::section refers to the individual buttons
@@ -521,7 +521,7 @@ class Launcher():
             'color': '@fg',
             'font': '@subhead',
             '::down-arrow': {
-                'image': 'url(assets/fat-arrow-down.svg)',
+                'image': 'url(assets/thick-chevron-down.svg)',
                 'width': '@margin',
             },
             '::drop-down': {
@@ -697,8 +697,8 @@ class Launcher():
     @staticmethod
     def app_config() -> dict:
         config = {
-            'minimum_window_width': 1280,
-            'minimum_window_height': 1016,
+            'minimum_window_width': 1370,
+            'minimum_window_height': 907,
             'settings_path': r'/.OSCR_settings.ini',
             'templog_folder_path': r'/~temp_log_files',
             'link_website': '',

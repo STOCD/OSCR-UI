@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eeeeee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 5 L20 5 L20 20 L5 20 Z"/>
+
+    <!-- top -->
+    <line x1="8" y1="5" x2="8" y2="2"/>
+    <line x1="12.5" y1="5" x2="12.5" y2="2"/>
+    <line x1="17" y1="5" x2="17" y2="2"/>
+    <!-- bottom -->
+    <line x1="8" y1="20" x2="8" y2="23"/>
+    <line x1="12.5" y1="20" x2="12.5" y2="23"/>
+    <line x1="17" y1="20" x2="17" y2="23"/>
+    <!-- left -->
+    <line x1="5" y1="8" x2="2" y2="8"/>
+    <line x1="5" y1="12.5" x2="2" y2="12.5"/>
+    <line x1="5" y1="17" x2="2" y2="17"/>
+    <!-- right -->
+    <line x1="20" y1="8" x2="23" y2="8"/>
+    <line x1="20" y1="12.5" x2="23" y2="12.5"/>
+    <line x1="20" y1="17" x2="23" y2="17"/>
+
+    <polyline points="9 8 16 12.5 9 17"></polyline>
+</svg>

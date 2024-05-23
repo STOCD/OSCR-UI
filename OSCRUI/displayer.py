@@ -108,9 +108,6 @@ def create_overview(self):
     table_layout.addWidget(table)
     self.widgets.overview_table_frame.setLayout(table_layout)
     table.resizeColumnsToContents()
-    horizontal_header = table.horizontalHeader()
-    for col in range(len(TABLE_HEADER)):
-        horizontal_header.resizeSection(col, horizontal_header.sectionSize(col) + 5)
 
 
 @setup_plot

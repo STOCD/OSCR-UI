@@ -31,9 +31,14 @@ def save_combat(self, combat_num: int):
     Parameters:
     - :param combat_num: number of combat in self.combats
     """
-    if not self.parser1.active_combat:
+    combat = self.parser1.active_combat
+    if not combat:
         return
-    base_dir = os.path.dirname(self.entry.text())
+    filename = combat.map
+    if combat.difficulty is not None and combat.difficulty != '':
+        filename += ' ' + combat.difficulty
+    filename += f' {combat.start_time.strftime('%Y-%m-%d %H.%M')}.log'
+    base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     if not base_dir:
         base_dir = self.app_dir
     path = self.browse_path(base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)

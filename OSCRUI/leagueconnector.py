@@ -121,9 +121,9 @@ def slot_ladder(self, selected_map):
     table = self.widgets.ladder_table
     table.setModel(sorting_proxy)
     table.resizeColumnsToContents()
-    table_header = table.horizontalHeader()
-    for col in range(len(model._header)):
-        table_header.resizeSection(col, table_header.sectionSize(col) + 5)
+    # table_header = table.horizontalHeader()
+    # for col in range(len(model._header)):
+    #     table_header.resizeSection(col, table_header.sectionSize(col) + 5)
 
 
 def extend_ladder(self):
@@ -136,8 +136,7 @@ def extend_ladder(self):
         return
 
     ladder_data = self.league_api.ladder_entries(
-        self.league_api.current_ladder_id, self.league_api.pages_loaded + 1
-    )
+            self.league_api.current_ladder_id, self.league_api.pages_loaded + 1)
     if ladder_data is not None:
         if len(ladder_data.results) < 50:
             self.league_api.entire_ladder_loaded = True
@@ -163,7 +162,8 @@ def extend_ladder(self):
                     row.get("build", "Unknown"),
                 )
             )
-        self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data, logfile_ids)
+        self.widgets.ladder_table.model().sourceModel().extend_data(
+                table_index, table_data, logfile_ids)
 
 
 def download_and_view_combat(self):
