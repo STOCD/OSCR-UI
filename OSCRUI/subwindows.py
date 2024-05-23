@@ -4,7 +4,7 @@ from PySide6.QtCore import QPoint, QSize, Qt
 from PySide6.QtGui import QIntValidator, QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QDialog
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit
-from PySide6.QtWidgets import QMessageBox, QSpacerItem, QTableView
+from PySide6.QtWidgets import QMessageBox, QSpacerItem, QSplitter, QTableView
 from PySide6.QtWidgets import QVBoxLayout
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
@@ -289,10 +289,17 @@ def live_parser_toggle(self, activate):
         self.live_parser_window = None
         self.live_parser = None
         self.widgets.live_parser_table = None
+        self.widgets.live_parser_splitter = None
         self.widgets.live_parser_button.setChecked(False)
 
 
 def create_live_parser_window(self):
+    """
+    Creates the LiveParser window.
+    """
+    ui_scale = self.config['ui_scale']
+    self.config['ui_scale'] = self.config['live_scale']
+
     live_window = LiveParserWindow()
     live_window.setStyleSheet(get_style(self, 'live_parser'))
     live_window.setWindowFlags(
@@ -315,13 +322,23 @@ def create_live_parser_window(self):
 
     graph_colors = None
     graph_column = None
-    if self.settings.value('live_graph_active', type=bool):
+    graph_active = self.settings.value('live_graph_active', type=bool)
+    if graph_active:
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter.setStyleSheet(get_style_class(self, 'QSplitter', 'splitter'))
+        splitter.setChildrenCollapsible(False)
+        self.widgets.live_parser_splitter = splitter
         graph_frame, curves = create_live_graph(self)
-        layout.addWidget(graph_frame, stretch=1)
+        graph_frame.setMinimumHeight(self.sidebar_item_width * 0.1)
+        splitter.addWidget(graph_frame)
         self.widgets.live_parser_curves = curves
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
         graph_column = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
         graph_colors = self.theme['plot']['color_cycler'][:5]
+        table_layout = splitter
+        layout.addWidget(splitter, stretch=1)
+    else:
+        table_layout = layout
 
     table = QTableView()
     table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
@@ -332,14 +349,16 @@ def create_live_parser_window(self):
     table.horizontalHeader().setStyleSheet(
             get_style_class(self, 'QHeaderView', 'live_table_header'))
     table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'live_table_index'))
+    table.verticalHeader().setMinimumHeight(1)
     table.verticalHeader().setDefaultSectionSize(1)
-    table.horizontalHeader().setMinimumHeight(1)
+    table.horizontalHeader().setMinimumWidth(1)
+    table.horizontalHeader().setDefaultSectionSize(1)
     table.horizontalHeader().setSectionResizeMode(RFIXED)
     table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
     table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-    table.setMinimumWidth(self.sidebar_item_width * 0.25)
-    table.setMinimumHeight(self.sidebar_item_width * 0.25)
+    table.setMinimumWidth(self.sidebar_item_width * 0.1)
+    table.setMinimumHeight(self.sidebar_item_width * 0.1)
     model = LiveParserTableModel(
             [[0] * len(LIVE_TABLE_HEADER)], LIVE_TABLE_HEADER, [''],
             theme_font(self, 'live_table_header'), theme_font(self, 'live_table'),
@@ -351,7 +370,10 @@ def create_live_parser_window(self):
         if not self.settings.value(f'live_columns|{index}', type=bool):
             table.hideColumn(index)
     self.widgets.live_parser_table = table
-    layout.addWidget(table, stretch=1)
+    table_layout.addWidget(table)
+
+    if graph_active and self.settings.value('live_splitter'):
+        table_layout.restoreState(self.settings.value('live_splitter'))
 
     bottom_layout = QGridLayout()
     bottom_layout.setContentsMargins(self.theme['defaults']['isp'], 0, 0, 0)
@@ -359,22 +381,20 @@ def create_live_parser_window(self):
     bottom_layout.setColumnStretch(0, 1)
     bottom_layout.setColumnStretch(2, 1)
 
+    icon_size = [self.theme['s.c']['button_icon_size'] * self.config['live_scale'] * 0.8] * 2
     copy_button = copy_button = create_icon_button(
-            self, self.icons['copy'], 'Copy Result', style_override={'margin-bottom': '@margin'},
-            icon_size=[self.config['icon_size'] * 0.8] * 2)
+            self, self.icons['copy'], 'Copy Result', icon_size=icon_size)
     copy_button.clicked.connect(lambda: copy_live_data_callback(self))
     bottom_layout.addWidget(copy_button, 0, 0, alignment=ARIGHT | AVCENTER)
     activate_button = FlipButton('Activate', 'Deactivate', live_window, checkable=True)
     activate_button.setStyleSheet(self.get_style_class(
-            'QPushButton', 'toggle_button', {'margin': (1, 8, 10, 8)}))
+            'QPushButton', 'toggle_button', {'margin': (0, 8, 0, 8)}))
     activate_button.setFont(self.theme_font('app', '@subhead'))
     activate_button.r_function = lambda: self.live_parser.start()
     activate_button.l_function = lambda: self.live_parser.stop()
     bottom_layout.addWidget(activate_button, 0, 1, alignment=AVCENTER)
     close_button = create_icon_button(
-            self, self.icons['close'], 'Close Live Parser',
-            style_override={'margin-bottom': '@margin'},
-            icon_size=[self.config['icon_size'] * 0.8] * 2)
+            self, self.icons['close'], 'Close Live Parser', icon_size=icon_size)
     close_button.clicked.connect(lambda: live_parser_toggle(self, False))
     bottom_layout.addWidget(close_button, 0, 2, alignment=ALEFT | AVCENTER)
 
@@ -387,6 +407,7 @@ def create_live_parser_window(self):
     live_window.update_table.connect(lambda data: update_live_table(self, data))
     live_window.update_graph.connect(update_live_graph)
     self.live_parser_window = live_window
+    self.config['ui_scale'] = ui_scale
     live_window.show()
 
 
@@ -396,6 +417,10 @@ def live_parser_close_callback(self, event):
     """
     window_geometry = self.live_parser_window.saveGeometry()
     self.settings.setValue('live_geometry', window_geometry)
+    try:
+        self.settings.setValue('live_splitter', self.widgets.live_parser_splitter.saveState())
+    except AttributeError:
+        pass
     event.accept()
 
 

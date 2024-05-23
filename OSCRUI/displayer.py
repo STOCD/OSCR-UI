@@ -300,8 +300,8 @@ def create_live_graph(self) -> tuple[QFrame, list]:
     :return: Frame containing the graph and list of curves that will be used to plot the data
     """
     plot_widget = PlotWidget()
-    plot_widget.setAxisItems({'left': CustomPlotAxis('left')})
-    plot_widget.setAxisItems({'bottom': CustomPlotAxis('bottom', unit='s')})
+    plot_widget.setAxisItems({'left': CustomPlotAxis('left', compressed=True)})
+    plot_widget.setAxisItems({'bottom': CustomPlotAxis('bottom', unit='s', no_labels=True)})
     plot_widget.setStyleSheet(get_style(self, 'plot_widget_nullifier'))
     plot_widget.setBackground(None)
     plot_widget.setMouseEnabled(False, False)
@@ -310,9 +310,9 @@ def create_live_graph(self) -> tuple[QFrame, list]:
     plot_widget.setDefaultPadding(padding=0)
     plot_widget.setXRange(-14, 0, padding=0)
     left_axis = plot_widget.getAxis('left')
-    left_axis.setTickFont(theme_font(self, 'plot_widget'))
+    left_axis.setTickFont(theme_font(self, 'live_plot_widget'))
     left_axis.setTextPen(color=self.theme['defaults']['fg'])
-    left_axis.setTickDensity(3)
+    # left_axis.setTickDensity(0.1)
     bottom_axis = plot_widget.getAxis('bottom')
     bottom_axis.setTickFont(theme_font(self, 'plot_widget'))
     bottom_axis.setTextPen(color=self.theme['defaults']['fg'])
@@ -323,7 +323,7 @@ def create_live_graph(self) -> tuple[QFrame, list]:
         curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
 
     frame = create_frame(self, None, 'plot_widget', size_policy=SMIXMAX, style_override={
-            'margin-left': '@margin', 'margin-right': '@margin', 'margin-bottom': 0})
+            'margin': 4, 'padding': 2})
     frame.setMinimumWidth(self.sidebar_item_width * 0.25)
     frame.setMinimumHeight(self.sidebar_item_width * 0.25)
     layout = QHBoxLayout()

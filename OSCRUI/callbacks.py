@@ -191,6 +191,18 @@ def set_ui_scale_setting(self, new_value: int):
     return setting_value
 
 
+def set_live_scale_setting(self, new_value: int):
+    """
+    Calculates new_value / 50 and stores it to settings.
+
+    Parameters:
+    - :param new_value: 50 times the live scale percentage
+    """
+    setting_value = f'{new_value / 50:.2f}'
+    self.settings.setValue('live_scale', setting_value)
+    return setting_value
+
+
 def set_sto_logpath_setting(self, entry: QLineEdit):
     """
     Formats and stores new logpath to settings.
