@@ -136,7 +136,8 @@ def extend_ladder(self):
         return
 
     ladder_data = self.league_api.ladder_entries(
-            self.league_api.current_ladder_id, self.league_api.pages_loaded + 1)
+        self.league_api.current_ladder_id, self.league_api.pages_loaded + 1
+    )
     if ladder_data is not None:
         if len(ladder_data.results) < 50:
             self.league_api.entire_ladder_loaded = True
@@ -162,8 +163,7 @@ def extend_ladder(self):
                     row.get("build", "Unknown"),
                 )
             )
-        self.widgets.ladder_table.model().sourceModel().extend_data(
-                table_index, table_data, logfile_ids)
+        self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data, logfile_ids)
 
 
 def download_and_view_combat(self):
@@ -213,7 +213,7 @@ class OSCRClient:
 
         # TODO: This is a test domain and not for production.
         if not address:
-            self.address = "http://127.0.0.1:8000"
+            self.address = "http://oscr.stobuilds.com"
 
         self.api_client = OSCR_django_client.api_client.ApiClient()
         self.api_client.configuration.host = self.address
