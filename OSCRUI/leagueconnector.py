@@ -253,7 +253,11 @@ class OSCRClient:
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
-            reply.setText(str(e))
+            try:
+                data = json.loads.body(e.body)
+                reply.setText(data.get("detail", "Failed to parse error from server"))
+            except Exception as e:
+                reply.setText("Failed to parse error from server")
             reply.exec()
 
         return None
@@ -265,7 +269,11 @@ class OSCRClient:
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
-            reply.setText(str(e))
+            try:
+                data = json.loads.body(e.body)
+                reply.setText(data.get("detail", "Failed to parse error from server"))
+            except Exception as e:
+                reply.setText("Failed to parse error from server")
             reply.exec()
 
         return None
@@ -282,7 +290,11 @@ class OSCRClient:
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
-            reply.setText(str(e))
+            try:
+                data = json.loads.body(e.body)
+                reply.setText(data.get("detail", "Failed to parse error from server"))
+            except Exception as e:
+                reply.setText("Failed to parse error from server")
             reply.exec()
 
         return None
