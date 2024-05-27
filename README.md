@@ -8,7 +8,8 @@ User Interface for the OSCR parser.
 
 The STOCD team provides a companion web application for OSCR located at [oscr.stobuilds.com](https://oscr.stobuilds.com).
 This allows users to view and download combat log data without OSCR installed, however uploads
-and more detailed analysis of combat logs requires OSCR.
+and more detailed analysis of combat logs requires OSCR or a parser that supports
+interracting with OSCR's backend such as [CLA](https://github.com/AnotherNathan/STO_CombatLogAnalyzer).
 
 # Windows Users
 
