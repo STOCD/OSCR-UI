@@ -7,7 +7,7 @@ User Interface for the OSCR parser.
 # Companion Web Application
 
 The STOCD team provides a companion web application for OSCR located at [oscr.stobuilds.com](https://oscr.stobuilds.com).
-This application allows users to view and download combat log data without OSCR installed.
+This allows users to view and download combat log data without OSCR installed.
 
 # Windows Users
 
