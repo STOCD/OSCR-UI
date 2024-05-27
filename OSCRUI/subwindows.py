@@ -219,7 +219,7 @@ def uploadresult_dialog(self, result):
         else:
             table_style = {'background-color': '@bg', 'padding': (5, 3, 3, 3), 'margin': 0}
             icon_table_style = {'background-color': '@bg', 'padding': (3, 3, 3, 3), 'margin': 0}
-        if line['updated']:
+        if line.updated:
             icon = self.icons['check'].pixmap(icon_size)
         else:
             icon = self.icons['dash'].pixmap(icon_size)
@@ -227,14 +227,14 @@ def uploadresult_dialog(self, result):
         status_label.setPixmap(icon)
         status_label.setSizePolicy(SMINMIN)
         content_layout.addWidget(status_label, row, 0)
-        name_label = create_label(self, line['name'], style_override=table_style)
+        name_label = create_label(self, line.name, style_override=table_style)
         name_label.setSizePolicy(SMINMAX)
         content_layout.addWidget(name_label, row, 1)
-        value_label = create_label(self, str(line['value']), style_override=table_style)
+        value_label = create_label(self, str(line.value), style_override=table_style)
         value_label.setSizePolicy(SMINMAX)
         value_label.setAlignment(ARIGHT)
         content_layout.addWidget(value_label, row, 2)
-        detail_label = create_label(self, line['detail'], style_override=table_style)
+        detail_label = create_label(self, line.detail, style_override=table_style)
         detail_label.setSizePolicy(SMINMAX)
         content_layout.addWidget(detail_label, row, 3)
     top_margin = {'margin-top': self.theme['defaults']['isp']}
