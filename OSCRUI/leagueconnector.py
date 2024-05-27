@@ -213,7 +213,7 @@ class OSCRClient:
 
         # TODO: This is a test domain and not for production.
         if not address:
-            self.address = "http://127.0.0.1:8000"
+            self.address = "http://oscr.stobuilds.com"
 
         self.api_client = OSCR_django_client.api_client.ApiClient()
         self.api_client.configuration.host = self.address
