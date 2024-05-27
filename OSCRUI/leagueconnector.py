@@ -3,6 +3,7 @@
 import gzip
 import os
 import tempfile
+import json
 
 import OSCR_django_client
 from OSCR.utilities import logline_to_str
@@ -12,7 +13,7 @@ from PySide6.QtWidgets import QMessageBox
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
 from .style import theme_font
-from .subwindows import show_warning
+from .subwindows import show_warning, uploadresult_dialog
 from .textedit import format_datetime_str
 
 LADDER_HEADER = (
@@ -203,7 +204,9 @@ def upload_callback(self):
         )
         file.write(data)
         file.flush()
-    self.league_api.upload(file.name)
+    res = self.league_api.upload(file.name)
+    if res:
+        uploadresult_dialog(self, res)
     os.remove(file.name)
 
 
@@ -228,23 +231,17 @@ class OSCRClient:
     def upload(self, filename):
         """Upload a combat log located at path for analysis"""
 
-        reply = QMessageBox()
-        reply.setWindowTitle("Open Source Combatlog Reader")
-
         try:
-            res = self.api_combatlog.combatlog_upload(file=filename)
-            lines = []
-            for entry in res:
-                lines.append(entry.detail)
-            reply.setText("\n".join(lines))
+            return self.api_combatlog.combatlog_upload(file=filename)
         except OSCR_django_client.exceptions.ServiceException as e:
+            reply = QMessageBox()
+            reply.setWindowTitle("Open Source Combatlog Reader")
             try:
                 data = json.loads(e.body)
                 reply.setText(data.get("detail", "Failed to parse error from server"))
             except Exception as e:
                 reply.setText("Failed to parse error from server")
-
-        reply.exec()
+            reply.exec()
 
     def download(self, id):
         """Download a combat log"""
