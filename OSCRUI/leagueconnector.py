@@ -121,9 +121,9 @@ def slot_ladder(self, selected_map):
     table = self.widgets.ladder_table
     table.setModel(sorting_proxy)
     table.resizeColumnsToContents()
-    table_header = table.horizontalHeader()
-    for col in range(len(model._header)):
-        table_header.resizeSection(col, table_header.sectionSize(col) + 5)
+    # table_header = table.horizontalHeader()
+    # for col in range(len(model._header)):
+    #     table_header.resizeSection(col, table_header.sectionSize(col) + 5)
 
 
 def extend_ladder(self):

@@ -31,9 +31,14 @@ def save_combat(self, combat_num: int):
     Parameters:
     - :param combat_num: number of combat in self.combats
     """
-    if not self.parser1.active_combat:
+    combat = self.parser1.active_combat
+    if not combat:
         return
-    base_dir = os.path.dirname(self.entry.text())
+    filename = combat.map
+    if combat.difficulty is not None and combat.difficulty != '':
+        filename += ' ' + combat.difficulty
+    filename += f' {combat.start_time.strftime('%Y-%m-%d %H.%M')}.log'
+    base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     if not base_dir:
         base_dir = self.app_dir
     path = self.browse_path(base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
@@ -188,6 +193,18 @@ def set_ui_scale_setting(self, new_value: int):
     """
     setting_value = f'{new_value / 50:.2f}'
     self.settings.setValue('ui_scale', setting_value)
+    return setting_value
+
+
+def set_live_scale_setting(self, new_value: int):
+    """
+    Calculates new_value / 50 and stores it to settings.
+
+    Parameters:
+    - :param new_value: 50 times the live scale percentage
+    """
+    setting_value = f'{new_value / 50:.2f}'
+    self.settings.setValue('live_scale', setting_value)
     return setting_value
 
 

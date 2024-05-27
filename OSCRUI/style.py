@@ -93,7 +93,7 @@ def get_css(self, style: dict) -> str:
     css = str()
     ui_scale = self.config['ui_scale']
     for key, val in style.items():
-        if isinstance(val, str) and val[0] == '@':
+        if isinstance(val, str) and val.startswith('@'):
             v = self.theme['defaults'][val[1:]]
         else:
             v = val

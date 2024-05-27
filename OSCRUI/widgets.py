@@ -1,9 +1,11 @@
+from math import sqrt, floor, frexp
+
 import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
 from PySide6.QtCore import QRect, Qt, Signal, Slot
 from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
-from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QTableView
-from PySide6.QtWidgets import QTabWidget, QTreeView, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QSplitter
+from PySide6.QtWidgets import QTableView, QTabWidget, QTreeView, QWidget
 
 from .widgetbuilder import SMINMIN
 
@@ -52,6 +54,7 @@ class WidgetStorage():
         self.live_parser_table: QTableView
         self.live_parser_button: QPushButton
         self.live_parser_curves: list
+        self.live_parser_splitter: QSplitter
 
     @property
     def analysis_table(self):
@@ -175,9 +178,11 @@ class CustomPlotAxis(AxisItem):
     """
     Extending AxisItem for custom tick formatting
     """
-    def __init__(self, *args, unit: str = '', **kwargs):
+    def __init__(self, *args, unit: str = '', no_labels=False, compressed=False, **kwargs):
         super().__init__(*args, **kwargs)
         self._unit = ' ' + unit
+        self._no_labels = no_labels
+        self._compressed = compressed
 
     @property
     def unit(self):
@@ -188,6 +193,9 @@ class CustomPlotAxis(AxisItem):
         self._unit = ' ' + value
 
     def tickStrings(self, values, scale, spacing):
+        if self._no_labels:
+            return []
+
         if self.logMode:
             return self.logTickStrings(values, scale, spacing)
 
@@ -200,6 +208,81 @@ class CustomPlotAxis(AxisItem):
             else:
                 strings.append(f'{tick:.0f}{self._unit}')
         return strings
+
+    def tickSpacing(self, minVal, maxVal, size):
+        """Return values describing the desired spacing and offset of ticks.
+
+        This method is called whenever the axis needs to be redrawn and is a
+        good method to override in subclasses that require control over tick locations.
+
+        The return value must be a list of tuples, one for each set of ticks::
+
+            [
+                (major tick spacing, offset),
+                (minor tick spacing, offset),
+                (sub-minor tick spacing, offset),
+                ...
+            ]
+        """
+        # almost the original implementation of tickSpacing
+        if self._tickSpacing is not None:
+            return self._tickSpacing
+
+        dif = abs(maxVal - minVal)
+        if dif == 0:
+            return []
+
+        ref_size = 300.
+        minNumberOfIntervals = max(2.25, 2.25 * self._tickDensity * sqrt(size / ref_size))
+
+        majorMaxSpacing = dif / minNumberOfIntervals
+
+        mantissa, exp2 = frexp(majorMaxSpacing)
+        p10unit = 10. ** (floor((exp2 - 1) / 3.32192809488736) - 1)
+        if 100. * p10unit <= majorMaxSpacing:
+            majorScaleFactor = 10
+            p10unit *= 10.
+        else:
+            if self._compressed:
+                scale_factors = (50, 30, 20, 10)
+            else:
+                scale_factors = (50, 20, 10)
+            for majorScaleFactor in scale_factors:
+                if majorScaleFactor * p10unit <= majorMaxSpacing:
+                    break
+        majorInterval = majorScaleFactor * p10unit
+
+        minorMinSpacing = 2 * dif / size
+        if majorScaleFactor == 10:
+            trials = (5, 10)
+        else:
+            trials = (10, 20, 50)
+        for minorScaleFactor in trials:
+            minorInterval = minorScaleFactor * p10unit
+            if minorInterval >= minorMinSpacing:
+                break
+        levels = [
+            (majorInterval, 0),
+            (minorInterval, 0)
+        ]
+
+        if self.style['maxTickLevel'] >= 2:
+            if majorScaleFactor == 10:
+                trials = (1, 2, 5, 10)
+            elif majorScaleFactor == 20:
+                trials = (2, 5, 10, 20)
+            elif majorScaleFactor == 50:
+                trials = (5, 10, 50)
+            else:
+                trials = ()
+                extraInterval = minorInterval
+            for extraScaleFactor in trials:
+                extraInterval = extraScaleFactor * p10unit
+                if extraInterval >= minorMinSpacing or extraInterval == minorInterval:
+                    break
+            if extraInterval < minorInterval:
+                levels.append((extraInterval, 0))
+        return levels
 
 
 class AnalysisPlot(PlotWidget):

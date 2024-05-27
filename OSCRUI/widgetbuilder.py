@@ -32,8 +32,10 @@ AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
 RFIXED = QHeaderView.ResizeMode.Fixed
 
-
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
+
+SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 
 
 def create_button(self, text, style: str = 'button', parent=None, style_override={}, toggle=None):
@@ -86,7 +88,7 @@ def create_icon_button(
         button.setToolTip(tooltip)
     button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
     if len(icon_size) != 2:
-        icon_size = [self.theme['s.c']['button_icon_size']] * 2
+        icon_size = [self.config['icon_size']] * 2
     button.setIconSize(QSize(*icon_size))
     button.setCursor(Qt.CursorShape.PointingHandCursor)
     button.setSizePolicy(SMAXMAX)
@@ -361,6 +363,8 @@ def style_table(self, table: QTableView, style_override: dict = {}, single_row_s
     table.setVerticalScrollMode(SMPIXEL)
     table.horizontalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_header'))
     table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_index'))
+    table.verticalHeader().setMinimumHeight(1)
+    table.verticalHeader().setDefaultSectionSize(1)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
     table.horizontalHeader().setSortIndicatorShown(False)

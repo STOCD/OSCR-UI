@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget
+from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QScrollArea
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings, QTimer
@@ -14,6 +14,7 @@ from .textedit import format_path
 from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
 from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
 from .widgetbuilder import SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
+from .widgetbuilder import SCROLLOFF, SCROLLON, SMPIXEL
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 from signal import signal, SIGINT, SIG_DFL
@@ -24,9 +25,10 @@ class OSCRUI():
 
     from .callbacks import (
             browse_log, browse_sto_logpath, collapse_overview_table, expand_overview_table,
-            favorite_button_callback, navigate_log, save_combat, set_parser_opacity_setting,
-            set_graph_resolution_setting, set_sto_logpath_setting, set_ui_scale_setting,
-            switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab)
+            favorite_button_callback, navigate_log, save_combat, set_live_scale_setting,
+            set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
+            set_ui_scale_setting, switch_analysis_tab, switch_main_tab, switch_map_tab,
+            switch_overview_tab)
     from .datafunctions import analyze_log_callback, copy_analysis_callback
     from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
     from .datafunctions import update_shown_columns_heal
@@ -106,13 +108,13 @@ class OSCRUI():
             'collapse-left': 'collapse-left.svg',
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
-            'save': 'save.svg',
-            'log-up': 'log-up.svg',
-            'log-down': 'log-down.svg',
-            'log-cut': 'log-cut-tight.svg',
-            'parser-left': 'parser-left.svg',
-            'parser-right': 'parser-right.svg',
-            'export-parse': 'export-parse.svg',
+            'save': 'database.svg',
+            'page-up': 'page-up.svg',
+            'page-down': 'page-down.svg',
+            'edit': 'edit.svg',
+            'parser-left': 'parser-left-3.svg',
+            'parser-right': 'parser-right-3.svg',
+            'export-parse': 'export.svg',
             'copy': 'copy.svg',
             'ladder': 'ladder.svg',
             'star': 'star.svg',
@@ -123,6 +125,8 @@ class OSCRUI():
             'collapse-top': 'collapse-top.svg',
             'expand-bottom': 'expand-bottom.svg',
             'collapse-bottom': 'collapse-bottom.svg',
+            'check': 'check.svg',
+            'dash': 'dash.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -147,6 +151,9 @@ class OSCRUI():
         self.config['templog_folder_path'] = os.path.abspath(
                 self.app_dir + self.config['templog_folder_path'])
         self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
+        self.config['live_scale'] = self.settings.value('live_scale', type=float)
+        self.config['icon_size'] = round(
+                self.config['ui_scale'] * self.theme['s.c']['button_icon_size'])
 
     @property
     def parser_settings(self) -> dict:
@@ -176,7 +183,10 @@ class OSCRUI():
         """
         Width of the sidebar.
         """
-        return int(self.theme['s.c']['sidebar_item_width'] * self.window.width())
+        return int(
+                self.theme['s.c']['sidebar_item_width']
+                * self.window.width()
+                * self.config['ui_scale'])
 
     def main_window_close_callback(self, event):
         """
@@ -252,7 +262,7 @@ class OSCRUI():
         col_3 = QVBoxLayout()
         col_3.setContentsMargins(csp, csp, csp, csp)
         content_layout.addLayout(col_3, 0, 3)
-        icon_size = self.theme['s.c']['button_icon_size']
+        icon_size = self.config['icon_size']
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
@@ -428,7 +438,7 @@ class OSCRUI():
         head = self.create_label('STO Combatlog:', 'label_heading', frame)
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         cut_log_button = self.create_icon_button(
-                self.icons['log-cut'], 'Manage Logfile', parent=frame)
+                self.icons['edit'], 'Manage Logfile', parent=frame)
         cut_log_button.clicked.connect(self.split_dialog)
         head_layout.addWidget(cut_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
@@ -454,7 +464,7 @@ class OSCRUI():
 
         top_button_row = QHBoxLayout()
         top_button_row.setContentsMargins(0, 0, 0, 0)
-        top_button_row.setSpacing(0)
+        top_button_row.setSpacing(m)
 
         combat_button_layout = QHBoxLayout()
         combat_button_layout.setContentsMargins(0, 0, 0, 0)
@@ -473,12 +483,12 @@ class OSCRUI():
         navigation_button_layout.setSpacing(m)
         navigation_button_layout.setAlignment(AHCENTER)
         up_button = self.create_icon_button(
-                self.icons['log-up'], 'Load newer Combats', parent=frame)
+                self.icons['page-up'], 'Load newer Combats', parent=frame)
         up_button.setEnabled(False)
         navigation_button_layout.addWidget(up_button)
         self.widgets.navigate_up_button = up_button
         down_button = self.create_icon_button(
-                self.icons['log-down'], 'Load older Combats', parent=frame)
+                self.icons['page-down'], 'Load older Combats', parent=frame)
         down_button.setEnabled(False)
         navigation_button_layout.addWidget(down_button)
         self.widgets.navigate_down_button = down_button
@@ -567,7 +577,7 @@ class OSCRUI():
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setColumnStretch(1, 1)
-        logo_size = [self.theme['s.c']['button_icon_size'] * 4] * 2
+        logo_size = [self.config['icon_size'] * 4] * 2
         stocd_logo = self.create_icon_button(
                 self.icons['stocd'], self.config['link_stocd'],
                 style_override={'border-style': 'none'}, icon_size=logo_size)
@@ -942,32 +952,195 @@ class OSCRUI():
         isp = self.theme['defaults']['isp']
         settings_layout.setContentsMargins(2 * isp, isp, isp, isp)
         settings_layout.setSpacing(isp)
+        scroll_layout = QVBoxLayout()
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(isp)
+        scroll_frame = self.create_frame()
+        scroll_area = QScrollArea()
+        scroll_area.setSizePolicy(SMINMIN)
+        scroll_area.setHorizontalScrollBarPolicy(SCROLLOFF)
+        scroll_area.setVerticalScrollBarPolicy(SCROLLON)
+        scroll_area.setAlignment(AHCENTER)
+        settings_layout.addWidget(scroll_area)
+        settings_frame.setLayout(settings_layout)
+        col_1_frame = None  # TODO remove parent parameter from self.create_... functions
+        col_2_frame = None
 
-        col_1_frame = self.create_frame(settings_frame)
-        col_1_frame.setSizePolicy(SMINMAX)
-        settings_layout.addWidget(col_1_frame, alignment=ATOP, stretch=1)
-        col_2_frame = self.create_frame(settings_frame)
-        col_2_frame.setSizePolicy(SMINMAX)
-        settings_layout.addWidget(col_2_frame, alignment=ATOP, stretch=1)
-        col_3_frame = self.create_frame(settings_frame)
-        col_3_frame.setSizePolicy(SMINMAX)
-        settings_layout.addWidget(col_3_frame, alignment=ATOP, stretch=1)
+        # first section
+        sec_1 = QGridLayout()
+        sec_1.setContentsMargins(0, 0, 0, 0)
+        sec_1.setVerticalSpacing(self.theme['defaults']['isp'])
+        sec_1.setHorizontalSpacing(self.theme['defaults']['csp'])
+        combat_delta_label = self.create_label('Seconds Between Combats:', 'label_subhead')
+        sec_1.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
+        combat_delta_validator = QIntValidator()
+        combat_delta_validator.setBottom(1)
+        combat_delta_entry = self.create_entry(
+                self.settings.value('seconds_between_combats', type=str),
+                combat_delta_validator, style_override={'margin-top': 0})
+        combat_delta_entry.setSizePolicy(SMIXMAX)
+        combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'seconds_between_combats', combat_delta_entry.text()))
+        sec_1.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
+        combat_num_label = self.create_label('Number of combats to isolate:', 'label_subhead')
+        sec_1.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
+        combat_num_validator = QIntValidator()
+        combat_num_validator.setBottom(1)
+        combat_num_entry = self.create_entry(
+                self.settings.value('combats_to_parse', type=str), combat_num_validator,
+                style_override={'margin-top': 0})
+        combat_num_entry.setSizePolicy(SMIXMAX)
+        combat_num_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'combats_to_parse', combat_num_entry.text()))
+        sec_1.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
+        graph_resolution_label = self.create_label(
+                'Graph resolution (interval in seconds):', 'label_subhead')
+        sec_1.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
+        graph_resolution_layout = self.create_annotated_slider(
+                self.settings.value('graph_resolution', type=float) * 10, 1, 20,
+                callback=self.set_graph_resolution_setting)
+        sec_1.addLayout(graph_resolution_layout, 2, 1, alignment=ALEFT)
+        split_length_label = self.create_label('Auto Split After Lines:', 'label_subhead')
+        sec_1.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
+        split_length_validator = QIntValidator()
+        split_length_validator.setBottom(1)
+        split_length_entry = self.create_entry(
+                self.settings.value('split_log_after', type=str), split_length_validator,
+                style_override={'margin-top': 0})
+        split_length_entry.setSizePolicy(SMIXMAX)
+        split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'split_log_after', split_length_entry.text()))
+        sec_1.addWidget(split_length_entry, 3, 1, alignment=AVCENTER)
+        overview_sort_label = self.create_label('Sort overview table by column:', 'label_subhead')
+        sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
+        overview_sort_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        overview_sort_combo.addItems(TABLE_HEADER)
+        overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
+        overview_sort_combo.currentIndexChanged.connect(
+                lambda new_index: self.settings.setValue('overview_sort_column', new_index))
+        sec_1.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
+        overview_sort_order_label = self.create_label('Overview table sort order:', 'label_subhead')
+        sec_1.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
+        overview_sort_order_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        overview_sort_order_combo.addItems(('Descending', 'Ascending'))
+        overview_sort_order_combo.setCurrentText(self.settings.value('overview_sort_order'))
+        overview_sort_order_combo.currentTextChanged.connect(
+                lambda new_text: self.settings.setValue('overview_sort_order', new_text))
+        sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
+        auto_scan_label = self.create_label('Scan log automatically:', 'label_subhead')
+        sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
+        auto_scan_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        auto_scan_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        auto_scan_button.setFont(self.theme_font('app', '@font'))
+        auto_scan_button.r_function = lambda: self.settings.setValue('auto_scan', True)
+        auto_scan_button.l_function = lambda: self.settings.setValue('auto_scan', False)
+        if self.settings.value('auto_scan', type=bool):
+            auto_scan_button.flip()
+        sec_1.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
+        sto_log_path_button = self.create_button('STO Logfile:', style_override={
+                'margin': 0, 'font': '@subhead', 'border-color': '@bc', 'border-style': 'solid',
+                'border-width': '@bw'})
+        sec_1.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
+        sto_log_path_entry = self.create_entry(
+                self.settings.value('sto_log_path'), style_override={'margin-top': 0})
+        sto_log_path_entry.setSizePolicy(SMIXMAX)
+        sto_log_path_entry.editingFinished.connect(
+                lambda: self.set_sto_logpath_setting(sto_log_path_entry))
+        sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
+        sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
+        opacity_label = self.create_label('Live Parser Opacity:', 'label_subhead')
+        sec_1.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
+        opacity_slider_layout = self.create_annotated_slider(
+                default_value=round(self.settings.value('live_parser_opacity', type=float) * 20, 0),
+                min=1, max=20,
+                style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
+                callback=self.set_parser_opacity_setting)
+        sec_1.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
+        live_graph_active_label = self.create_label('LiveParser Graph:', 'label_subhead')
+        sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
+        live_graph_active_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        live_graph_active_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        live_graph_active_button.setFont(self.theme_font('app', '@font'))
+        live_graph_active_button.r_function = (
+                lambda: self.settings.setValue('live_graph_active', True))
+        live_graph_active_button.l_function = (
+                lambda: self.settings.setValue('live_graph_active', False))
+        if self.settings.value('live_graph_active', type=bool):
+            live_graph_active_button.flip()
+        sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
+        live_graph_field_label = self.create_label('LiveParser Graph Field:', 'label_subhead')
+        sec_1.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
+        live_graph_field_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        live_graph_field_combo.addItems(self.config['live_graph_fields'])
+        live_graph_field_combo.setCurrentIndex(self.settings.value('live_graph_field', type=int))
+        live_graph_field_combo.currentIndexChanged.connect(
+                lambda new_index: self.settings.setValue('live_graph_field', new_index))
+        sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
+        overview_tab_label = self.create_label('Default Overview Tab:', 'label_subhead')
+        sec_1.addWidget(overview_tab_label, 11, 0, alignment=ARIGHT)
+        overview_tab_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        overview_tab_combo.addItems(('DPS Bar', 'DPS Graph', 'Damage Graph'))
+        overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
+        overview_tab_combo.currentIndexChanged.connect(
+            lambda new_index: self.settings.setValue('first_overview_tab', new_index))
+        sec_1.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
+        size_warning_label = self.create_label('Logfile Size Warning:', 'label_subhead')
+        sec_1.addWidget(size_warning_label, 12, 0, alignment=ARIGHT)
+        size_warning_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        size_warning_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        size_warning_button.setFont(self.theme_font('app', '@font'))
+        size_warning_button.r_function = (
+                lambda: self.settings.setValue('log_size_warning', True))
+        size_warning_button.l_function = (
+                lambda: self.settings.setValue('log_size_warning', False))
+        if self.settings.value('log_size_warning', type=bool):
+            size_warning_button.flip()
+        sec_1.addWidget(size_warning_button, 12, 1, alignment=ALEFT)
+        ui_scale_label = self.create_label('UI Scale:', 'label_subhead')
+        sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
+        ui_scale_slider_layout = self.create_annotated_slider(
+                default_value=round(self.settings.value('ui_scale', type=float) * 50, 0),
+                min=25, max=75, callback=self.set_ui_scale_setting)
+        sec_1.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
+        ui_scale_label = self.create_label('LiveParser Scale:', 'label_subhead')
+        sec_1.addWidget(ui_scale_label, 14, 0, alignment=ARIGHT)
+        live_scale_slider_layout = self.create_annotated_slider(
+                default_value=round(self.settings.value('live_scale', type=float) * 50, 0),
+                min=25, max=75, callback=self.set_live_scale_setting)
+        sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
+        sec_1.setAlignment(AHCENTER)
+        scroll_layout.addLayout(sec_1)
 
-        # first column
+        # seperator
+        section_seperator = self.create_frame(
+            scroll_frame, 'hr', style_override={'background-color': '@lbg'},
+            size_policy=SMINMIN)
+        section_seperator.setFixedHeight(self.theme['defaults']['bw'])
+        scroll_layout.addWidget(section_seperator)
+
+        # second section
         hider_frame_style_override = {
             'border-color': '@lbg',
             'border-width': '@bw', 'border-style': 'solid', 'border-radius': 2
         }
-        col_1 = QHBoxLayout()
-        col_1.setContentsMargins(0, 0, 0, 0)
-        col_1.setSpacing(self.theme['defaults']['isp'])
-        col_1_1 = QVBoxLayout()
-        col_1_1.setSpacing(0)
-        dmg_hider_label = self.create_label('Damage table columns:', 'label_subhead')
-        col_1_1.addWidget(dmg_hider_label)
+        sec_2 = QVBoxLayout()
+        sec_2.setContentsMargins(0, isp, 0, 0)
+        sec_2.setSpacing(isp)
+        sec_2.setAlignment(AHCENTER)
+        dmg_hider_label = self.create_label(
+            'Damage table columns:', 'label_subhead')
+        sec_2.addWidget(dmg_hider_label)
         dmg_hider_layout = QVBoxLayout()
         dmg_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
+        dmg_hider_frame.setMinimumWidth(self.sidebar_item_width)
         self.set_buttons = list()
         for i, head in enumerate(TREE_HEADER[1:]):
             bt = self.create_button(
@@ -986,13 +1159,11 @@ class OSCRUI():
         apply_button.clicked.connect(self.update_shown_columns_dmg)
         dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT | ATOP)
         dmg_hider_frame.setLayout(dmg_hider_layout)
-        col_1_1.addWidget(dmg_hider_frame, alignment=ATOP)
-        col_1.addLayout(col_1_1, stretch=1)
+        sec_2.addWidget(dmg_hider_frame, alignment=ATOP)
 
-        col_1_2 = QVBoxLayout()
-        col_1_2.setSpacing(0)
-        heal_hider_label = self.create_label('Heal table columns:', 'label_subhead', col_1_frame)
-        col_1_2.addWidget(heal_hider_label)
+        heal_hider_label = self.create_label(
+                'Heal table columns:', 'label_subhead')
+        sec_2.addWidget(heal_hider_label)
         heal_hider_layout = QVBoxLayout()
         heal_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
@@ -1014,10 +1185,10 @@ class OSCRUI():
         heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
 
-        col_1_2.addWidget(heal_hider_frame, alignment=ATOP)
+        sec_2.addWidget(heal_hider_frame, alignment=ATOP)
         live_hider_label = self.create_label(
-                'Live Parser columns:', 'label_subhead', col_1_frame, {'margin-top': '@isp'})
-        col_1_2.addWidget(live_hider_label)
+                'Live Parser columns:', 'label_subhead')
+        sec_2.addWidget(live_hider_label)
         live_hider_layout = QVBoxLayout()
         live_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
@@ -1030,155 +1201,9 @@ class OSCRUI():
                     lambda state, i=i: self.settings.setValue(f'live_columns|{i}', state))
             live_hider_layout.addWidget(bt, stretch=1)
         live_hider_frame.setLayout(live_hider_layout)
-        col_1_2.addWidget(live_hider_frame, alignment=ATOP)
-        col_1.addLayout(col_1_2, stretch=1)
+        sec_2.addWidget(live_hider_frame, alignment=ATOP)
 
-        col_1_frame.setLayout(col_1)
+        scroll_layout.addLayout(sec_2)
 
-        # second column
-        col_2 = QGridLayout()
-        col_2.setContentsMargins(0, 0, 0, 0)
-        col_2.setVerticalSpacing(self.theme['defaults']['isp'])
-        col_2.setHorizontalSpacing(self.theme['defaults']['csp'])
-        combat_delta_label = self.create_label('Seconds Between Combats:', 'label_subhead')
-        col_2.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
-        combat_delta_validator = QIntValidator()
-        combat_delta_validator.setBottom(1)
-        combat_delta_entry = self.create_entry(
-                self.settings.value('seconds_between_combats', type=str),
-                combat_delta_validator, style_override={'margin-top': 0})
-        combat_delta_entry.setSizePolicy(SMIXMAX)
-        combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'seconds_between_combats', combat_delta_entry.text()))
-        col_2.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
-        combat_num_label = self.create_label('Number of combats to isolate:', 'label_subhead')
-        col_2.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
-        combat_num_validator = QIntValidator()
-        combat_num_validator.setBottom(1)
-        combat_num_entry = self.create_entry(
-                self.settings.value('combats_to_parse', type=str), combat_num_validator,
-                style_override={'margin-top': 0})
-        combat_num_entry.setSizePolicy(SMIXMAX)
-        combat_num_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'combats_to_parse', combat_num_entry.text()))
-        col_2.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
-        graph_resolution_label = self.create_label(
-                'Graph resolution (interval in seconds):', 'label_subhead')
-        col_2.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
-        graph_resolution_layout = self.create_annotated_slider(
-                self.settings.value('graph_resolution', type=float) * 10, 1, 20,
-                callback=self.set_graph_resolution_setting)
-        col_2.addLayout(graph_resolution_layout, 2, 1, alignment=ALEFT)
-        split_length_label = self.create_label('Auto Split After Lines:', 'label_subhead')
-        col_2.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
-        split_length_validator = QIntValidator()
-        split_length_validator.setBottom(1)
-        split_length_entry = self.create_entry(
-                self.settings.value('split_log_after', type=str), split_length_validator,
-                style_override={'margin-top': 0})
-        split_length_entry.setSizePolicy(SMIXMAX)
-        split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'split_log_after', split_length_entry.text()))
-        col_2.addWidget(split_length_entry, 3, 1, alignment=AVCENTER)
-        overview_sort_label = self.create_label('Sort overview table by column:', 'label_subhead')
-        col_2.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
-        overview_sort_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
-        overview_sort_combo.addItems(TABLE_HEADER)
-        overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
-        overview_sort_combo.currentIndexChanged.connect(
-                lambda new_index: self.settings.setValue('overview_sort_column', new_index))
-        col_2.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
-        overview_sort_order_label = self.create_label('Overview table sort order:', 'label_subhead')
-        col_2.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
-        overview_sort_order_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
-        overview_sort_order_combo.addItems(('Descending', 'Ascending'))
-        overview_sort_order_combo.setCurrentText(self.settings.value('overview_sort_order'))
-        overview_sort_order_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.setValue('overview_sort_order', new_text))
-        col_2.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
-        auto_scan_label = self.create_label('Scan log automatically:', 'label_subhead')
-        col_2.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
-        auto_scan_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
-        auto_scan_button.setStyleSheet(self.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        auto_scan_button.setFont(self.theme_font('app', '@font'))
-        auto_scan_button.r_function = lambda: self.settings.setValue('auto_scan', True)
-        auto_scan_button.l_function = lambda: self.settings.setValue('auto_scan', False)
-        if self.settings.value('auto_scan', type=bool):
-            auto_scan_button.flip()
-        col_2.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
-        sto_log_path_button = self.create_button('STO Logfile:', style_override={
-                'margin': 0, 'font': '@subhead', 'border-color': '@bc', 'border-style': 'solid',
-                'border-width': '@bw'})
-        col_2.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
-        sto_log_path_entry = self.create_entry(
-                self.settings.value('sto_log_path'), style_override={'margin-top': 0})
-        sto_log_path_entry.setSizePolicy(SMIXMAX)
-        sto_log_path_entry.editingFinished.connect(
-                lambda: self.set_sto_logpath_setting(sto_log_path_entry))
-        col_2.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
-        sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
-        opacity_label = self.create_label('Live Parser Opacity:', 'label_subhead')
-        col_2.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
-        opacity_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.value('live_parser_opacity', type=float) * 20, 0),
-                min=1, max=20,
-                style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
-                callback=self.set_parser_opacity_setting)
-        col_2.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
-        live_graph_active_label = self.create_label('LiveParser Graph:', 'label_subhead')
-        col_2.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
-        live_graph_active_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
-        live_graph_active_button.setStyleSheet(self.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        live_graph_active_button.setFont(self.theme_font('app', '@font'))
-        live_graph_active_button.r_function = (
-                lambda: self.settings.setValue('live_graph_active', True))
-        live_graph_active_button.l_function = (
-                lambda: self.settings.setValue('live_graph_active', False))
-        if self.settings.value('live_graph_active', type=bool):
-            live_graph_active_button.flip()
-        col_2.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
-        live_graph_field_label = self.create_label('LiveParser Graph Field:', 'label_subhead')
-        col_2.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
-        live_graph_field_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
-        live_graph_field_combo.addItems(self.config['live_graph_fields'])
-        live_graph_field_combo.setCurrentIndex(self.settings.value('live_graph_field', type=int))
-        live_graph_field_combo.currentIndexChanged.connect(
-                lambda new_index: self.settings.setValue('live_graph_field', new_index))
-        col_2.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
-        overview_tab_label = self.create_label('Default Overview Tab:', 'label_subhead')
-        col_2.addWidget(overview_tab_label, 11, 0, alignment=ARIGHT)
-        overview_tab_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
-        overview_tab_combo.addItems(('DPS Bar', 'DPS Graph', 'Damage Graph'))
-        overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
-        overview_tab_combo.currentIndexChanged.connect(
-            lambda new_index: self.settings.setValue('first_overview_tab', new_index))
-        col_2.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
-        size_warning_label = self.create_label('Logfile Size Warning:', 'label_subhead')
-        col_2.addWidget(size_warning_label, 12, 0, alignment=ARIGHT)
-        size_warning_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
-        size_warning_button.setStyleSheet(self.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        size_warning_button.setFont(self.theme_font('app', '@font'))
-        size_warning_button.r_function = (
-                lambda: self.settings.setValue('log_size_warning', True))
-        size_warning_button.l_function = (
-                lambda: self.settings.setValue('log_size_warning', False))
-        if self.settings.value('log_size_warning', type=bool):
-            size_warning_button.flip()
-        col_2.addWidget(size_warning_button, 12, 1, alignment=ALEFT)
-        ui_scale_label = self.create_label('UI Scale:', 'label_subhead')
-        col_2.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
-        ui_scale_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.value('ui_scale', type=float) * 50, 0),
-                min=25, max=75, callback=self.set_ui_scale_setting)
-        col_2.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
-
-        col_2_frame.setLayout(col_2)
-
-        settings_frame.setLayout(settings_layout)
+        scroll_frame.setLayout(scroll_layout)
+        scroll_area.setWidget(scroll_frame)

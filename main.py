@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.05b020'
+    version = '2024.05b231'
     __version__ = '0.1'
 
     # holds the style of the app
@@ -420,7 +420,7 @@ class Launcher():
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'padding': (0, 0, 0, 0),  # (0, -8, -3, 6), # don't ask
+                'padding': (0, 0, 0, 0),
                 'border': 'none',
                 'margin': 0
             },
@@ -484,11 +484,11 @@ class Launcher():
             },
             # down-pointing arrow
             '::branch:open:has-children': {
-                'image': 'url(assets/arrow-down.svg)'
+                'image': 'url(assets/chevron-down.svg)'
             },
             # right-pointing arrow
             '::branch:closed:has-children': {
-                'image': 'url(assets/arrow-right.svg)'
+                'image': 'url(assets/chevron-right.svg)'
             }
         },
         # header of the analysis table; ::section refers to the individual buttons
@@ -521,7 +521,7 @@ class Launcher():
             'color': '@fg',
             'font': '@subhead',
             '::down-arrow': {
-                'image': 'url(assets/fat-arrow-down.svg)',
+                'image': 'url(assets/thick-chevron-down.svg)',
                 'width': '@margin',
             },
             '::drop-down': {
@@ -565,6 +565,10 @@ class Launcher():
             'margin': 0,
             'padding': 0,
         },
+        # smaller tick font for live parser graph
+        'live_plot_widget': {
+            'font': ('Overpass', 9, 'medium')
+        },
         # holds various properties related to graphing
         'plot': {
             'color_cycler': ('#8f54b4', '#B14D54', '#89B177', '#545DB4', '#C8B74E',
@@ -593,10 +597,10 @@ class Launcher():
             'border-color': '@bc',
             'gridline-color': 'rgba(0,0,0,0)',  # -> s.c: table_gridline
             'outline': '0',  # removes dotted line around clicked item
-            'margin': 10,
+            'margin': (4, 4, 4, 4),
             'font': ('Roboto Mono', 10, 'Medium'),
             '::item': {
-                'padding': (0, 5, 0, 5),
+                'padding': (0, 2, 0, 2),
                 'border-width': '@bw',
                 'border-style': 'solid',
                 'border-color': '@bg',
@@ -605,7 +609,7 @@ class Launcher():
                 'border-right-color': '@bc',
             },
             '::item:alternate': {
-                'padding': (0, 5, 0, 5),
+                'padding': (0, 2, 0, 2),
                 'background-color': '@mbg',
                 'border-width': '@bw',
                 'border-style': 'solid',
@@ -628,7 +632,7 @@ class Launcher():
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'padding': (0, 0, 0, 0),  # (0, -8, -3, 6), # don't ask
+                'padding': (0, 0, 0, 0),
                 'border': 'none',
                 'margin': 0
             },
@@ -645,7 +649,7 @@ class Launcher():
             '::section': {
                 'background-color': '@mbg',
                 'color': '@fg',
-                'padding': (0, 3, 0, 3),
+                'padding': (0, 2, 0, 2),
                 'border': 'none',
                 'margin': 0
             },
@@ -654,6 +658,21 @@ class Launcher():
             'border-style': 'none',
             'background-color': 'none',
             'image': 'url(assets/resize.svg)',
+        },
+        'splitter': {
+            'border': 'none',
+            'margin': 0,
+            'padding': 0,
+            '::handle': {
+                'background-color': '@oscr'
+            },
+            '::handle:pressed': {
+                'background-color': '@bc'
+            },
+            '::handle:vertical': {
+                'height': '@bw',
+                'margin': (0, 13, 0, 13)
+            }
         },
         # other style decisions
         's.c': {
@@ -678,8 +697,8 @@ class Launcher():
     @staticmethod
     def app_config() -> dict:
         config = {
-            'minimum_window_width': 1280,
-            'minimum_window_height': 1016,
+            'minimum_window_width': 1370,
+            'minimum_window_height': 907,
             'settings_path': r'/.OSCR_settings.ini',
             'templog_folder_path': r'/~temp_log_files',
             'link_website': '',
@@ -689,11 +708,14 @@ class Launcher():
             'link_stocd': 'https://github.com/STOCD',
             'live_graph_fields': ('DPS', 'Debuff', 'Attacks-in Share', 'HPS'),
             'ui_scale': 1,
+            'live_scale': 1,
+            'icon_size': 24,
             'default_settings': {
                 'log_path': '',
                 'sto_log_path': '',
                 'geometry': None,
                 'live_geometry': None,
+                'live_splitter': None,
                 'dmg_columns|0': True,
                 'dmg_columns|1': True,
                 'dmg_columns|2': True,
@@ -752,6 +774,7 @@ class Launcher():
                 'first_overview_tab': 0,
                 'log_size_warning': True,
                 'ui_scale': 1,
+                'live_scale': 1,
             }
         }
         return config
