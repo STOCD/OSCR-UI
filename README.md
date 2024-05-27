@@ -4,9 +4,15 @@
 
 User Interface for the OSCR parser. 
 
+# Companion Web Application
+
+The STOCD team provides a companion web application for OSCR located at [oscr.stobuilds.com](https://oscr.stobuilds.com).
+This Application allows users to view and download combat log data for those who may not have OSCR installed.
+
 # Windows Users
 
 For Windows users we have pre-compiled standalone binaries available on the [Releases](https://github.com/STOCD/OSCR-UI/releases) page.
+
 # Installation
 
 ## PyPI
