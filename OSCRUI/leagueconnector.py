@@ -238,7 +238,11 @@ class OSCRClient:
                 lines.append(entry.detail)
             reply.setText("\n".join(lines))
         except OSCR_django_client.exceptions.ServiceException as e:
-            reply.setText(str(e))
+            try:
+                data = json.loads.body(e.body)
+                reply.setText(data.get("detail", "Failed to parse error from server"))
+            except Exception as e:
+                reply.setText("Failed to parse error from server")
 
         reply.exec()
 
