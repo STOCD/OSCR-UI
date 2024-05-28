@@ -335,10 +335,7 @@ def create_live_parser_window(self):
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
         graph_column = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
         graph_colors = self.theme['plot']['color_cycler'][:5]
-        table_layout = splitter
         layout.addWidget(splitter, stretch=1)
-    else:
-        table_layout = layout
 
     table = QTableView()
     table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
@@ -370,10 +367,12 @@ def create_live_parser_window(self):
         if not self.settings.value(f'live_columns|{index}', type=bool):
             table.hideColumn(index)
     self.widgets.live_parser_table = table
-    table_layout.addWidget(table)
-
-    if graph_active and self.settings.value('live_splitter'):
-        table_layout.restoreState(self.settings.value('live_splitter'))
+    if graph_active:
+        splitter.addWidget(table)
+        if self.settings.value('live_splitter'):
+            splitter.restoreState(self.settings.value('live_splitter'))
+    else:
+        layout.addWidget(table, 1)
 
     bottom_layout = QGridLayout()
     bottom_layout.setContentsMargins(self.theme['defaults']['isp'], 0, 0, 0)

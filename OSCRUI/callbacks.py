@@ -37,7 +37,7 @@ def save_combat(self, combat_num: int):
     filename = combat.map
     if combat.difficulty is not None and combat.difficulty != '':
         filename += ' ' + combat.difficulty
-    filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.log'
+    filename += f' {combat.start_time.strftime('%Y-%m-%d %H.%M')}.log'
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     if not base_dir:
         base_dir = self.app_dir
