@@ -108,7 +108,7 @@ class OSCRUI():
             'collapse-left': 'collapse-left.svg',
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
-            'save': 'database.svg',
+            'save': 'save.svg',
             'page-up': 'page-up.svg',
             'page-down': 'page-down.svg',
             'edit': 'edit.svg',
