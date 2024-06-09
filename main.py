@@ -704,7 +704,6 @@ class Launcher():
             'minimum_window_width': 1370,
             'minimum_window_height': 907,
             'settings_path': r'/.OSCR_settings.ini',
-            'templog_folder_path': r'/~temp_log_files',
             'link_website': 'https://oscr.stobuilds.com',
             'link_github': 'https://github.com/STOCD/OSCR-UI',
             'link_downloads': 'https://github.com/STOCD/OSCR-UI/releases',

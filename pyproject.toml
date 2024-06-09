@@ -57,6 +57,7 @@ include_files = ["assets"]
 zip_include_packages = ["*"]
 zip_exclude_packages = []
 
-[tool.cxfreeze.executable]
+[tool.cxfreeze.executables]
 icon = "assets/oscr_icon_small"
 shortcut_name = "OSCR"
+shortcut_dir = "DesktopFolder"
