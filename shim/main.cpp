@@ -2,30 +2,8 @@
 #include <iostream>
 
 #include <Python.h>
-#include <QApplication>
-#include <QMainWindow>
 
 // nix-shell -p cmake gdb qt6.full
-
-class PythonQt {
-public:
-  PythonQt() {
-    const char *fname = "main.py";
-    PyObject *obj = Py_BuildValue("s", fname);
-    FILE *fp = _Py_fopen_obj(obj, "rb");
-    if (NULL == fp) {
-      throw std::runtime_error("Failed to open main.py");
-    }
-
-    int ret = PyRun_SimpleFile(fp, fname);
-    fclose(fp);
-    Py_Finalize();
-    if (ret) {
-      PyErr_Print();
-      throw std::runtime_error("Failed to run main.py");
-    }
-  }
-};
 
 static int init_python(int argc, char **argv) {
   const char *executable = "venv/bin/python";
@@ -51,14 +29,21 @@ static int init_python(int argc, char **argv) {
   return 0;
 }
 
-static int init_qt(int argc, char **argv) {
-  QApplication app(argc, argv);
-  QMainWindow win;
-  win.setObjectName("OSCR");
+static int init_main(int argc, char **argv) {
+  const char *fname = "main.py";
+  PyObject *obj = Py_BuildValue("s", fname);
+  FILE *fp = _Py_fopen_obj(obj, "rb");
+  if (NULL == fp) {
+    throw std::runtime_error("Failed to open main.py");
+  }
 
-  PythonQt code;
-  app.exec();
-
+  int ret = PyRun_SimpleFile(fp, fname);
+  fclose(fp);
+  Py_Finalize();
+  if (ret) {
+    PyErr_Print();
+    throw std::runtime_error("Failed to run main.py");
+  }
   return 0;
 }
 
@@ -70,7 +55,7 @@ static int run(int argc, char **argv) {
     throw std::runtime_error("Failed to initialize python");
   }
 
-  ret = init_qt(argc, argv);
+  ret = init_main(argc, argv);
   if (ret) {
     throw std::runtime_error("Failed to initialize qt");
   }
