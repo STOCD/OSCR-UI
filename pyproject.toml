@@ -53,4 +53,5 @@ executables = [
 ]
 
 [tool.cxfreeze.build_exe]
-zip_include_packages = ["encodings", "PySide6", "shiboken6"]
+zip_include_packages = ["*"]
+zip_exclude_packages = []
