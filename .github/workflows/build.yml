@@ -4,7 +4,7 @@ on: push
 
 jobs:
   build_release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -16,13 +16,12 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: "3.12"
-    - run: python3 -m pip install virtualenv
+    - run: python3 -m pip install virtualenv cx_Freeze
     - run: python3 -m virtualenv venv
     - run: .\venv\Scripts\activate.bat
     - run: pip install .
-    - run: cmake .
-    - run: cmake --build .
-    - run: Compress-Archive -Path * -Destination OSCR.zip
+    - run: czfreeze build
+    - run: Compress-Archive -Path build/* -Destination OSCR.zip
     - uses: actions/upload-artifact@v2
       with:
         name: build_release
