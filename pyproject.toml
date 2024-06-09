@@ -52,7 +52,7 @@ executables = [
     {
         script = "main.py",
         base = "gui",
-        target_name = "OSCR"
+        target_name = "OSCR",
         icon = "assets/oscr_icon_small",
         shortcut_name = "OSCR",
         shortcut_dir = "DesktopFolder".
