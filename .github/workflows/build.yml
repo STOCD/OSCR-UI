@@ -20,7 +20,7 @@ jobs:
     - run: python3 -m virtualenv venv
     - run: .\venv\Scripts\activate.bat
     - run: pip install .
-    - run: czfreeze build
+    - run: cxfreeze build
     - run: Compress-Archive -Path build/* -Destination OSCR.zip
     - uses: actions/upload-artifact@v2
       with:
