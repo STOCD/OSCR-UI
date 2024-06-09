@@ -39,8 +39,8 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build_release
-          path: dist
+          path: .
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: dist/OSCR.zip
+          artifacts: dist/OSCR-UI-win64.msi

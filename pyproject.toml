@@ -56,3 +56,7 @@ executables = [
 include_files = ["assets"]
 zip_include_packages = ["*"]
 zip_exclude_packages = []
+
+[tool.cxfreeze.executable]
+icon = "assets/oscr_icon_small"
+shortcut_name = "OSCR"
