@@ -49,15 +49,17 @@ line-length = 110
 
 [tool.cxfreeze]
 executables = [
-    { script = "main.py", base = "gui", target_name = "OSCR" }
+    {
+        script = "main.py",
+        base = "gui",
+        target_name = "OSCR"
+        icon = "assets/oscr_icon_small",
+        shortcut_name = "OSCR",
+        shortcut_dir = "DesktopFolder".
+    }
 ]
 
 [tool.cxfreeze.build_exe]
 include_files = ["assets"]
 zip_include_packages = ["*"]
 zip_exclude_packages = []
-
-[tool.cxfreeze.executables]
-icon = "assets/oscr_icon_small"
-shortcut_name = "OSCR"
-shortcut_dir = "DesktopFolder"
