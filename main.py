@@ -694,7 +694,7 @@ class Launcher():
             if getattr(sys, 'frozen', False):
                 # The application is frozen
                 base_path = os.path.dirname(sys.executable)
-            else
+            else:
                 base_path = os.path.abspath(os.path.dirname(__file__))
         return base_path
 
