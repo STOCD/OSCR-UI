@@ -43,4 +43,4 @@ jobs:
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: dist/OSCR-UI-win64.msi
+          artifacts: OSCR-UI-win64.msi
