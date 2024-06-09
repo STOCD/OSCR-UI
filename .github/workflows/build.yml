@@ -17,6 +17,7 @@ jobs:
     - uses: jurplel/install-qt-action@v3
       with:
         python-version: "3.12"
+    - run: python3 -m pip install virtualenv
     - run: python3 -m virtualenv venv
     - run: .\venv\bin\activate.ps
     - run: pip install .
