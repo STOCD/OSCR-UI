@@ -53,7 +53,7 @@ executables = [
 ]
 
 [tool.cxfreeze.build_exe]
-include_files = ["assets"]
+include_files = ["assets", "README.md", "LICENSE"]
 zip_include_packages = ["*"]
 zip_exclude_packages = []
 
