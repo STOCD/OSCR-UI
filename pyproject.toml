@@ -49,7 +49,7 @@ line-length = 110
 
 [tool.cxfreeze]
 executables = [
-    { script = "main.py", base = "gui", target_name = "OSCR", icon = "assets/oscr_icon_small", shortcut_name = "OSCR", shortcut_dir = "DesktopFolder" }
+    { script = "main.py", base = "gui", target_name = "OSCR", icon = "assets/oscr_icon_small", shortcut_name = "Open Source Combatlog Reader", shortcut_dir = "DesktopFolder" }
 ]
 
 [tool.cxfreeze.build_exe]
