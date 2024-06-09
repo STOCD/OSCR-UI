@@ -19,7 +19,7 @@ jobs:
         python-version: "3.12"
     - run: python3 -m pip install virtualenv
     - run: python3 -m virtualenv venv
-    - run: .\venv\bin\activate.ps
+    - run: .\venv\bin\activate.ps1
     - run: pip install .
     - run: cmake .
     - run: cmake --build .
