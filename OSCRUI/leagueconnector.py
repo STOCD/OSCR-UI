@@ -180,7 +180,7 @@ def download_and_view_combat(self):
     result = self.league_api.download(log_id)
     result = gzip.decompress(result)
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=self.config["templog_folder_path"], delete=False
+        mode="w", encoding="utf-8", delete=False
     ) as file:
         file.write(result.decode())
     analyze_log_callback(self, path=file.name, parser_num=1, hidden_path=True)
@@ -198,7 +198,7 @@ def upload_callback(self):
 
     establish_league_connection(self)
 
-    with tempfile.NamedTemporaryFile(dir=self.config["templog_folder_path"], delete=False) as file:
+    with tempfile.NamedTemporaryFile(delete=False) as file:
         data = gzip.compress(
             "".join([logline_to_str(line) for line in self.parser1.active_combat.log_data]).encode()
         )
