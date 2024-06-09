@@ -59,5 +59,4 @@ zip_exclude_packages = []
 
 [tool.cxfreeze.bdist_msi]
 initial_target_dir = "[ProgramFilesFolder]OSCR"
-install_icon = "assets/oscr_icon_small"
 upgrade_code = "{4780dfdf-6dc6-4d06-93ad-f0297d4f5bf2}"
