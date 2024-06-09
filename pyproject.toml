@@ -55,7 +55,7 @@ executables = [
         target_name = "OSCR",
         icon = "assets/oscr_icon_small",
         shortcut_name = "OSCR",
-        shortcut_dir = "DesktopFolder".
+        shortcut_dir = "DesktopFolder",
     }
 ]
 
