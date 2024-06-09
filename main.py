@@ -691,7 +691,11 @@ class Launcher():
         try:
             base_path = sys._MEIPASS
         except Exception:
-            base_path = os.path.abspath(os.path.dirname(__file__))
+            if getattr(sys, 'frozen', False):
+                # The application is frozen
+                base_path = os.path.dirname(sys.executable)
+            else
+                base_path = os.path.abspath(os.path.dirname(__file__))
         return base_path
 
     @staticmethod
@@ -700,6 +704,7 @@ class Launcher():
             'minimum_window_width': 1370,
             'minimum_window_height': 907,
             'settings_path': r'/.OSCR_settings.ini',
+            'templog_folder_path': r'/~temp_log_files',
             'link_website': 'https://oscr.stobuilds.com',
             'link_github': 'https://github.com/STOCD/OSCR-UI',
             'link_downloads': 'https://github.com/STOCD/OSCR-UI/releases',
