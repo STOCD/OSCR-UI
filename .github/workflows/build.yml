@@ -21,11 +21,10 @@ jobs:
     - run: .\venv\Scripts\activate.bat
     - run: pip install .
     - run: cxfreeze bdist_msi
-    - run: Compress-Archive -Path dist/* -Destination OSCR.zip
     - uses: actions/upload-artifact@v2
       with:
         name: build_release
-        path: OSCR.zip
+        path: dist/OSCR-UI-win64.msi
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
