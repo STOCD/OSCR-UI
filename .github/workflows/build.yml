@@ -4,7 +4,7 @@ on: push
 
 jobs:
   build_release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -14,13 +14,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
+    - uses: jurplel/install-qt-action@v3
       with:
         python-version: "3.10"
-
     - run: pip install .
-    - run: pip install nuitka==2.0.4 
-    - run: python -m nuitka --standalone --enable-plugin=pyside6 --output-filename=OSCR --output-dir=dist main.py --disable-console --assume-yes-for-downloads --noinclude-qt-translations --include-data-files=./assets/*=./assets/ --windows-icon-from-ico=./assets/oscr_icon_small.ico
-    - run: Compress-Archive -Path dist/main.dist/* -Destination OSCR.zip
+    - run: mdkir build
+    - run: cd build
+    - run: cmake ..
+    - run: cmake --build .
+    - run: Compress-Archive -Path build/* -Destination OSCR.zip
     - uses: actions/upload-artifact@v2
       with:
         name: build_release
