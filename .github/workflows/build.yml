@@ -15,16 +15,16 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: "3.10"
-
+        python-version: "3.12"
+    - run: python3 -m pip install virtualenv cx_Freeze
+    - run: python3 -m virtualenv venv
+    - run: .\venv\Scripts\activate.bat
     - run: pip install .
-    - run: pip install nuitka==2.0.4 
-    - run: python -m nuitka --standalone --enable-plugin=pyside6 --output-filename=OSCR --output-dir=dist main.py --disable-console --assume-yes-for-downloads --noinclude-qt-translations --include-data-files=./assets/*=./assets/ --windows-icon-from-ico=./assets/oscr_icon_small.ico
-    - run: Compress-Archive -Path dist/main.dist/* -Destination OSCR.zip
+    - run: cxfreeze bdist_msi
     - uses: actions/upload-artifact@v2
       with:
         name: build_release
-        path: OSCR.zip
+        path: dist/OSCR-UI-win64.msi
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -39,8 +39,8 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build_release
-          path: dist
+          path: .
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: dist/OSCR.zip
+          artifacts: OSCR-UI-win64.msi
