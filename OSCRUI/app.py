@@ -78,6 +78,7 @@ class OSCRUI():
         self.live_parser = None
         self.init_settings()
         self.init_config()
+        reset_temp_folder(self.config['templog_folder_path'])
         self.app, self.window = self.create_main_window()
         self.init_parser()
         self.cache_assets()
@@ -147,6 +148,8 @@ class OSCRUI():
         """
         self.current_combat_id = -1
         self.current_combat_path = ''
+        self.config['templog_folder_path'] = os.path.abspath(
+                self.app_dir + self.config['templog_folder_path'])
         self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
         self.config['live_scale'] = self.settings.value('live_scale', type=float)
         self.config['icon_size'] = round(
@@ -165,6 +168,7 @@ class OSCRUI():
             setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
             if setting:
                 settings[setting_key] = setting
+        settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
 
     @property
@@ -514,6 +518,8 @@ class OSCRUI():
         self.current_combats.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
         self.current_combats.setFont(self.theme_font('listbox'))
         self.current_combats.setSizePolicy(SMIXMIN)
+        self.current_combats.doubleClicked.connect(
+            lambda: self.analyze_log_callback(self.current_combats.currentRow(), parser_num=1))
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
