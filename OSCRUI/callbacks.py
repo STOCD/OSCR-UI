@@ -138,16 +138,19 @@ def favorite_button_callback(self):
     Adds ladder to / removes ladder from favorites list. Updates settings.
     """
     # Add current ladder to favorites
-    if self.widgets.map_tabber.currentIndex() == 0:
-        current_ladder = self.widgets.ladder_selector.currentItem().text()
+    current_item = self.widgets.ladder_selector.currentItem()
+    if current_item and self.widgets.map_tabber.currentIndex() == 0:
+        current_ladder = current_item.text()
         favorite_ladders = self.settings.value('favorite_ladders', type=list)
         if current_ladder not in favorite_ladders:
             favorite_ladders.append(current_ladder)
             self.settings.setValue('favorite_ladders', favorite_ladders)
             self.widgets.favorite_ladder_selector.addItem(current_ladder)
+            return
+
     # Remove current ladder from favorites
-    else:
-        current_item = self.widgets.favorite_ladder_selector.currentItem()
+    current_item = self.widgets.favorite_ladder_selector.currentItem()
+    if current_item:
         current_ladder = current_item.text()
         favorite_ladders = self.settings.value('favorite_ladders', type=list)
         if current_ladder in favorite_ladders:

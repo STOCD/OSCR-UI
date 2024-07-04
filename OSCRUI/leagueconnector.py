@@ -7,7 +7,7 @@ import json
 
 import OSCR_django_client
 from OSCR.utilities import logline_to_str
-from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi
+from OSCR_django_client.api import CombatlogApi, LadderApi, LadderEntriesApi, VariantApi
 from PySide6.QtWidgets import QMessageBox
 
 from .datafunctions import CustomThread, analyze_log_callback
@@ -47,15 +47,36 @@ def fetch_and_insert_maps(self):
     """
     Retrieves maps from API and inserts them into the list.
     """
-    ladders = self.league_api.ladders()
+
+    update_default_records(self)
+    update_seasonal_records(self)
+
+
+def update_default_records(self):
+    """Update the default records widget"""
+
+    ladders = self.league_api.ladders(variant="Default")
     if ladders is not None:
         self.widgets.ladder_selector.clear()
         for ladder in ladders.results:
             solo = "[Solo]" if ladder.is_solo else ""
-            variant = f"[{ladder.variant_name}] " if ladder.variant_name != "Default" else ""
-            key = f"{variant}{ladder.name} ({ladder.difficulty}) {solo}"
+            key = f"{ladder.name} ({ladder.difficulty}) {solo}"
             self.league_api.ladder_dict[key] = ladder
             self.widgets.ladder_selector.addItem(key)
+
+
+def update_seasonal_records(self):
+    """Update the seasonal records widget"""
+
+    populate_variants(self)
+    ladders = self.league_api.ladders(variant=self.variant_list.currentText())
+    if ladders is not None:
+        self.widgets.season_ladder_selector.clear()
+        for ladder in ladders.results:
+            solo = "[Solo]" if ladder.is_solo else ""
+            key = f"{ladder.name} ({ladder.difficulty}) {solo}"
+            self.league_api.ladder_dict_season[key] = ladder
+            self.widgets.season_ladder_selector.addItem(key)
 
 
 def apply_league_table_filter(self, filter_text: str):
@@ -68,19 +89,30 @@ def apply_league_table_filter(self, filter_text: str):
         pass
 
 
-def slot_ladder(self, selected_map):
+def slot_ladder_default(self, selected_map):
+    self.season_selector.clearSelection()
+    slot_ladder(self, self.league_api.ladder_dict, selected_map)
+
+
+def slot_ladder_season(self, selected_map):
+    self.map_selector.clearSelection()
+    self.favorite_selector.clearSelection()
+    slot_ladder(self, self.league_api.ladder_dict_season, selected_map)
+
+
+def slot_ladder(self, ladder_dict, selected_map):
     """
     Fetches current ladder and puts it into the table.
     """
 
-    if selected_map not in self.league_api.ladder_dict:
+    if selected_map not in ladder_dict:
         return
     if self.widgets.map_tabber.currentIndex() == 0:
         self.widgets.favorite_ladder_selector.selectionModel().clear()
     else:
         self.widgets.ladder_selector.selectionModel().clear()
 
-    selected_ladder = self.league_api.ladder_dict[selected_map]
+    selected_ladder = ladder_dict[selected_map]
     self.league_api.current_ladder_id = selected_ladder.id
     ladder_data = self.league_api.ladder_entries(selected_ladder.id)
     if len(ladder_data.results) >= 50:
@@ -210,6 +242,21 @@ def upload_callback(self):
     os.remove(file.name)
 
 
+def populate_variants(self):
+    """Populate the list of variants"""
+
+    # Only populate the table once.
+    if self.variant_list.count():
+        return
+
+    variants = self.league_api.variants(ordering="-start_date")
+    for variant in variants.results:
+        if variant.name != "Default":
+            self.variant_list.addItem(variant.name)
+
+    self.variant_list.setCurrentIndex(0)
+
+
 class OSCRClient:
     def __init__(self, address=None):
         """Initialize an instance of the OSCR backlend client"""
@@ -223,7 +270,9 @@ class OSCRClient:
         self.api_combatlog = CombatlogApi(api_client=self.api_client)
         self.api_ladder = LadderApi(api_client=self.api_client)
         self.api_ladder_entries = LadderEntriesApi(api_client=self.api_client)
+        self.api_variant = VariantApi(api_client=self.api_client)
         self.ladder_dict: dict = dict()
+        self.ladder_dict_season: dict = dict()
         self.current_ladder_id = None
         self.pages_loaded: int = -1
         self.entire_ladder_loaded: bool = True
@@ -259,10 +308,10 @@ class OSCRClient:
 
         return None
 
-    def ladders(self):
+    def ladders(self, **kwargs):
         """Fetch the list of ladders"""
         try:
-            return self.api_ladder.ladder_list()
+            return self.api_ladder.ladder_list(**kwargs)
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
@@ -284,6 +333,23 @@ class OSCRClient:
                 ordering="-data__DPS",
                 page_size=50,
             )
+        except OSCR_django_client.exceptions.ServiceException as e:
+            reply = QMessageBox()
+            reply.setWindowTitle("Open Source Combatlog Reader")
+            try:
+                data = json.loads(e.body)
+                reply.setText(data.get("detail", "Failed to parse error from server"))
+            except Exception as e:
+                reply.setText("Failed to parse error from server")
+            reply.exec()
+
+        return None
+
+    def variants(self, **kwargs):
+        """Return a list of Variants"""
+
+        try:
+            return self.api_variant.variant_list(**kwargs)
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
