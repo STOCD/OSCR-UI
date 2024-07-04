@@ -212,7 +212,7 @@ def download_and_view_combat(self):
     result = self.league_api.download(log_id)
     result = gzip.decompress(result)
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", delete=False
+        mode="w", encoding="utf-8", dir=self.config["templog_folder_path"], delete=False
     ) as file:
         file.write(result.decode())
     analyze_log_callback(self, path=file.name, parser_num=1, hidden_path=True)
