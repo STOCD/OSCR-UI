@@ -514,6 +514,8 @@ class OSCRUI():
         self.current_combats.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
         self.current_combats.setFont(self.theme_font('listbox'))
         self.current_combats.setSizePolicy(SMIXMIN)
+        self.current_combats.doubleClicked.connect(
+            lambda: self.analyze_log_callback(self.current_combats.currentRow(), parser_num=1))
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
