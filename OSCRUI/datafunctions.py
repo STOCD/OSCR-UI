@@ -62,9 +62,24 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
         if not hidden_path and path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
 
-        proceed = get_data(self, combat=None, path=path)
-        if not proceed:
-            return
+        self.parser1.log_path = path
+        try:
+            self.parser1.analyze_log_file()
+        except FileExistsError:
+            if self.settings.value('log_size_warning', type=bool):
+                action = log_size_warning(self)
+                if action == 'split dialog':
+                    split_dialog(self)
+                    return
+                elif action == 'trim':
+                    trim_logfile(self)
+                    self.parser1.analyze_log_file()
+                elif action == 'continue':
+                    self.parser1.analyze_massive_log_file()
+                else:
+                    action = 'continue'
+            else:
+                self.parser1.analyze_massive_log_file()
         self.current_combats.clear()
         self.current_combats.addItems(parser.analyzed_combats)
         self.current_combats.setCurrentRow(0)
@@ -79,13 +94,10 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
 
     # subsequent run / click on older combat
     elif isinstance(combat_id, int):
-        get_data(self, combat_id)
         self.current_combat_id = combat_id
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(combat_id))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
         analysis_thread.start(QThread.Priority.IdlePriority)
-
-    create_overview(self)
 
     # reset tabber
     switch_main_tab(self, 0)
@@ -129,42 +141,6 @@ def copy_summary_callback(self, parser_num: int = 1):
     self.app.clipboard().setText(summary)
 
 
-def get_data(self, combat: int | None = None, path: str | None = None):
-    """
-    Interface between OSCRUI and OSCR.
-    Uses OSCR class to analyze log at path
-
-    :return: False to abort analyzing process, True otherwise
-    """
-
-    # new log file
-    if combat is None:
-        self.parser1.log_path = path
-        try:
-            self.parser1.analyze_log_file()
-        except FileExistsError:
-            if self.settings.value('log_size_warning', type=bool):
-                action = log_size_warning(self)
-            else:
-                action = 'continue'
-            if action == 'split dialog':
-                split_dialog(self)
-                return False
-            elif action == 'trim':
-                trim_logfile(self)
-                self.parser1.analyze_log_file()
-            elif action == 'continue':
-                self.parser1.analyze_massive_log_file()
-            else:
-                return False
-        self.parser1.shallow_combat_analysis(0)
-
-    # same log file, old combat
-    else:
-        self.parser1.shallow_combat_analysis(combat)
-    return True
-
-
 def analysis_data_slot(self, item_tuple: tuple):
     """
     Inserts the data retrieved from the parser into the respective tables
@@ -172,6 +148,7 @@ def analysis_data_slot(self, item_tuple: tuple):
     Parameters:
     - :param item_tuple: tuple containing only the root item of the data model
     """
+    create_overview(self)
     populate_analysis(self, *item_tuple)
     self.widgets.main_menu_buttons[1].setDisabled(False)
 
