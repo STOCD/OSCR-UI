@@ -40,7 +40,9 @@ class OSCRUI():
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
     from .widgetbuilder import create_icon_button, create_label, style_table
     from .leagueconnector import apply_league_table_filter, download_and_view_combat
-    from .leagueconnector import establish_league_connection, extend_ladder, slot_ladder_default, slot_ladder_season, update_seasonal_records
+    from .leagueconnector import (
+            establish_league_connection, extend_ladder, slot_ladder_default, slot_ladder_season,
+            update_seasonal_records)
     from .leagueconnector import upload_callback
 
     app_dir = None
@@ -375,7 +377,8 @@ class OSCRUI():
         self.map_selector.setFont(self.theme_font('listbox'))
         self.map_selector.setSizePolicy(SMIXMIN)
         self.widgets.ladder_selector = self.map_selector
-        self.map_selector.itemClicked.connect(lambda clicked_item: self.slot_ladder_default(clicked_item.text()))
+        self.map_selector.itemClicked.connect(
+                lambda clicked_item: self.slot_ladder_default(clicked_item.text()))
         background_layout.addWidget(self.map_selector)
         all_layout.addWidget(background_frame, stretch=1)
         all_frame.setLayout(all_layout)
