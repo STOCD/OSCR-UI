@@ -5,11 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "OSCR-UI"
 dependencies = [
-  "PySide6>=6.6.0",
-  "pyqtgraph>=0.13.4",
-  "numpy>=1.26.1",
+  "cx_Freeze==7.1.0.post0",
+  "PySide6==6.7.1",
+  "pyqtgraph==0.13.7",
+  "numpy==1.26.4",
   "STO-OSCR>=2024.5b270",
   "OSCR-django-client>=2024.6.9.0",
+  "pydantic==2.7.3",
 ]
 requires-python = ">=3.10"
 authors = []
@@ -49,7 +51,8 @@ line-length = 110
 
 [tool.cxfreeze]
 executables = [
-    { script = "main.py", base = "gui", target_name = "OSCR", icon = "assets/oscr_icon_small", shortcut_name = "Open Source Combatlog Reader", shortcut_dir = "DesktopFolder" }
+    { script = "main.py", base = "gui", target_name = "OSCR", icon = "assets/oscr_icon_small", shortcut_name = "Open Source Combatlog Reader", shortcut_dir = "DesktopFolder" },
+    { script = "main.py", base = "gui", target_name = "OSCR", icon = "assets/oscr_icon_small", shortcut_name = "Open Source Combatlog Reader", shortcut_dir = "ProgramMenuFolder" },
 ]
 
 [tool.cxfreeze.build_exe]
