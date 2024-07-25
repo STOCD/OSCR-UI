@@ -1125,6 +1125,19 @@ class OSCRUI():
                 min=25, max=75, callback=self.set_live_scale_setting)
         sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
         sec_1.setAlignment(AHCENTER)
+        live_enabled_label = self.create_label('LiveParser default state:', 'label_subhead')
+        sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
+        live_enabled_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        live_enabled_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        live_enabled_button.setFont(self.theme_font('app', '@font'))
+        live_enabled_button.r_function = (
+                lambda: self.settings.setValue('live_enabled', True))
+        live_enabled_button.l_function = (
+                lambda: self.settings.setValue('live_enabled', False))
+        if self.settings.value('live_enabled', type=bool):
+            live_enabled_button.flip()
+        sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
         scroll_layout.addLayout(sec_1)
 
         # seperator

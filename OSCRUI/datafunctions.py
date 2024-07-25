@@ -7,7 +7,7 @@ from .callbacks import switch_main_tab, switch_overview_tab, trim_logfile
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
 from .displayer import create_overview
 from .subwindows import log_size_warning, show_warning, split_dialog
-from .textedit import format_damage_tree_data, format_heal_tree_data
+from .textedit import format_damage_number, format_damage_tree_data, format_heal_tree_data
 
 
 class CustomThread(QThread):
@@ -125,9 +125,9 @@ def copy_summary_callback(self, parser_num: int = 1):
     summary = f'{{ OSCR }} {parser.active_combat.map}'
     difficulty = parser.active_combat.difficulty
     if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
-        summary += f' ({difficulty}) - DPS [{combat_time}]: '
+        summary += f' ({difficulty}) - DPS / DMG [{combat_time}]: '
     else:
-        summary += f' - DPS [{combat_time}]: '
+        summary += f' - DPS / DMG [{combat_time}]: '
     players = sorted(
         self.parser1.active_combat.player_dict.values(),
         reverse=True,
@@ -135,7 +135,9 @@ def copy_summary_callback(self, parser_num: int = 1):
     )
     parts = list()
     for player in players:
-        parts.append(f"`{player.handle}` {player.DPS:,.0f}")
+        parts.append(
+                f"`{player.handle}` {player.DPS:,.0f} / "
+                + format_damage_number(player.total_damage))
     summary += " | ".join(parts)
 
     self.app.clipboard().setText(summary)
