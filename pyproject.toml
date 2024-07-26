@@ -64,3 +64,7 @@ zip_exclude_packages = []
 initial_target_dir = "[ProgramFilesFolder]OSCR"
 install_icon = "assets/oscr_icon_small.ico"
 upgrade_code = "{4780dfdf-6dc6-4d06-93ad-f0297d4f5bf2}"
+
+[tool.setuptools.data-files]
+"share/applications" = ["assets/oscr.desktop"]
+"share/icons/hicolor/64x64/apps" = ["assets/oscr_icon_small.png"]
