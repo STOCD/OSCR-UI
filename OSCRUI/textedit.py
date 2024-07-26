@@ -151,3 +151,21 @@ def format_datetime_str(datetime: str) -> str:
     parts = datetime[:-1].split(':')
     seconds = int(float(parts[-1]))
     return f'{parts[0].replace("T", " ")}:{parts[1]}:{seconds:02d}'
+
+
+def format_damage_number(num: int) -> str:
+    """
+    Formats a number:
+    - num < 10^3: 123.876 -> 123.9
+    - 10^3 < num < 10^6: 123456.789 -> 123.5 k
+    - 10^6 < num: 123456789 -> 123.5 M
+
+    Parameters:
+    - :param num: number to be formatted
+    """
+    if num > 1_000_000:
+        return f'{num / 1_000_000:.1f} M'
+    elif num > 1_000:
+        return f'{num / 1000:.1f} k'
+    else:
+        return f'{num:.1f}'

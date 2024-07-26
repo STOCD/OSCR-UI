@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.07b090'
+    version = '2024.07b250'
     __version__ = '0.2'
 
     # holds the style of the app
@@ -779,6 +779,7 @@ class Launcher():
                 'log_size_warning': True,
                 'ui_scale': 1,
                 'live_scale': 1,
+                'live_enabled': False,
             }
         }
         return config

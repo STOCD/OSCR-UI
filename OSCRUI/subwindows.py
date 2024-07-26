@@ -409,6 +409,9 @@ def create_live_parser_window(self):
     self.config['ui_scale'] = ui_scale
     live_window.show()
 
+    if self.settings.value('live_enabled', type=bool):
+        activate_button.flip()
+
 
 def live_parser_close_callback(self, event):
     """
