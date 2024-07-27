@@ -261,7 +261,6 @@ class OSCRClient:
     def __init__(self, address=None):
         """Initialize an instance of the OSCR backlend client"""
 
-        # TODO: This is a test domain and not for production.
         if not address:
             self.address = "https://oscr.stobuilds.com"
 

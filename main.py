@@ -128,7 +128,7 @@ class Launcher():
             'border-radius': '@br',
             'margin': (3, 3, 3, 3),
             'padding': (2, 5, 0, 5),
-            'font': ('Overpass', 13, 'medium'),
+            'font': ('Overpass', 12, 'medium'),
             ':hover': {
                 'color': '@fg',
                 'border-width': '@bw',
@@ -701,8 +701,8 @@ class Launcher():
     @staticmethod
     def app_config() -> dict:
         config = {
-            'minimum_window_width': 1370,
-            'minimum_window_height': 907,
+            'minimum_window_width': 1280,
+            'minimum_window_height': 720,
             'settings_path': r'/.OSCR_settings.ini',
             'templog_folder_path': r'/~temp_log_files',
             'link_website': 'https://oscr.stobuilds.com',
