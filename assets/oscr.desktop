@@ -1,0 +1,9 @@
+[Desktop Entry]
+Exec=oscr
+Name=Open Source Combatlog Reader
+Comment=Open Source Combatlog Reader for Star Trek Online
+Type=Application
+Terminal=false
+Categories=Utility;
+Icon=oscr_icon_small.ico
+Keywords=STO;OSCR;Star Trek Online;Open Source Combatlog Reader
