@@ -100,6 +100,12 @@ class OSCRUI():
                     lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1)
             )
 
+
+    def translate(self, text):
+        """Translate text."""
+        return self._(text)
+    
+
     def update_translation(self):
         """Update the translation based on the current language setting."""
         try:
@@ -678,7 +684,7 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
-        self.widgets.main_menu_buttons[2].clicked.connect(self.establish_league_connection)
+        self.widgets.main_menu_buttons[2].clicked.connect(self.establish_league_connection(self.translate))
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
@@ -738,7 +744,7 @@ class OSCRUI():
         copy_button.clicked.connect(self.copy_summary_callback)
         icon_layout.addWidget(copy_button)
         ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
-        ladder_button.clicked.connect(self.upload_callback)
+        ladder_button.clicked.connect(self.upload_callback(self.translate))
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
