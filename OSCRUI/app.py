@@ -78,14 +78,14 @@ class OSCRUI():
         self.app_dir = path
         self.config = config
         self.widgets = WidgetStorage()
-        self.league_api = None
         self.live_parser_window = None
         self.live_parser = None
         self.init_settings()
         self.init_config()
 
-        self.language = self.settings.value('language', 'en')
         self.update_translation()
+        
+        self.league_api = None
 
         reset_temp_folder(self.config['templog_folder_path'])
         self.app, self.window = self.create_main_window()
@@ -103,7 +103,7 @@ class OSCRUI():
     def update_translation(self):
         """Update the translation based on the current language setting."""
         try:
-            lang = gettext.translation('messages', localedir='locales', languages=[self.language])
+            lang = gettext.translation('messages', localedir='locales', languages=[self.settings.value('language')])
             lang.install()
             self._ = lang.gettext
         except Exception as e:

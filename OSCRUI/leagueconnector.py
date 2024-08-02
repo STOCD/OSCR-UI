@@ -294,6 +294,12 @@ class OSCRClient:
     def download(self, id):
         """Download a combat log"""
         try:
+            
+            reply = QMessageBox()
+            reply.setWindowTitle("Open Source Combatlog Reader")
+            reply.setText(self._("Test"))
+            reply.exec()
+            
             return self.api_combatlog.combatlog_download(id=id)
         except OSCR_django_client.exceptions.ServiceException as e:
             reply = QMessageBox()

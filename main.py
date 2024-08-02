@@ -715,6 +715,7 @@ class Launcher():
             'live_scale': 1,
             'icon_size': 24,
             'default_settings': {
+                'language': 'en',
                 'log_path': '',
                 'sto_log_path': '',
                 'geometry': None,
