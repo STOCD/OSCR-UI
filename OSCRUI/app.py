@@ -78,13 +78,13 @@ class OSCRUI():
         self.app_dir = path
         self.config = config
         self.widgets = WidgetStorage()
-        self.league_api = None
         self.live_parser_window = None
         self.live_parser = None
         self.init_settings()
         self.init_config()
 
         self.update_translation()
+        self.league_api = None
 
         reset_temp_folder(self.config['templog_folder_path'])
         self.app, self.window = self.create_main_window()
@@ -99,11 +99,9 @@ class OSCRUI():
                     lambda: self.analyze_log_callback(self.translate, path=self.entry.text(), parser_num=1)
             )
 
-
     def translate(self, text):
         """Translate text."""
         return self._(text)
-    
 
     def update_translation(self):
         """Update the translation based on the current language setting."""
