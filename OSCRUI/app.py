@@ -78,14 +78,13 @@ class OSCRUI():
         self.app_dir = path
         self.config = config
         self.widgets = WidgetStorage()
+        self.league_api = None
         self.live_parser_window = None
         self.live_parser = None
         self.init_settings()
         self.init_config()
 
         self.update_translation()
-        
-        self.league_api = None
 
         reset_temp_folder(self.config['templog_folder_path'])
         self.app, self.window = self.create_main_window()
@@ -97,7 +96,7 @@ class OSCRUI():
         if self.settings.value('auto_scan', type=bool):
             QTimer.singleShot(
                     100,
-                    lambda: self.analyze_log_callback(path=self.entry.text(), parser_num=1)
+                    lambda: self.analyze_log_callback(self.translate, path=self.entry.text(), parser_num=1)
             )
 
 
@@ -487,8 +486,7 @@ class OSCRUI():
                 'callback': lambda: self.entry.setText(self.settings.value('sto_log_path')),
                 'align': AHCENTER
             },
-            self._('Scan'): {'callback': lambda: self.analyze_log_callback(
-                    path=self.entry.text(), parser_num=1), 'align': ARIGHT}
+            self._('Scan'): {'callback': lambda: self.analyze_log_callback(self.translate, path=self.entry.text(), parser_num=1), 'align': ARIGHT}
         }
         entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
         left_layout.addLayout(entry_buttons)
@@ -550,12 +548,12 @@ class OSCRUI():
         self.current_combats.setFont(self.theme_font('listbox'))
         self.current_combats.setSizePolicy(SMIXMIN)
         self.current_combats.doubleClicked.connect(
-            lambda: self.analyze_log_callback(self.current_combats.currentRow(), parser_num=1))
+            lambda: self.analyze_log_callback(self.translate, self.current_combats.currentRow(), parser_num=1))
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
         parser1_button.clicked.connect(
-                lambda: self.analyze_log_callback(self.current_combats.currentRow(), parser_num=1))
+                lambda: self.analyze_log_callback(self.translate, self.current_combats.currentRow(), parser_num=1))
         export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
         up_button.clicked.connect(lambda: self.navigate_log('up'))
         down_button.clicked.connect(lambda: self.navigate_log('down'))
@@ -741,10 +739,10 @@ class OSCRUI():
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Result')
-        copy_button.clicked.connect(self.copy_summary_callback)
+        copy_button.clicked.connect(self.translate, self.copy_summary_callback)
         icon_layout.addWidget(copy_button)
         ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
-        ladder_button.clicked.connect(self.upload_callback(self.translate))
+        ladder_button.clicked.connect(lambda: self.upload_callback(self.translate))
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)

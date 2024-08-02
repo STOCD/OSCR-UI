@@ -33,7 +33,7 @@ def init_parser(self):
     # self.parser2 = OSCR()
 
 
-def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, hidden_path=False):
+def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num: int = 1, hidden_path=False):
     """
     Wrapper function for retrieving and showing data. Callback of "Analyse" and "Refresh" button.
 
@@ -53,11 +53,14 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
     else:
         return
 
+    if self._ is None:
+        self._ = translate
+
     # initial run / click on the Analyze buttonQGuiApplication
     if combat_id is None:
         if not path or not os.path.isfile(path):
             show_warning(
-                    self, 'Invalid Logfile', 'The Logfile you are trying to open does not exist.')
+                    self, self._('Invalid Logfile'), self._('The Logfile you are trying to open does not exist.'))
             return
         if not hidden_path and path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
@@ -104,7 +107,7 @@ def analyze_log_callback(self, combat_id=None, path=None, parser_num: int = 1, h
     switch_overview_tab(self, self.settings.value('first_overview_tab', type=int))
 
 
-def copy_summary_callback(self, parser_num: int = 1):
+def copy_summary_callback(self, translate, parser_num: int = 1):
     """
     Callback to set the combat summary of the active combat to the user's clippboard
 
@@ -118,6 +121,9 @@ def copy_summary_callback(self, parser_num: int = 1):
 
     if not parser.active_combat:
         return
+
+    if self._ is None:
+        self._ = translate
 
     duration = self.parser1.active_combat.duration.total_seconds()
     combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
@@ -256,7 +262,7 @@ def copy_analysis_callback(self):
     current_tab = self.widgets.analysis_tabber.currentIndex()
     current_table = self.widgets.analysis_table[current_tab]
     copy_mode = self.widgets.analysis_copy_combobox.currentText()
-    if copy_mode == 'Selection':
+    if copy_mode == self._('Selection'):
         if current_tab <= 1:
             current_header = TREE_HEADER
             format_function = format_damage_tree_data
@@ -283,13 +289,13 @@ def copy_analysis_callback(self):
                 output.append(f"`{formatted_row_name}`: {' | '.join(formatted_row)}")
             output_string = '\n'.join(output)
             self.app.clipboard().setText(output_string)
-    elif copy_mode == 'Global Max One Hit':
+    elif copy_mode == self._('Global Max One Hit'):
         if current_tab <= 1:
             max_one_hit_col = 4
-            prefix = 'Max One Hit'
+            prefix = self._('Max One Hit')
         else:
             max_one_hit_col = 7
-            prefix = 'Max One Heal'
+            prefix = self._('Max One Heal')
         max_one_hits = []
         for player_item in current_table.model()._player._children:
             max_one_hits.append((player_item.get_data(max_one_hit_col), player_item))
@@ -303,13 +309,13 @@ def copy_analysis_callback(self):
                          f'(`{"".join(max_one_hit_item.get_data(0))}` – '
                          f'{max_one_hit_ability})')
         self.app.clipboard().setText(output_string)
-    elif copy_mode == 'Max One Hit':
+    elif copy_mode == self._('Max One Hit'):
         if current_tab <= 1:
             max_one_hit_col = 4
-            prefix = 'Max One Hit'
+            prefix = self._('Max One Hit')
         else:
             max_one_hit_col = 7
-            prefix = 'Max One Heal'
+            prefix = self._('Max One Heal')
         selection = current_table.selectedIndexes()
         if selection:
             selected_row = selection[0].internalPointer()
@@ -324,15 +330,15 @@ def copy_analysis_callback(self):
                                  f'(`{"".join(selected_row.get_data(0))}` – '
                                  f'{max_one_hit_ability})')
                 self.app.clipboard().setText(output_string)
-    elif copy_mode == 'Magnitude':
+    elif copy_mode == self._('Magnitude'):
         if current_tab == 0:
-            prefix = 'Total Damage Out'
+            prefix = self._('Total Damage Out')
         elif current_tab == 1:
-            prefix = 'Total Damage Taken'
+            prefix = self._('Total Damage Taken')
         elif current_tab == 2:
-            prefix = 'Total Heal Out'
+            prefix = self._('Total Heal Out')
         else:
-            prefix = 'Total Heal In'
+            prefix = self._('Total Heal In')
         magnitudes = list()
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
@@ -340,15 +346,15 @@ def copy_analysis_callback(self):
         magnitudes = [f"`[{''.join(player)}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
-    elif copy_mode == 'Magnitude / s':
+    elif copy_mode == self._('Magnitude / s'):
         if current_tab == 0:
-            prefix = 'Total DPS Out'
+            prefix = self._('Total DPS Out')
         elif current_tab == 1:
-            prefix = 'Total DPS Taken'
+            prefix = self._('Total DPS Taken')
         elif current_tab == 2:
-            prefix = 'Total HPS Out'
+            prefix = self._('Total HPS Out')
         else:
-            prefix = 'Total HPS In'
+            prefix = self._('Total HPS In')
         magnitudes = list()
         for player_item in current_table.model()._player._children:
             magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
