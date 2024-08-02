@@ -739,7 +739,7 @@ class OSCRUI():
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Result')
-        copy_button.clicked.connect(self.translate, self.copy_summary_callback)
+        copy_button.clicked.connect(self.copy_summary_callback(self.translate))
         icon_layout.addWidget(copy_button)
         ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
         ladder_button.clicked.connect(lambda: self.upload_callback(self.translate))
