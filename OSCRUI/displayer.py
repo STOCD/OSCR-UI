@@ -5,7 +5,7 @@ from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, Slot
 
-from OSCR import TABLE_HEADER
+from .headers import get_table_headers
 from OSCR.combat import Combat
 
 from .datamodels import OverviewTableModel, SortingProxy
@@ -275,7 +275,7 @@ def create_overview_table(self, table_data) -> QTableView:
     table_cell_data = tuple(tuple(line[2:]) for line in table_data)
     table_index = tuple(line[0] + line[1] for line in table_data)
     model = OverviewTableModel(
-            table_cell_data, TABLE_HEADER, table_index, self.theme_font('table_header'),
+            table_cell_data, get_table_headers(), table_index, self.theme_font('table_header'),
             self.theme_font('table'))
     sort = SortingProxy()
     sort.setSourceModel(model)
