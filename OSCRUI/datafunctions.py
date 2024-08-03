@@ -1,11 +1,12 @@
 import os
 
-from OSCR import OSCR, HEAL_TREE_HEADER, TREE_HEADER
+from OSCR import OSCR
 from PySide6.QtCore import Qt, QThread, Signal
 
 from .callbacks import switch_main_tab, switch_overview_tab, trim_logfile
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
 from .displayer import create_overview
+from .headers import get_heal_tree_headers, get_tree_headers
 from .subwindows import log_size_warning, show_warning, split_dialog
 from .textedit import format_damage_number, format_damage_tree_data, format_heal_tree_data
 
@@ -170,7 +171,7 @@ def populate_analysis(self, root_items: tuple):
     damage_out_table = self.widgets.analysis_table_dout
     damage_out_model = DamageTreeModel(
             damage_out_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']))
+            self.theme_font('', self.theme['tree_table']['::item']['font']), get_tree_headers())
     damage_out_table.setModel(damage_out_model)
     damage_out_root_index = damage_out_model.createIndex(0, 0, damage_out_model._root)
     damage_out_table.expand(damage_out_model.index(0, 0, damage_out_root_index))
@@ -180,7 +181,7 @@ def populate_analysis(self, root_items: tuple):
     damage_in_table = self.widgets.analysis_table_dtaken
     damage_in_model = DamageTreeModel(
             damage_in_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']))
+            self.theme_font('', self.theme['tree_table']['::item']['font']), get_tree_headers())
     damage_in_table.setModel(damage_in_model)
     damage_in_root_index = damage_in_model.createIndex(0, 0, damage_in_model._root)
     damage_in_table.expand(damage_in_model.index(0, 0, damage_in_root_index))
@@ -190,7 +191,7 @@ def populate_analysis(self, root_items: tuple):
     heal_out_table = self.widgets.analysis_table_hout
     heal_out_model = HealTreeModel(
             heal_out_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']))
+            self.theme_font('', self.theme['tree_table']['::item']['font']), get_heal_tree_headers())
     heal_out_table.setModel(heal_out_model)
     heal_out_root_index = damage_in_model.createIndex(0, 0, heal_out_model._root)
     heal_out_table.expand(heal_out_model.index(0, 0, heal_out_root_index))
@@ -200,7 +201,7 @@ def populate_analysis(self, root_items: tuple):
     heal_in_table = self.widgets.analysis_table_hin
     heal_in_model = HealTreeModel(
             heal_in_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']))
+            self.theme_font('', self.theme['tree_table']['::item']['font']), get_heal_tree_headers())
     heal_in_table.setModel(heal_in_model)
     heal_in_root_index = damage_in_model.createIndex(0, 0, heal_in_model._root)
     heal_in_table.expand(heal_in_model.index(0, 0, heal_in_root_index))
@@ -264,10 +265,10 @@ def copy_analysis_callback(self):
     copy_mode = self.widgets.analysis_copy_combobox.currentText()
     if copy_mode == self._('Selection'):
         if current_tab <= 1:
-            current_header = TREE_HEADER
+            current_header = get_tree_headers()
             format_function = format_damage_tree_data
         else:
-            current_header = HEAL_TREE_HEADER
+            current_header = get_heal_tree_headers()
             format_function = format_heal_tree_data
         selection = current_table.selectedIndexes()
         if selection:

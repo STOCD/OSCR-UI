@@ -3,11 +3,12 @@ import os
 from PySide6.QtWidgets import QFileDialog, QLineEdit
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, split_log_by_combat, split_log_by_lines
+
 from .iofunctions import browse_path
 from .textedit import format_path
 
 
-def browse_log(self, entry: QLineEdit):
+def browse_log(self, entry: QLineEdit, translate):
     """
     Callback for browse button.
 
@@ -21,7 +22,7 @@ def browse_log(self, entry: QLineEdit):
     if path != '':
         entry.setText(format_path(path))
         if self.settings.value('auto_scan', type=bool):
-            self.analyze_log_callback(path=path, parser_num=1)
+            self.analyze_log_callback(translate, path=path, parser_num=1)
 
 
 def save_combat(self, combat_num: int):

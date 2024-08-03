@@ -1,14 +1,13 @@
 import os
 
-import gettext
-
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QScrollArea
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings, QTimer
 from PySide6.QtGui import QFontDatabase, QIntValidator
 
-from OSCR import HEAL_TREE_HEADER, LIVE_TABLE_HEADER, TABLE_HEADER, TREE_HEADER
+from .headers import init_header_trans, get_table_headers, get_tree_headers, get_heal_tree_headers, get_live_table_headers
+from .translation import init_translation
 
 from .leagueconnector import OSCRClient
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link, reset_temp_folder
@@ -16,7 +15,7 @@ from .textedit import format_path
 from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
 from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
 from .widgetbuilder import SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
-from .widgetbuilder import SCROLLOFF, SCROLLON, SMPIXEL
+from .widgetbuilder import SCROLLOFF, SCROLLON
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 from signal import signal, SIGINT, SIG_DFL
@@ -106,9 +105,8 @@ class OSCRUI():
     def update_translation(self):
         """Update the translation based on the current language setting."""
         try:
-            lang = gettext.translation('messages', localedir='locales', languages=[self.settings.value('language')])
-            lang.install()
-            self._ = lang.gettext
+            self._ = init_translation(self.settings.value('language'))
+            init_header_trans(self.settings.value('language'))
         except Exception as e:
             print(f"Translation update failed: {e}")
             self._ = lambda x: x
@@ -479,7 +477,7 @@ class OSCRUI():
 
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
-            self._('Browse ...'): {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
+            self._('Browse ...'): {'callback': lambda: self.browse_log(self.entry, self.translate), 'align': ALEFT},
             self._('Default'): {
                 'callback': lambda: self.entry.setText(self.settings.value('sto_log_path')),
                 'align': AHCENTER
@@ -737,7 +735,7 @@ class OSCRUI():
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Result')
-        copy_button.clicked.connect(self.copy_summary_callback(self.translate))
+        copy_button.clicked.connect(lambda: self.copy_summary_callback(self.translate))
         icon_layout.addWidget(copy_button)
         ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
         ladder_button.clicked.connect(lambda: self.upload_callback(self.translate))
@@ -917,7 +915,7 @@ class OSCRUI():
         search_bar.textChanged.connect(lambda text: self.apply_league_table_filter(text))
         control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
         control_button_style = {
-            self._('View Parse'): {'callback': self.download_and_view_combat},
+            self._('View Parse'): {'callback': lambda: self.download_and_view_combat(self.translate)},
             self._('More'): {'callback': self.extend_ladder, 'style': {'margin-right': 0}}
         }
         control_button_layout = self.create_button_series(
@@ -1044,7 +1042,7 @@ class OSCRUI():
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
         overview_sort_combo = self.create_combo_box(
                 col_2_frame, style_override={'font': '@small_text'})
-        overview_sort_combo.addItems(TABLE_HEADER)
+        overview_sort_combo.addItems(get_table_headers())
         overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
         overview_sort_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('overview_sort_column', new_index))
@@ -1121,7 +1119,7 @@ class OSCRUI():
         sec_1.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
         size_warning_label = self.create_label(self._('Logfile Size Warning:'), 'label_subhead')
         sec_1.addWidget(size_warning_label, 12, 0, alignment=ARIGHT)
-        size_warning_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        size_warning_button = FlipButton(self._('Disabled'), self._('Enabled'), col_2_frame, checkable=True)
         size_warning_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         size_warning_button.setFont(self.theme_font('app', '@font'))
@@ -1147,7 +1145,7 @@ class OSCRUI():
         sec_1.setAlignment(AHCENTER)
         live_enabled_label = self.create_label(self._('LiveParser default state:'), 'label_subhead')
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
-        live_enabled_button = FlipButton('Disabled', 'Enabled', col_2_frame, checkable=True)
+        live_enabled_button = FlipButton(self._('Disabled'), self._('Enabled'), col_2_frame, checkable=True)
         live_enabled_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_enabled_button.setFont(self.theme_font('app', '@font'))
@@ -1203,7 +1201,7 @@ class OSCRUI():
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
         dmg_hider_frame.setMinimumWidth(self.sidebar_item_width)
         self.set_buttons = list()
-        for i, head in enumerate(TREE_HEADER[1:]):
+        for i, head in enumerate(get_tree_headers()[1:]):
             bt = self.create_button(
                     head, 'toggle_button', dmg_hider_frame,
                     toggle=self.settings.value(f'dmg_columns|{i}', type=bool))
@@ -1228,7 +1226,7 @@ class OSCRUI():
         heal_hider_layout = QVBoxLayout()
         heal_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
-        for i, head in enumerate(HEAL_TREE_HEADER[1:]):
+        for i, head in enumerate(get_heal_tree_headers()[1:]):
             bt = self.create_button(
                     head, 'toggle_button', heal_hider_frame,
                     toggle=self.settings.value(f'heal_columns|{i}', type=bool))
@@ -1253,7 +1251,7 @@ class OSCRUI():
         live_hider_layout = QVBoxLayout()
         live_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
-        for i, head in enumerate(LIVE_TABLE_HEADER):
+        for i, head in enumerate(get_live_table_headers()):
             bt = self.create_button(
                     head, 'toggle_button', live_hider_frame,
                     toggle=self.settings.value(f'live_columns|{i}', type=bool))

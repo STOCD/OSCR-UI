@@ -12,22 +12,10 @@ from PySide6.QtWidgets import QMessageBox
 
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
+from .headers import get_ladder_headers
 from .style import theme_font
 from .subwindows import show_warning, uploadresult_dialog
 from .textedit import format_datetime_str
-
-LADDER_HEADER = (
-    "Name",
-    "Handle",
-    "DPS",
-    "Total Damage",
-    "Deaths",
-    "Combat Time",
-    "Date",
-    "Max One Hit",
-    "Debuff",
-    "Build",
-)
 
 
 def establish_league_connection(self, translate):
@@ -143,7 +131,7 @@ def slot_ladder(self, ladder_dict, selected_map):
 
     model = LeagueTableModel(
         table_data,
-        LADDER_HEADER,
+        get_ladder_headers(),
         table_index,
         theme_font(self, "table_header"),
         theme_font(self, "table"),
@@ -199,7 +187,7 @@ def extend_ladder(self):
         self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data, logfile_ids)
 
 
-def download_and_view_combat(self):
+def download_and_view_combat(self, translation):
     """
     Download a combat log and view its contents in the overview / analysis pages.
     """
@@ -215,7 +203,7 @@ def download_and_view_combat(self):
         mode="w", encoding="utf-8", dir=self.config["templog_folder_path"], delete=False
     ) as file:
         file.write(result.decode())
-    analyze_log_callback(self, path=file.name, parser_num=1, hidden_path=True)
+    analyze_log_callback(self, translation, path=file.name, parser_num=1, hidden_path=True)
     self.switch_overview_tab(0)
     self.switch_main_tab(0)
 
