@@ -234,7 +234,9 @@ class TreeModel(QAbstractItemModel):
     """
     Data model for the analysis table
     """
-    def __init__(self, root_item, header_font: QFont, name_font: QFont, cell_font: QFont):
+    def __init__(
+            self, root_item, header_font: QFont, name_font: QFont, cell_font: QFont,
+            header_data=None):
         """
         Initializes Tree Model with data in root item.
 
@@ -263,6 +265,10 @@ class TreeModel(QAbstractItemModel):
         self._header_font = header_font
         self._name_font = name_font
         self._cell_font = cell_font
+        if header_data is None:
+            self._header_data = self._root.data
+        else:
+            self._header_data = header_data
         if root_item.get_child(0).get_data(0) == 'Player':
             self._player = root_item.get_child(0)
             self._npc = root_item.get_child(1)
@@ -326,7 +332,7 @@ class TreeModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role) -> str:
         if role == Qt.ItemDataRole.DisplayRole:
-            return self._root.data[section]
+            return self._header_data[section]
         elif role == Qt.ItemDataRole.FontRole:
             return self._header_font
         elif role == Qt.ItemDataRole.TextAlignmentRole:
