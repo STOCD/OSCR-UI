@@ -1,0 +1,332 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2024-08-02 02:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: .\OSCR-UI-main\OSCRUI\app.py:290
+msgid "Collapse Sidebar"
+msgstr "折叠侧边栏"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:290
+msgid "Expand Sidebar"
+msgstr "展开侧边栏"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:295
+msgid "Collapse"
+msgstr "折叠"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:295
+msgid "Expand"
+msgstr "展开"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:306
+msgid "Collapse Table"
+msgstr "折叠表格"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:308
+msgid "Expand_Table"
+msgstr "展开表格"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:342
+msgid "Available Maps:"
+msgstr "可用地图："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:355 .\OSCR-UI-main\OSCRUI\app.py:378
+msgid "All Maps"
+msgstr "所有地图"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:357 .\OSCR-UI-main\OSCRUI\app.py:379
+msgid "Favorites"
+msgstr "收藏夹"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:367
+msgid "Add to Favorites"
+msgstr "添加到收藏夹"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:427
+msgid "Seasonal Records:"
+msgstr "赛季记录："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:464
+msgid "STO Combatlog:"
+msgstr "STO 日志文件路径："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:467
+msgid "Manage Logfile"
+msgstr "管理日志文件"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:480
+msgid "Browse ..."
+msgstr "选择日志"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:481
+msgid "Default"
+msgstr "默认日志"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:485
+msgid "Scan"
+msgstr "扫描日志"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:500
+msgid "Export Combat"
+msgstr "导出战斗"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:503
+msgid "Save Combat to Cache"
+msgstr "将战斗保存到缓存"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:512
+msgid "Load newer Combats"
+msgstr "加载较新的战斗"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:517
+msgid "Load older Combats"
+msgstr "加载较旧的战斗"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:528 .\OSCR-UI-main\OSCRUI\app.py:531
+msgid "Analyze Combat"
+msgstr "分析战斗"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:562
+msgid "Live Parser"
+msgstr "实时解析器"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:580
+msgid "About OSCR:"
+msgstr "关于OSCR："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:583
+msgid "Open Source Combatlog Reader (OSCR), developed by the STO Community "
+msgstr "Open Source Combatlog Reader (OSCR)，由STO社区开发"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:584
+msgid "Developers in cooperation with the STO Builds Discord."
+msgstr "开发者与 STO Builds Discord 群组合作。"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:588
+msgid "Current Version"
+msgstr "当前版本"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:593
+msgid "Website"
+msgstr "网站"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:594
+msgid "Github"
+msgstr "Github"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:595
+msgid "Downloads"
+msgstr "下载"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:636
+msgid "Log"
+msgstr "日志"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:637
+msgid "League"
+msgstr "联赛"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:638
+msgid "About"
+msgstr "关于"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:723 .\OSCR-UI-main\OSCRUI\app.py:1116
+msgid "DPS Bar"
+msgstr "DPS 条形图"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:725 .\OSCR-UI-main\OSCRUI\app.py:1116
+msgid "DPS Graph"
+msgstr "DPS 折线图"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:727 .\OSCR-UI-main\OSCRUI\app.py:1116
+msgid "Damage Graph"
+msgstr "伤害柱状图"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:786
+msgid "Damage Out"
+msgstr "造成伤害"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:789
+msgid "Damage Taken"
+msgstr "受到伤害"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:792
+msgid "Heals Out"
+msgstr "对外治疗"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:795
+msgid "Heals In"
+msgstr "受到治疗"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Global Max One Hit"
+msgstr "全局最大单次命中"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Magnitude"
+msgstr "幅度"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Magnitude / s"
+msgstr "幅度 / 秒"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Max One Hit"
+msgstr "最大单次命中"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Selection"
+msgstr "请选择"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:860
+msgid "Freeze Graph"
+msgstr "冻结图表"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:864
+msgid "Clear Graph"
+msgstr "清除图表"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:912
+msgid "Search:"
+msgstr "搜索："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:915
+msgid "name@handle"
+msgstr "昵称@句柄"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:919
+msgid "View Parse"
+msgstr "查看选中日志解析"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:920
+msgid "More"
+msgstr "查看更多"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:956
+msgid "Overview"
+msgstr "概览"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:957
+msgid "Analysis"
+msgstr "分析"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:958
+msgid "League Standings"
+msgstr "联赛排名"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:959
+msgid "Settings"
+msgstr "设置"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1002
+msgid "Seconds Between Combats:"
+msgstr "战斗间隔时间："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1013
+msgid "Number of combats to isolate:"
+msgstr "隔离战斗的数量："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1025
+msgid "Graph resolution (interval in seconds):"
+msgstr "图表刷新率（间隔秒数）："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1031
+msgid "Auto Split After Lines:"
+msgstr "自动裁剪行数："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1042
+msgid "Sort overview table by column:"
+msgstr "按选中列排序概览表："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1051
+msgid "Overview table sort order:"
+msgstr "概览表排序顺序："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1055
+msgid "Ascending"
+msgstr "升序"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1055
+msgid "Descending"
+msgstr "降序"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1060
+msgid "Scan log automatically:"
+msgstr "自动扫描日志："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1062 .\OSCR-UI-main\OSCRUI\app.py:1092
+msgid "Disabled"
+msgstr "禁用"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1062 .\OSCR-UI-main\OSCRUI\app.py:1092
+msgid "Enabled"
+msgstr "启用"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1071
+msgid "STO Logfile:"
+msgstr "STO 日志文件路径："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1082
+msgid "Live Parser Opacity:"
+msgstr "实时解析器透明度："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1090
+msgid "LiveParser Graph:"
+msgstr "实时解析器图表："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1103
+msgid "LiveParser Graph Field:"
+msgstr "实时解析器图表字段："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1112
+msgid "Default Overview Tab:"
+msgstr "默认概览标签："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1121
+msgid "Logfile Size Warning:"
+msgstr "日志文件大小警告："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1134
+msgid "UI Scale:"
+msgstr "界面缩放："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1140
+msgid "LiveParser Scale:"
+msgstr "实时解析器缩放："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1147
+msgid "LiveParser default state:"
+msgstr "实时解析器默认状态："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1162
+msgid "Language:"
+msgstr "语言："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1190
+msgid "Damage table columns:"
+msgstr "显示的伤害表列："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1210 .\OSCR-UI-main\OSCRUI\app.py:1235
+msgid "Apply"
+msgstr "应用"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1217
+msgid "Heal table columns:"
+msgstr "显示的治疗表列："
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1242
+msgid "Live Parser columns:"
+msgstr "显示的实时解析器列："

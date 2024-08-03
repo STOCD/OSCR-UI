@@ -1,0 +1,332 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2024-08-02 02:56+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: .\OSCR-UI-main\OSCRUI\app.py:290
+msgid "Collapse Sidebar"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:290
+msgid "Expand Sidebar"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:295
+msgid "Collapse"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:295
+msgid "Expand"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:306
+msgid "Collapse Table"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:308
+msgid "Expand_Table"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:342
+msgid "Available Maps:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:355 .\OSCR-UI-main\OSCRUI\app.py:378
+msgid "All Maps"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:357 .\OSCR-UI-main\OSCRUI\app.py:379
+msgid "Favorites"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:367
+msgid "Add to Favorites"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:427
+msgid "Seasonal Records:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:464
+msgid "STO Combatlog:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:467
+msgid "Manage Logfile"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:480
+msgid "Browse ..."
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:481
+msgid "Default"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:485
+msgid "Scan"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:500
+msgid "Export Combat"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:503
+msgid "Save Combat to Cache"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:512
+msgid "Load newer Combats"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:517
+msgid "Load older Combats"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:528 .\OSCR-UI-main\OSCRUI\app.py:531
+msgid "Analyze Combat"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:562
+msgid "Live Parser"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:580
+msgid "About OSCR:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:583
+msgid "Open Source Combatlog Reader (OSCR), developed by the STO Community "
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:584
+msgid "Developers in cooperation with the STO Builds Discord."
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:588
+msgid "Current Version"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:593
+msgid "Website"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:594
+msgid "Github"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:595
+msgid "Downloads"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:636
+msgid "Log"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:637
+msgid "League"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:638
+msgid "About"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:723 .\OSCR-UI-main\OSCRUI\app.py:1116
+msgid "DPS Bar"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:725 .\OSCR-UI-main\OSCRUI\app.py:1116
+msgid "DPS Graph"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:727 .\OSCR-UI-main\OSCRUI\app.py:1116
+msgid "Damage Graph"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:786
+msgid "Damage Out"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:789
+msgid "Damage Taken"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:792
+msgid "Heals Out"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:795
+msgid "Heals In"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Global Max One Hit"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Magnitude"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Magnitude / s"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Max One Hit"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:809
+msgid "Selection"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:860
+msgid "Freeze Graph"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:864
+msgid "Clear Graph"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:912
+msgid "Search:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:915
+msgid "name@handle"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:919
+msgid "View Parse"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:920
+msgid "More"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:956
+msgid "Overview"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:957
+msgid "Analysis"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:958
+msgid "League Standings"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:959
+msgid "Settings"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1002
+msgid "Seconds Between Combats:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1013
+msgid "Number of combats to isolate:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1025
+msgid "Graph resolution (interval in seconds):"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1031
+msgid "Auto Split After Lines:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1042
+msgid "Sort overview table by column:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1051
+msgid "Overview table sort order:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1055
+msgid "Ascending"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1055
+msgid "Descending"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1060
+msgid "Scan log automatically:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1062 .\OSCR-UI-main\OSCRUI\app.py:1092
+msgid "Disabled"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1062 .\OSCR-UI-main\OSCRUI\app.py:1092
+msgid "Enabled"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1071
+msgid "STO Logfile:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1082
+msgid "Live Parser Opacity:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1090
+msgid "LiveParser Graph:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1103
+msgid "LiveParser Graph Field:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1112
+msgid "Default Overview Tab:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1121
+msgid "Logfile Size Warning:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1134
+msgid "UI Scale:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1140
+msgid "LiveParser Scale:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1147
+msgid "LiveParser default state:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1162
+msgid "Language:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1190
+msgid "Damage table columns:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1210 .\OSCR-UI-main\OSCRUI\app.py:1235
+msgid "Apply"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1217
+msgid "Heal table columns:"
+msgstr ""
+
+#: .\OSCR-UI-main\OSCRUI\app.py:1242
+msgid "Live Parser columns:"
+msgstr ""

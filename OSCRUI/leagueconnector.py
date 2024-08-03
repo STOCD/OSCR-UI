@@ -12,25 +12,13 @@ from PySide6.QtWidgets import QMessageBox
 
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
+from .headers import get_ladder_headers
 from .style import theme_font
 from .subwindows import show_warning, uploadresult_dialog
 from .textedit import format_datetime_str
 
-LADDER_HEADER = (
-    "Name",
-    "Handle",
-    "DPS",
-    "Total Damage",
-    "Deaths",
-    "Combat Time",
-    "Date",
-    "Max One Hit",
-    "Debuff",
-    "Build",
-)
 
-
-def establish_league_connection(self):
+def establish_league_connection(self, translate):
     """
     Connects to the league server if not already connected.
 
@@ -38,7 +26,7 @@ def establish_league_connection(self):
     - :param fetch_ladder: fetches available maps and updates map selector if true
     """
     if self.league_api is None:
-        self.league_api = OSCRClient()
+        self.league_api = OSCRClient(translate)
         map_fetch_thread = CustomThread(self.window, lambda: fetch_and_insert_maps(self))
         map_fetch_thread.start()
 
@@ -143,7 +131,7 @@ def slot_ladder(self, ladder_dict, selected_map):
 
     model = LeagueTableModel(
         table_data,
-        LADDER_HEADER,
+        get_ladder_headers(),
         table_index,
         theme_font(self, "table_header"),
         theme_font(self, "table"),
@@ -199,7 +187,7 @@ def extend_ladder(self):
         self.widgets.ladder_table.model().sourceModel().extend_data(table_index, table_data, logfile_ids)
 
 
-def download_and_view_combat(self):
+def download_and_view_combat(self, translation):
     """
     Download a combat log and view its contents in the overview / analysis pages.
     """
@@ -215,20 +203,20 @@ def download_and_view_combat(self):
         mode="w", encoding="utf-8", dir=self.config["templog_folder_path"], delete=False
     ) as file:
         file.write(result.decode())
-    analyze_log_callback(self, path=file.name, parser_num=1, hidden_path=True)
+    analyze_log_callback(self, translation, path=file.name, parser_num=1, hidden_path=True)
     self.switch_overview_tab(0)
     self.switch_main_tab(0)
 
 
-def upload_callback(self):
+def upload_callback(self, translate):
     """
     Helper function to grab the current combat and upload it to the backend.
     """
     if self.parser1.active_combat is None or self.parser1.active_combat.log_data is None:
-        show_warning(self, "OSCR - Logfile Upload", "No data to upload.")
+        show_warning(self, "OSCR - Logfile Upload", self._("No data to upload."))
         return
 
-    establish_league_connection(self)
+    establish_league_connection(self, translate)
 
     with tempfile.NamedTemporaryFile(delete=False) as file:
         data = gzip.compress(
@@ -258,11 +246,13 @@ def populate_variants(self):
 
 
 class OSCRClient:
-    def __init__(self, address=None):
+    def __init__(self, translate, address=None):
         """Initialize an instance of the OSCR backlend client"""
 
         if not address:
             self.address = "https://oscr.stobuilds.com"
+            
+        self._ = translate
 
         self.api_client = OSCR_django_client.api_client.ApiClient()
         self.api_client.configuration.host = self.address
@@ -286,9 +276,9 @@ class OSCRClient:
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
                 data = json.loads(e.body)
-                reply.setText(data.get("detail", "Failed to parse error from server"))
+                reply.setText(data.get("detail", self._("Failed to parse error from server")))
             except Exception as e:
-                reply.setText("Failed to parse error from server")
+                reply.setText(self._("Failed to parse error from server"))
             reply.exec()
 
     def download(self, id):
@@ -300,9 +290,9 @@ class OSCRClient:
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
                 data = json.loads(e.body)
-                reply.setText(data.get("detail", "Failed to parse error from server"))
+                reply.setText(data.get("detail", self._("Failed to parse error from server")))
             except Exception as e:
-                reply.setText("Failed to parse error from server")
+                reply.setText(self._("Failed to parse error from server"))
             reply.exec()
 
         return None
@@ -316,9 +306,9 @@ class OSCRClient:
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
                 data = json.loads(e.body)
-                reply.setText(data.get("detail", "Failed to parse error from server"))
+                reply.setText(data.get("detail", self._("Failed to parse error from server")))
             except Exception as e:
-                reply.setText("Failed to parse error from server")
+                reply.setText(self._("Failed to parse error from server"))
             reply.exec()
 
         return None
@@ -337,9 +327,9 @@ class OSCRClient:
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
                 data = json.loads(e.body)
-                reply.setText(data.get("detail", "Failed to parse error from server"))
+                reply.setText(data.get("detail", self._("Failed to parse error from server")))
             except Exception as e:
-                reply.setText("Failed to parse error from server")
+                reply.setText(self._("Failed to parse error from server"))
             reply.exec()
 
         return None
@@ -354,9 +344,9 @@ class OSCRClient:
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
                 data = json.loads(e.body)
-                reply.setText(data.get("detail", "Failed to parse error from server"))
+                reply.setText(data.get("detail", self._("Failed to parse error from server")))
             except Exception as e:
-                reply.setText("Failed to parse error from server")
+                reply.setText(self._("Failed to parse error from server"))
             reply.exec()
 
         return None

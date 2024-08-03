@@ -253,6 +253,7 @@ class TreeModel(QAbstractItemModel):
             item
             - property "child_count" containing the number of children the item has
             - property "column_count" containing the number of columns the items data row
+        - :param header_data: the headers using in the analysis UI.
 
         The item may already contain childen.
         - :param header_font: font used for the header
