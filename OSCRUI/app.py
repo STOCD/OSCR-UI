@@ -465,7 +465,7 @@ class OSCRUI():
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         cut_log_button = self.create_icon_button(
                 self.icons['edit'], self._('Manage Logfile'), parent=frame)
-        cut_log_button.clicked.connect(self.split_dialog)
+        cut_log_button.clicked.connect(lambda _: self.split_dialog(self.translate))
         head_layout.addWidget(cut_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
 
@@ -559,7 +559,7 @@ class OSCRUI():
 
         live_parser_button = self.create_button(
                 self._('Live Parser'), 'tab_button', style_override={'margin-top': '@isp'}, toggle=False)
-        live_parser_button.clicked[bool].connect(self.live_parser_toggle)
+        live_parser_button.clicked[bool].connect(lambda checked: self.live_parser_toggle(self.translate, checked))
         left_layout.addWidget(live_parser_button, alignment=AHCENTER)
         self.widgets.live_parser_button = live_parser_button
 
@@ -734,10 +734,10 @@ class OSCRUI():
         icon_layout = QHBoxLayout()
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
-        copy_button = self.create_icon_button(self.icons['copy'], 'Copy Result')
+        copy_button = self.create_icon_button(self.icons['copy'], self._('Copy Result'))
         copy_button.clicked.connect(lambda: self.copy_summary_callback(self.translate))
         icon_layout.addWidget(copy_button)
-        ladder_button = self.create_icon_button(self.icons['ladder'], 'Upload Result')
+        ladder_button = self.create_icon_button(self.icons['ladder'], self._('Upload Result'))
         ladder_button.clicked.connect(lambda: self.upload_callback(self.translate))
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
