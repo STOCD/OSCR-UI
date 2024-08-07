@@ -51,7 +51,7 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         return
     if parser_num == 1:
         parser: OSCR = self.parser1
-    elif parser_num == 2:
+    elif parser_num == 2: 
         parser: OSCR = self.parser2
     else:
         return
@@ -95,7 +95,7 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
                 message = (
                     f"{self._('Failed to analyze the log file.')}\n\n"
                     f"{self._('Reason:')}\n{error_message}\n\n"
-                    f"{self._('Please report this issue to Discord.')}"
+                    f"{self._('Please report this issue to Discord OSCR-Support channel.')}"
                 )
                 error.setText(message)
             except Exception as ex:
@@ -104,7 +104,7 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
                 message = (
                     f"{self._('Failed to analyze the log file.')}\n\n"
                     f"{self._('Reason:')}\n{error_message}\n\n"
-                    f"{self._('Please report this issue to Discord.')}"
+                    f"{self._('Please report this issue to Discord OSCR-Support channel.')}"
                 )
                 error.setText(message)
 

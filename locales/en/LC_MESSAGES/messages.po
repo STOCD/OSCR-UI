@@ -14,6 +14,365 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
+msgid "Upload Result"
+msgstr ""
+
+msgid "Copy Result"
+msgstr ""
+
+msgid "Split Dialog"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:57
+msgid "The combatlog file you are trying to open will impair the performance of the app "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:58
+msgid ""
+"due to its size. It is advised to split the log. \n"
+"\n"
+"Click \"Split Dialog\" to split "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:59
+msgid "the file, \"Cancel\" to abort combatlog analysis or \"Continue\" to analyze the log "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:60
+msgid "nevertheless."
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:64
+msgid "Cancel"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:66
+msgid "Trim"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:67
+msgid "Continue"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:101
+msgid "Selected Logfile:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:116
+msgid "Trim Logfile:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:119
+msgid "Removes all combats but the most recent one from the selected logfile. "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:120
+msgid "All previous combats will be lost!"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:134
+msgid "Split Log Automatically:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:137
+msgid "Automatically splits the logfile at the next combat end after "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:139
+msgid " lines until the entire file has "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:140
+msgid " been split. The new files are written to the selected folder. It is advised to "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:141
+msgid "select an empty folder to ensure all files are saved correctly."
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:146
+msgid "Auto Split"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:154
+msgid "Export Range of Combats:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:157
+msgid "Exports combats including and between lower and upper limit to selected file. "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:158
+msgid "Both limits refer to the indexed list of all combats in the file starting with 1. "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:159
+msgid "An upper limit larger than the total number of combats or of \"-1\", is treated as "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:160
+msgid "being equal to the total number of combats."
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:169
+msgid "Lower Limit:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:171
+msgid "Upper Limit:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:192
+msgid "Export Combats"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:202
+msgid "OSCR - Split Logfile"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:229
+msgid "Upload Results:"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:264
+msgid "OSCR - Upload Results"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:286
+msgid "Make sure to set the STO Logfile setting in the "
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:287
+msgid "settings tab to a valid logfile before starting the live parser."
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:409
+msgid "Activate"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:409
+msgid "Deactivate"
+msgstr ""
+
+#: .\OSCRUI\subwindows.py:417
+msgid "Close Live Parser"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Handle"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Build"
+msgstr ""
+
+#: .\headers.py:9
+msgid "Attacks-in Share"
+msgstr ""
+
+#: .\headers.py:9 .\headers.py:18
+msgid "Total Damage"
+msgstr ""
+
+#: .\headers.py:9 .\headers.py:18 .\headers.py:33
+msgid "DPS"
+msgstr ""
+
+#: .\headers.py:9 .\headers.py:18 .\headers.py:33
+msgid "Debuff"
+msgstr ""
+
+#: .\headers.py:9 .\headers.py:20 .\headers.py:27 .\headers.py:33
+msgid "Combat Time"
+msgstr ""
+
+#: .\headers.py:10
+msgid "Damage Share"
+msgstr ""
+
+#: .\headers.py:10
+msgid "Taken Damage Share"
+msgstr ""
+
+#: .\headers.py:10
+msgid "Total Heals"
+msgstr ""
+
+#: .\headers.py:10 .\headers.py:18
+msgid "Max One Hit"
+msgstr ""
+
+#: .\headers.py:10 .\headers.py:18 .\headers.py:27
+msgid "Crit Chance"
+msgstr ""
+
+#: .\headers.py:10 .\headers.py:33
+msgid "Deaths"
+msgstr ""
+
+#: .\headers.py:11
+msgid "Heal Crit Chance"
+msgstr ""
+
+#: .\headers.py:11
+msgid "Heal Share"
+msgstr ""
+
+#: .\headers.py:11
+msgid "Total Damage Taken"
+msgstr ""
+
+#: .\headers.py:11
+msgid "Total Hull Damage Taken"
+msgstr ""
+
+#: .\headers.py:12
+msgid "Attacks-in Number"
+msgstr ""
+
+#: .\headers.py:12
+msgid "Total Attacks"
+msgstr ""
+
+#: .\headers.py:12
+msgid "Total Shield Damage Taken"
+msgstr ""
+
+#: .\headers.py:12 .\headers.py:20
+msgid "Hull Attacks"
+msgstr ""
+
+#: .\headers.py:13
+msgid "Crit Number"
+msgstr ""
+
+#: .\headers.py:13
+msgid "Heal Crit Number"
+msgstr ""
+
+#: .\headers.py:13
+msgid "Heal Number"
+msgstr ""
+
+#: .\headers.py:13 .\headers.py:19
+msgid "Misses"
+msgstr ""
+
+#: .\headers.py:18
+msgid "Accuracy"
+msgstr ""
+
+#: .\headers.py:18
+msgid "Flank Rate"
+msgstr ""
+
+#: .\headers.py:19
+msgid "Attacks"
+msgstr ""
+
+#: .\headers.py:19
+msgid "Critical Hits"
+msgstr ""
+
+#: .\headers.py:19
+msgid "Flank Hits"
+msgstr ""
+
+#: .\headers.py:19
+msgid "Shield DPS"
+msgstr ""
+
+#: .\headers.py:19
+msgid "Shield Damage"
+msgstr ""
+
+#: .\headers.py:19 .\headers.py:33
+msgid "Kills"
+msgstr ""
+
+#: .\headers.py:20
+msgid "Base DPS"
+msgstr ""
+
+#: .\headers.py:20
+msgid "Base Damage"
+msgstr ""
+
+#: .\headers.py:20
+msgid "Hull DPS"
+msgstr ""
+
+#: .\headers.py:20
+msgid "Hull Damage"
+msgstr ""
+
+#: .\headers.py:21
+msgid "Shield Attacks"
+msgstr ""
+
+#: .\headers.py:26
+msgid "Hull HPS"
+msgstr ""
+
+#: .\headers.py:26
+msgid "Hull Heal"
+msgstr ""
+
+#: .\headers.py:26
+msgid "Shield HPS"
+msgstr ""
+
+#: .\headers.py:26
+msgid "Shield Heal"
+msgstr ""
+
+#: .\headers.py:26
+msgid "Total Heal"
+msgstr ""
+
+#: .\headers.py:26 .\headers.py:33
+msgid "HPS"
+msgstr ""
+
+#: .\headers.py:27
+msgid "Critical Heals"
+msgstr ""
+
+#: .\headers.py:27
+msgid "Heal Ticks"
+msgstr ""
+
+#: .\headers.py:27
+msgid "Hull Heal Ticks"
+msgstr ""
+
+#: .\headers.py:27
+msgid "Max One Heal"
+msgstr ""
+
+#: .\headers.py:28
+msgid "Shield Heal Ticks"
+msgstr ""
+
+#: .\headers.py:33
+msgid "Attacks-in"
+msgstr ""
+
+msgid "Invalid Logfile"
+msgstr ""
+
+msgid "The Logfile you are trying to open does not exist."
+msgstr ""
+
+msgid "Failed to parse error from server"
+msgstr ""
+
+msgid "No data to upload."
+msgstr ""
 
 #: .\OSCR-UI-main\OSCRUI\app.py:290
 msgid "Collapse Sidebar"
