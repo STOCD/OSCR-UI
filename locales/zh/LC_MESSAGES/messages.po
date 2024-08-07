@@ -308,7 +308,7 @@ msgstr "舰体 DPS"
 
 #: .\headers.py:20
 msgid "Hull Damage"
-msgstr "船体伤害"
+msgstr "舰体伤害"
 
 #: .\headers.py:21
 msgid "Shield Attacks"
@@ -316,11 +316,11 @@ msgstr "攻击护盾次数"
 
 #: .\headers.py:26
 msgid "Hull HPS"
-msgstr "船体 HPS"
+msgstr "舰体 HPS"
 
 #: .\headers.py:26
 msgid "Hull Heal"
-msgstr "船体治疗"
+msgstr "舰体治疗"
 
 #: .\headers.py:26
 msgid "Shield HPS"
