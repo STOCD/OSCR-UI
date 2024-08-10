@@ -308,7 +308,7 @@ def copy_analysis_callback(self):
                 if column != 0:
                     cell_data = selected_cell.internalPointer().get_data(column)
                     selection_dict[row_name][column] = cell_data
-            output = ['OSCR | ']
+            output = ['{ OSCR }']
             for row_name, row_data in selection_dict.items():
                 formatted_row = list()
                 for col, value in row_data.items():
@@ -372,7 +372,7 @@ def copy_analysis_callback(self):
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"`[{''.join(player)}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
-        output_string = (f'OSCR | {prefix}: {" | ".join(magnitudes)}')
+        output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
     elif copy_mode == self._('Magnitude / s'):
         if current_tab == 0:
