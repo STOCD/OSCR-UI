@@ -68,9 +68,9 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         if not hidden_path and path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
 
-        self.parser1.log_path = path
+        parser.log_path = path
         try:
-            self.parser1.analyze_log_file()
+            parser.analyze_log_file()
         except FileExistsError:
             if self.settings.value('log_size_warning', type=bool):
                 action = log_size_warning(self, translate)
@@ -79,13 +79,12 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
                     return
                 elif action == 'trim':
                     trim_logfile(self)
-                    self.parser1.analyze_log_file()
+                    parser.analyze_log_file()
                 elif action == 'continue':
-                    self.parser1.analyze_massive_log_file()
-                else:
-                    action = 'continue'
-            else:
-                self.parser1.analyze_massive_log_file()
+                    parser.analyze_massive_log_file()
+                elif action == 'cancel':
+                    return
+
         except Exception as ex:
             error = QMessageBox()
             error.setWindowTitle("Open Source Combatlog Reader")
@@ -117,8 +116,8 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         self.current_combats.setCurrentRow(0)
         self.current_combat_id = 0
         self.current_combat_path = path
-        self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
-        self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
+        self.widgets.navigate_up_button.setEnabled(parser.navigation_up)
+        self.widgets.navigate_down_button.setEnabled(parser.navigation_down)
 
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(0))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))
@@ -157,12 +156,12 @@ def copy_summary_callback(self, translate, parser_num: int = 1):
     duration = self.parser1.active_combat.duration.total_seconds()
     combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
 
-    summary = f'{{ OSCR }} {parser.active_combat.map}'
+    summary = f'OSCR | {parser.active_combat.map}'
     difficulty = parser.active_combat.difficulty
     if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
-        summary += f' ({difficulty}) - DPS / DMG [{combat_time}]: '
+        summary += f' ({difficulty}) | DPS | [{combat_time}]: '
     else:
-        summary += f' - DPS / DMG [{combat_time}]: '
+        summary += f' - DPS | [{combat_time}]: '
     players = sorted(
         self.parser1.active_combat.player_dict.values(),
         reverse=True,
@@ -171,8 +170,7 @@ def copy_summary_callback(self, translate, parser_num: int = 1):
     parts = list()
     for player in players:
         parts.append(
-                f"`{player.handle}` {player.DPS:,.0f} / "
-                + format_damage_number(player.total_damage))
+                f"{player.handle} {player.DPS:,.0f}")
     summary += " | ".join(parts)
 
     self.app.clipboard().setText(summary)
@@ -309,7 +307,7 @@ def copy_analysis_callback(self):
                 if column != 0:
                     cell_data = selected_cell.internalPointer().get_data(column)
                     selection_dict[row_name][column] = cell_data
-            output = ['{ OSCR }']
+            output = ['OSCR | ']
             for row_name, row_data in selection_dict.items():
                 formatted_row = list()
                 for col, value in row_data.items():
@@ -334,7 +332,7 @@ def copy_analysis_callback(self):
         max_one_hit_ability = max_one_hit_ability.get_data(0)
         if isinstance(max_one_hit_ability, tuple):
             max_one_hit_ability = ''.join(max_one_hit_ability)
-        output_string = (f'{{ OSCR }} {prefix}: {max_one_hit:,.2f} '
+        output_string = (f'OSCR | {prefix}: {max_one_hit:,.2f} '
                          f'(`{"".join(max_one_hit_item.get_data(0))}` – '
                          f'{max_one_hit_ability})')
         self.app.clipboard().setText(output_string)
@@ -355,7 +353,7 @@ def copy_analysis_callback(self):
                 max_one_hit_ability = max_one_hit_item.get_data(0)
                 if isinstance(max_one_hit_ability, tuple):
                     max_one_hit_ability = ''.join(max_one_hit_ability)
-                output_string = (f'{{ OSCR }} {prefix}: {max_one_hit:,.2f} '
+                output_string = (f'OSCR | {prefix}: {max_one_hit:,.2f} '
                                  f'(`{"".join(selected_row.get_data(0))}` – '
                                  f'{max_one_hit_ability})')
                 self.app.clipboard().setText(output_string)
@@ -373,7 +371,7 @@ def copy_analysis_callback(self):
             magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"`[{''.join(player)}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
-        output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
+        output_string = (f'OSCR | {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
     elif copy_mode == self._('Magnitude / s'):
         if current_tab == 0:
@@ -389,5 +387,5 @@ def copy_analysis_callback(self):
             magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"`[{''.join(player)}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
-        output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
+        output_string = (f'OSCR | {prefix}: {" | ".join(magnitudes)}')
         self.app.clipboard().setText(output_string)
