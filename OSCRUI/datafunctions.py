@@ -68,9 +68,9 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         if not hidden_path and path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
 
-        self.parser1.log_path = path
+        parser.log_path = path
         try:
-            self.parser1.analyze_log_file()
+            parser.analyze_log_file()
         except FileExistsError:
             if self.settings.value('log_size_warning', type=bool):
                 action = log_size_warning(self, translate)
@@ -79,13 +79,12 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
                     return
                 elif action == 'trim':
                     trim_logfile(self)
-                    self.parser1.analyze_log_file()
+                    parser.analyze_log_file()
                 elif action == 'continue':
-                    self.parser1.analyze_massive_log_file()
-                else:
-                    action = 'continue'
-            else:
-                self.parser1.analyze_massive_log_file()
+                    parser.analyze_massive_log_file()
+                elif action == 'cancel':
+                    return
+
         except Exception as ex:
             error = QMessageBox()
             error.setWindowTitle("Open Source Combatlog Reader")
@@ -117,8 +116,8 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         self.current_combats.setCurrentRow(0)
         self.current_combat_id = 0
         self.current_combat_path = path
-        self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
-        self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
+        self.widgets.navigate_up_button.setEnabled(parser.navigation_up)
+        self.widgets.navigate_down_button.setEnabled(parser.navigation_down)
 
         analysis_thread = CustomThread(self.window, lambda: parser.full_combat_analysis(0))
         analysis_thread.result.connect(lambda result: analysis_data_slot(self, result))

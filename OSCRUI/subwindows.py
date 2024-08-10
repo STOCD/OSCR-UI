@@ -46,6 +46,7 @@ def show_warning(self, title: str, message: str):
 def log_size_warning(self, translate):
     """
     Warns user about oversized logfile.
+    Note: The default button counts as a two buttons
 
     :return: "cancel", "split dialog", "continue"
     """
@@ -63,20 +64,25 @@ def log_size_warning(self, translate):
     dialog.setText(message)
     dialog.setWindowTitle('Open Source Combalog Reader')
     dialog.setWindowIcon(self.icons['oscr'])
-    dialog.addButton(self._('Cancel'), QMessageBox.ButtonRole.RejectRole)
+
+    dialog.addButton(self._('Continue'), QMessageBox.ButtonRole.AcceptRole)
     default_button = dialog.addButton(self._('Split Dialog'), QMessageBox.ButtonRole.ActionRole)
     dialog.addButton(self._('Trim'), QMessageBox.ButtonRole.ActionRole)
-    dialog.addButton(self._('Continue'), QMessageBox.ButtonRole.AcceptRole)
+    dialog.addButton(self._('Cancel'), QMessageBox.ButtonRole.RejectRole)
+
     dialog.setDefaultButton(default_button)
     clicked = dialog.exec()
+
     if clicked == 1:
         return 'split dialog'
     elif clicked == 2:
-        return 'trim'
-    elif clicked == 3:
         return 'continue'
-    else:
-        return 'cancel'
+    elif clicked == 3:
+        return 'split dialog'
+    elif clicked == 4:
+        return 'trim'
+
+    return 'cancel'
 
 
 def split_dialog(self, translate):
