@@ -14,6 +14,369 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
+msgid "Upload Result"
+msgstr "上传日志"
+
+msgid "Copy Result"
+msgstr "复制结果"
+
+msgid "Split Dialog"
+msgstr "拆分日志"
+
+#: .\OSCRUI\subwindows.py:57
+msgid "The combatlog file you are trying to open will impair the performance of the app "
+msgstr "您尝试打开的战斗日志文件将影响应用程序的性能"
+
+#: .\OSCRUI\subwindows.py:58
+msgid ""
+"due to its size. It is advised to split the log. \n"
+"\n"
+"Click \"Split Dialog\" to split "
+msgstr "，因为文件过大。建议拆分日志。\n\n点击“拆分对话框”进行拆分"
+
+#: .\OSCRUI\subwindows.py:59
+msgid "the file, \"Cancel\" to abort combatlog analysis or \"Continue\" to analyze the log "
+msgstr "文件，“取消”以中止战斗日志分析，或“继续”以继续分析日志"
+
+#: .\OSCRUI\subwindows.py:60
+msgid "nevertheless."
+msgstr "。"
+
+#: .\OSCRUI\subwindows.py:64
+msgid "Cancel"
+msgstr "取消"
+
+#: .\OSCRUI\subwindows.py:66
+msgid "Trim"
+msgstr "裁剪"
+
+#: .\OSCRUI\subwindows.py:67
+msgid "Continue"
+msgstr "继续"
+
+#: .\OSCRUI\subwindows.py:101
+msgid "Selected Logfile:"
+msgstr "选择的日志文件："
+
+#: .\OSCRUI\subwindows.py:116
+msgid "Trim Logfile:"
+msgstr "裁剪日志文件："
+
+#: .\OSCRUI\subwindows.py:119
+msgid "Removes all combats but the most recent one from the selected logfile. "
+msgstr "从选定的日志文件中移除所有战斗，只保留最新的战斗。"
+
+#: .\OSCRUI\subwindows.py:120
+msgid "All previous combats will be lost!"
+msgstr "所有先前的战斗记录将丢失！"
+
+#: .\OSCRUI\subwindows.py:134
+msgid "Split Log Automatically:"
+msgstr "自动拆分日志："
+
+#: .\OSCRUI\subwindows.py:137
+msgid "Automatically splits the logfile at the next combat end after "
+msgstr "在下一次战斗结束后自动拆分日志文件"
+
+#: .\OSCRUI\subwindows.py:139
+msgid " lines until the entire file has "
+msgstr "，直到整个文件被"
+
+#: .\OSCRUI\subwindows.py:140
+msgid " been split. The new files are written to the selected folder. It is advised to "
+msgstr "拆分。新的文件将写入选定的文件夹。建议"
+
+#: .\OSCRUI\subwindows.py:141
+msgid "select an empty folder to ensure all files are saved correctly."
+msgstr "选择一个空文件夹以确保所有文件正确保存。"
+
+#: .\OSCRUI\subwindows.py:146
+msgid "Auto Split"
+msgstr "自动拆分"
+
+#: .\OSCRUI\subwindows.py:154
+msgid "Export Range of Combats:"
+msgstr "导出战斗范围："
+
+#: .\OSCRUI\subwindows.py:157
+msgid "Exports combats including and between lower and upper limit to selected file. "
+msgstr "将包括和介于下限和上限之间的战斗导出到选定的文件中。"
+
+#: .\OSCRUI\subwindows.py:158
+msgid "Both limits refer to the indexed list of all combats in the file starting with 1. "
+msgstr "这两个限制指的是文件中所有战斗的索引列表，从 1 开始。"
+
+#: .\OSCRUI\subwindows.py:159
+msgid "An upper limit larger than the total number of combats or of \"-1\", is treated as "
+msgstr "上限大于战斗总数或为 \"-1\"，被视为"
+
+#: .\OSCRUI\subwindows.py:160
+msgid "being equal to the total number of combats."
+msgstr "等于战斗总数。"
+
+#: .\OSCRUI\subwindows.py:169
+msgid "Lower Limit:"
+msgstr "下限："
+
+#: .\OSCRUI\subwindows.py:171
+msgid "Upper Limit:"
+msgstr "上限："
+
+#: .\OSCRUI\subwindows.py:192
+msgid "Export Combats"
+msgstr "导出战斗"
+
+#: .\OSCRUI\subwindows.py:202
+msgid "OSCR - Split Logfile"
+msgstr "OSCR - 拆分日志文件"
+
+#: .\OSCRUI\subwindows.py:229
+msgid "Upload Results:"
+msgstr "上传结果："
+
+#: .\OSCRUI\subwindows.py:264
+msgid "OSCR - Upload Results"
+msgstr "OSCR - 上传结果"
+
+#: .\OSCRUI\subwindows.py:286
+msgid "Make sure to set the STO Logfile setting in the "
+msgstr "确保在设置选项卡中设置 STO 日志文件"
+
+#: .\OSCRUI\subwindows.py:287
+msgid "settings tab to a valid logfile before starting the live parser."
+msgstr "为有效的日志文件，然后再启动实时解析器。"
+
+#: .\OSCRUI\subwindows.py:409
+msgid "Activate"
+msgstr "激活"
+
+#: .\OSCRUI\subwindows.py:409
+msgid "Deactivate"
+msgstr "关闭"
+
+#: .\OSCRUI\subwindows.py:417
+msgid "Close Live Parser"
+msgstr "关闭实时解析器"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Handle"
+msgstr "句柄"
+
+msgid "Date"
+msgstr "日期"
+
+msgid "Build"
+msgstr "配装"
+
+#: .\headers.py:9
+msgid "Attacks-in Share"
+msgstr "攻击数占比"
+
+#: .\headers.py:9 .\headers.py:18
+msgid "Total Damage"
+msgstr "总伤害"
+
+#: .\headers.py:9 .\headers.py:18 .\headers.py:33
+msgid "DPS"
+msgstr "DPS"
+
+#: .\headers.py:9 .\headers.py:18 .\headers.py:33
+msgid "Debuff"
+msgstr "减益"
+
+#: .\headers.py:9 .\headers.py:20 .\headers.py:27 .\headers.py:33
+msgid "Combat Time"
+msgstr "战斗时间"
+
+#: .\headers.py:10
+msgid "Damage Share"
+msgstr "伤害占比"
+
+#: .\headers.py:10
+msgid "Taken Damage Share"
+msgstr "承受伤害占比"
+
+#: .\headers.py:10
+msgid "Total Heals"
+msgstr "总治疗量"
+
+#: .\headers.py:10 .\headers.py:18
+msgid "Max One Hit"
+msgstr "最大单次伤害"
+
+#: .\headers.py:10 .\headers.py:18 .\headers.py:27
+msgid "Crit Chance"
+msgstr "暴击率"
+
+#: .\headers.py:10 .\headers.py:33
+msgid "Deaths"
+msgstr "死亡次数"
+
+#: .\headers.py:11
+msgid "Heal Crit Chance"
+msgstr "治疗暴击率"
+
+#: .\headers.py:11
+msgid "Heal Share"
+msgstr "治疗占比"
+
+#: .\headers.py:11
+msgid "Total Damage Taken"
+msgstr "总承受伤害"
+
+#: .\headers.py:11
+msgid "Total Hull Damage Taken"
+msgstr "总舰体承受伤害"
+
+#: .\headers.py:12
+msgid "Attacks-in Number"
+msgstr "攻击次数"
+
+#: .\headers.py:12
+msgid "Total Attacks"
+msgstr "总攻击次数"
+
+#: .\headers.py:12
+msgid "Total Shield Damage Taken"
+msgstr "总护盾承受伤害"
+
+#: .\headers.py:12 .\headers.py:20
+msgid "Hull Attacks"
+msgstr "舰体攻击"
+
+#: .\headers.py:13
+msgid "Crit Number"
+msgstr "暴击次数"
+
+#: .\headers.py:13
+msgid "Heal Crit Number"
+msgstr "治疗暴击次数"
+
+#: .\headers.py:13
+msgid "Heal Number"
+msgstr "治疗次数"
+
+#: .\headers.py:13 .\headers.py:19
+msgid "Misses"
+msgstr "未命中"
+
+#: .\headers.py:18
+msgid "Accuracy"
+msgstr "命中率"
+
+#: .\headers.py:18
+msgid "Flank Rate"
+msgstr "侧翼命中率"
+
+#: .\headers.py:19
+msgid "Attacks"
+msgstr "攻击次数"
+
+#: .\headers.py:19
+msgid "Critical Hits"
+msgstr "暴击数"
+
+#: .\headers.py:19
+msgid "Flank Hits"
+msgstr "侧翼击中"
+
+#: .\headers.py:19
+msgid "Shield DPS"
+msgstr "护盾 DPS"
+
+#: .\headers.py:19
+msgid "Shield Damage"
+msgstr "护盾伤害"
+
+#: .\headers.py:19 .\headers.py:33
+msgid "Kills"
+msgstr "击杀"
+
+#: .\headers.py:20
+msgid "Base DPS"
+msgstr "基础 DPS"
+
+#: .\headers.py:20
+msgid "Base Damage"
+msgstr "基础伤害"
+
+#: .\headers.py:20
+msgid "Hull DPS"
+msgstr "舰体 DPS"
+
+#: .\headers.py:20
+msgid "Hull Damage"
+msgstr "舰体伤害"
+
+#: .\headers.py:21
+msgid "Shield Attacks"
+msgstr "攻击护盾次数"
+
+#: .\headers.py:26
+msgid "Hull HPS"
+msgstr "舰体 HPS"
+
+#: .\headers.py:26
+msgid "Hull Heal"
+msgstr "舰体治疗"
+
+#: .\headers.py:26
+msgid "Shield HPS"
+msgstr "护盾 HPS"
+
+#: .\headers.py:26
+msgid "Shield Heal"
+msgstr "护盾治疗"
+
+#: .\headers.py:26
+msgid "Total Heal"
+msgstr "总治疗"
+
+#: .\headers.py:26 .\headers.py:33
+msgid "HPS"
+msgstr "每秒治疗"
+
+#: .\headers.py:27
+msgid "Critical Heals"
+msgstr "暴击治疗次数"
+
+#: .\headers.py:27
+msgid "Heal Ticks"
+msgstr "治疗次数"
+
+#: .\headers.py:27
+msgid "Hull Heal Ticks"
+msgstr "舰体治疗次数"
+
+#: .\headers.py:27
+msgid "Max One Heal"
+msgstr "最大单次治疗值"
+
+#: .\headers.py:28
+msgid "Shield Heal Ticks"
+msgstr "护盾治疗次数"
+
+#: .\headers.py:33
+msgid "Attacks-in"
+msgstr "被攻击数"
+
+msgid "Invalid Logfile"
+msgstr "非法日志文件"
+
+msgid "The Logfile you are trying to open does not exist."
+msgstr "尝试打开的日志文件不存在。"
+
+msgid "Failed to parse error from server"
+msgstr "无法从服务器获取解析"
+
+msgid "No data to upload."
+msgstr "无法上传空数据"
+
+#: .\OSCR-UI-main\OSCRUI\app.py:290
+msgid "Collapse Sidebar"
+msgstr "折叠侧边栏"
 
 #: .\OSCR-UI-main\OSCRUI\app.py:290
 msgid "Collapse Sidebar"

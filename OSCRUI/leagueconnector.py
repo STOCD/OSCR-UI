@@ -226,7 +226,7 @@ def upload_callback(self, translate):
         file.flush()
     res = self.league_api.upload(file.name)
     if res:
-        uploadresult_dialog(self, res)
+        uploadresult_dialog(self, res, translate)
     os.remove(file.name)
 
 
