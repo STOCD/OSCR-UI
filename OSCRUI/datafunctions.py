@@ -1,7 +1,9 @@
 import os
+import json
 
 from OSCR import OSCR
 from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import QMessageBox
 
 from .callbacks import switch_main_tab, switch_overview_tab, trim_logfile
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
@@ -49,7 +51,7 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         return
     if parser_num == 1:
         parser: OSCR = self.parser1
-    elif parser_num == 2:
+    elif parser_num == 2: 
         parser: OSCR = self.parser2
     else:
         return
@@ -71,7 +73,7 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
             self.parser1.analyze_log_file()
         except FileExistsError:
             if self.settings.value('log_size_warning', type=bool):
-                action = log_size_warning(self)
+                action = log_size_warning(self, translate)
                 if action == 'split dialog':
                     split_dialog(self)
                     return
@@ -84,6 +86,32 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
                     action = 'continue'
             else:
                 self.parser1.analyze_massive_log_file()
+        except Exception as ex:
+            error = QMessageBox()
+            error.setWindowTitle("Open Source Combatlog Reader")
+            try:
+                print(ex)
+                error_message = str(ex)[:60]
+                message = (
+                    f"{self._('Failed to analyze the log file.')}\n\n"
+                    f"{self._('Reason:')}\n{error_message}\n\n"
+                    f"{self._('Please report this issue to Discord OSCR-Support channel.')}"
+                )
+                error.setText(message)
+            except Exception as ex:
+                print(ex)
+                error_message = str(ex)[:60]
+                message = (
+                    f"{self._('Failed to analyze the log file.')}\n\n"
+                    f"{self._('Reason:')}\n{error_message}\n\n"
+                    f"{self._('Please report this issue to Discord OSCR-Support channel.')}"
+                )
+                error.setText(message)
+
+            error.setWindowTitle(self._("Open Source Combatlog Reader"))
+            error.setIcon(QMessageBox.Critical)
+            error.exec()
+
         self.current_combats.clear()
         self.current_combats.addItems(parser.analyzed_combats)
         self.current_combats.setCurrentRow(0)
