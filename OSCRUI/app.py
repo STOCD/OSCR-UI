@@ -4,9 +4,11 @@ from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWid
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtCore import QSize, QSettings, QTimer
-from PySide6.QtGui import QFontDatabase, QIntValidator
+from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut
 
-from .headers import init_header_trans, get_table_headers, get_tree_headers, get_heal_tree_headers, get_live_table_headers
+from .headers import (
+        init_header_trans, get_table_headers, get_tree_headers, get_heal_tree_headers,
+        get_live_table_headers)
 from .translation import init_translation
 
 from .leagueconnector import OSCRClient
@@ -30,9 +32,10 @@ class OSCRUI():
             set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
             set_ui_scale_setting, switch_analysis_tab, switch_main_tab, switch_map_tab,
             switch_overview_tab)
-    from .datafunctions import analyze_log_callback, copy_analysis_callback
-    from .datafunctions import copy_summary_callback, init_parser, update_shown_columns_dmg
-    from .datafunctions import update_shown_columns_heal
+    from .datafunctions import (
+            analyze_log_callback, copy_analysis_callback, copy_analysis_table_callback,
+            copy_summary_callback, init_parser, update_shown_columns_dmg,
+            update_shown_columns_heal)
     from .displayer import create_legend_item
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
@@ -58,7 +61,6 @@ class OSCRUI():
     widgets: WidgetStorage
 
     league_api: OSCRClient
-
 
     def __init__(self, theme, args, path, config, versions) -> None:
         """
@@ -87,6 +89,8 @@ class OSCRUI():
 
         reset_temp_folder(self.config['templog_folder_path'])
         self.app, self.window = self.create_main_window()
+        self.copy_shortcut = QShortcut(
+                QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.init_parser()
         self.cache_assets()
         self.setup_main_layout()
