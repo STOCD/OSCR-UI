@@ -10,7 +10,8 @@ from PySide6.QtWidgets import QVBoxLayout
 from OSCR import LiveParser
 
 from .callbacks import (
-        auto_split_callback, combat_split_callback, copy_live_data_callback, trim_logfile)
+        auto_split_callback, combat_split_callback, copy_live_data_callback, trim_logfile,
+        repair_logfile)
 from .displayer import create_live_graph, update_live_display, update_live_graph, update_live_table
 from .datamodels import LiveParserTableModel
 from .headers import get_live_table_headers
@@ -134,9 +135,9 @@ def split_dialog(self, translate):
     trim_button.clicked.connect(lambda: trim_logfile(self))
     grid_layout.addWidget(trim_button, 1, 2, alignment=ARIGHT | ABOTTOM)
     grid_layout.setRowMinimumHeight(2, item_spacing)
-    seperator_8 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_8.setFixedHeight(self.theme['hr']['height'])
-    grid_layout.addWidget(seperator_8, 3, 0, 1, 3)
+    seperator_3 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
+    seperator_3.setFixedHeight(self.theme['hr']['height'])
+    grid_layout.addWidget(seperator_3, 3, 0, 1, 3)
     grid_layout.setRowMinimumHeight(4, item_spacing)
 
     auto_split_heading = create_label(self, self._('Split Log Automatically:'), 'label_heading')
@@ -202,6 +203,16 @@ def split_dialog(self, translate):
             lambda le=lower_range_entry, ue=upper_range_entry:
             combat_split_callback(self, current_logpath, le.text(), ue.text()))
     grid_layout.addWidget(range_split_button, 11, 2, alignment=ARIGHT | ABOTTOM)
+    grid_layout.setRowMinimumHeight(12, item_spacing)
+    seperator_13 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
+    seperator_13.setFixedHeight(self.theme['hr']['height'])
+    grid_layout.addWidget(seperator_13, 13, 0, 1, 3)
+    grid_layout.setRowMinimumHeight(14, item_spacing)
+    repair_log_heading = create_label(self, 'Repair Logfile', 'label_heading')
+    grid_layout.addWidget(repair_log_heading, 15, 0, alignment=ALEFT)
+    repair_log_button = create_button(self, 'Repair')
+    repair_log_button.clicked.connect(lambda: repair_logfile(self))
+    grid_layout.addWidget(repair_log_button, 16, 2, alignment=ARIGHT | ABOTTOM)
 
     content_frame.setLayout(vertical_layout)
 
