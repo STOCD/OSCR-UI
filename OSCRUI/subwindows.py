@@ -1,7 +1,7 @@
 import os
 
-from PySide6.QtCore import QPoint, QSize, Qt
-from PySide6.QtGui import QIntValidator, QMouseEvent
+from PySide6.QtCore import QPoint, QSize, Qt, QUrl
+from PySide6.QtGui import QIntValidator, QMouseEvent, QDesktopServices
 from PySide6.QtWidgets import QAbstractItemView, QDialog
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit
 from PySide6.QtWidgets import QMessageBox, QSpacerItem, QSplitter, QTableView
@@ -223,6 +223,18 @@ def split_dialog(self, translate):
     dialog.setSizePolicy(SMAXMAX)
     dialog.exec()
 
+def uploadresult_view_result(result):
+    """
+    Open the result up in the user's web browser.
+
+    Parameters:
+    - :param result: The Combat Log Upload Response
+    """
+    from .leagueconnector import OSCR_SERVER_BACKEND
+
+    url = QUrl(f"{OSCR_SERVER_BACKEND}/ui/combatlog/{result.combatlog}/")
+    QDesktopServices.openUrl(url)
+
 
 def uploadresult_dialog(self, result, translate):
     """
@@ -245,34 +257,40 @@ def uploadresult_dialog(self, result, translate):
     content_layout.setContentsMargins(thick, thick, thick, thick)
     content_layout.setSpacing(0)
     margin = {'margin-bottom': self.theme['defaults']['isp']}
-    title_label = create_label(self, self._('Upload Results:'), 'label_heading', style_override=margin)
+    title_label = create_label(self, f"{result.detail}", 'label_heading', style_override=margin)
     content_layout.addWidget(title_label, 0, 0, 1, 4, alignment=ALEFT)
+    view_button = create_button(self, 'View Online', style_override=margin)
+    view_button.clicked.connect(lambda: uploadresult_view_result(result))
+    if result.results:
+        content_layout.addWidget(view_button, 0, 0, 1, 4, alignment=ARIGHT)
     icon_size = QSize(self.config['icon_size'] / 1.5, self.config['icon_size'] / 1.5)
-    for row, line in enumerate(result, 1):
-        if row % 2 == 1:
-            table_style = {'background-color': '@mbg', 'padding': (5, 3, 3, 3), 'margin': 0}
-            icon_table_style = {'background-color': '@mbg', 'padding': (3, 3, 3, 3), 'margin': 0}
-        else:
-            table_style = {'background-color': '@bg', 'padding': (5, 3, 3, 3), 'margin': 0}
-            icon_table_style = {'background-color': '@bg', 'padding': (3, 3, 3, 3), 'margin': 0}
-        if line.updated:
-            icon = self.icons['check'].pixmap(icon_size)
-        else:
-            icon = self.icons['dash'].pixmap(icon_size)
-        status_label = create_label(self, '', style_override=icon_table_style)
-        status_label.setPixmap(icon)
-        status_label.setSizePolicy(SMINMIN)
-        content_layout.addWidget(status_label, row, 0)
-        name_label = create_label(self, line.name, style_override=table_style)
-        name_label.setSizePolicy(SMINMAX)
-        content_layout.addWidget(name_label, row, 1)
-        value_label = create_label(self, str(line.value), style_override=table_style)
-        value_label.setSizePolicy(SMINMAX)
-        value_label.setAlignment(ARIGHT)
-        content_layout.addWidget(value_label, row, 2)
-        detail_label = create_label(self, line.detail, style_override=table_style)
-        detail_label.setSizePolicy(SMINMAX)
-        content_layout.addWidget(detail_label, row, 3)
+    row = 0
+    if (result.results):
+        for row, line in enumerate(result.results, 1):
+            if row % 2 == 1:
+                table_style = {'background-color': '@mbg', 'padding': (5, 3, 3, 3), 'margin': 0}
+                icon_table_style = {'background-color': '@mbg', 'padding': (3, 3, 3, 3), 'margin': 0}
+            else:
+                table_style = {'background-color': '@bg', 'padding': (5, 3, 3, 3), 'margin': 0}
+                icon_table_style = {'background-color': '@bg', 'padding': (3, 3, 3, 3), 'margin': 0}
+            if line.updated:
+                icon = self.icons['check'].pixmap(icon_size)
+            else:
+                icon = self.icons['dash'].pixmap(icon_size)
+            status_label = create_label(self, '', style_override=icon_table_style)
+            status_label.setPixmap(icon)
+            status_label.setSizePolicy(SMINMIN)
+            content_layout.addWidget(status_label, row, 0)
+            name_label = create_label(self, line.name, style_override=table_style)
+            name_label.setSizePolicy(SMINMAX)
+            content_layout.addWidget(name_label, row, 1)
+            value_label = create_label(self, str(line.value), style_override=table_style)
+            value_label.setSizePolicy(SMINMAX)
+            value_label.setAlignment(ARIGHT)
+            content_layout.addWidget(value_label, row, 2)
+            detail_label = create_label(self, line.detail, style_override=table_style)
+            detail_label.setSizePolicy(SMINMAX)
+            content_layout.addWidget(detail_label, row, 3)
     top_margin = {'margin-top': self.theme['defaults']['isp']}
     close_button = create_button(self, 'Close', style_override=top_margin)
     close_button.clicked.connect(dialog.close)
