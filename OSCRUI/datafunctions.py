@@ -36,7 +36,8 @@ def init_parser(self):
     # self.parser2 = OSCR()
 
 
-def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num: int = 1, hidden_path=False):
+def analyze_log_callback(
+        self, translate, combat_id=None, path=None, parser_num: int = 1, hidden_path=False):
     """
     Wrapper function for retrieving and showing data. Callback of "Analyse" and "Refresh" button.
 
@@ -51,7 +52,7 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
         return
     if parser_num == 1:
         parser: OSCR = self.parser1
-    elif parser_num == 2: 
+    elif parser_num == 2:
         parser: OSCR = self.parser2
     else:
         return
@@ -63,7 +64,8 @@ def analyze_log_callback(self, translate, combat_id=None, path=None, parser_num:
     if combat_id is None:
         if not path or not os.path.isfile(path):
             show_warning(
-                    self, self._('Invalid Logfile'), self._('The Logfile you are trying to open does not exist.'))
+                    self, self._('Invalid Logfile'),
+                    self._('The Logfile you are trying to open does not exist.'))
             return
         if not hidden_path and path != self.settings.value('log_path'):
             self.settings.setValue('log_path', path)
@@ -218,7 +220,8 @@ def populate_analysis(self, root_items: tuple):
     heal_out_table = self.widgets.analysis_table_hout
     heal_out_model = HealTreeModel(
             heal_out_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']), get_heal_tree_headers())
+            self.theme_font('', self.theme['tree_table']['::item']['font']),
+            get_heal_tree_headers())
     heal_out_table.setModel(heal_out_model)
     heal_out_root_index = damage_in_model.createIndex(0, 0, heal_out_model._root)
     heal_out_table.expand(heal_out_model.index(0, 0, heal_out_root_index))
@@ -228,7 +231,8 @@ def populate_analysis(self, root_items: tuple):
     heal_in_table = self.widgets.analysis_table_hin
     heal_in_model = HealTreeModel(
             heal_in_item, self.theme_font('tree_table_header'), self.theme_font('tree_table'),
-            self.theme_font('', self.theme['tree_table']['::item']['font']), get_heal_tree_headers())
+            self.theme_font('', self.theme['tree_table']['::item']['font']),
+            get_heal_tree_headers())
     heal_in_table.setModel(heal_in_model)
     heal_in_root_index = damage_in_model.createIndex(0, 0, heal_in_model._root)
     heal_in_table.expand(heal_in_model.index(0, 0, heal_in_root_index))
@@ -281,6 +285,36 @@ def resize_tree_table(tree):
     for col in range(tree.header().count()):
         width = max(tree.sizeHintForColumn(col), tree.header().sectionSizeHint(col)) + 5
         tree.header().resizeSection(col, width)
+
+
+def copy_analysis_table_callback(self):
+    """
+    Copies the current selection of analysis table as tab-delimited table
+    """
+    print('Table COPY')
+    if self.widgets.main_tabber.currentIndex() != 1:
+        return
+    current_tab = self.widgets.analysis_tabber.currentIndex()
+    current_table = self.widgets.analysis_table[current_tab]
+    if current_tab <= 1:
+        format_function = format_damage_tree_data
+    else:
+        format_function = format_heal_tree_data
+    selection: list = current_table.selectedIndexes()
+    if selection:
+        selection.sort(key=lambda index: (index.row(), index.column()))
+        output = list()
+        last_row = -1
+        for cell_index in selection:
+            col = cell_index.column()
+            if cell_index.row() != last_row:
+                output.append(list())
+            output[-1].append(cell_index.internalPointer().get_data(col))
+            last_row = cell_index.row()
+        print(output)
+        output_text = '\n'.join(map(lambda row: '\t'.join(map(str, row)), output))
+        print(output_text)
+        self.app.clipboard().setText(output_text)
 
 
 def copy_analysis_callback(self):

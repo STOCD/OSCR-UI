@@ -2,7 +2,9 @@ import os
 
 from PySide6.QtWidgets import QFileDialog, QLineEdit
 
-from OSCR import LIVE_TABLE_HEADER, OSCR, split_log_by_combat, split_log_by_lines
+from OSCR import (
+    LIVE_TABLE_HEADER, OSCR, repair_logfile as oscr_repair_logfile, split_log_by_combat,
+    split_log_by_lines)
 
 from .iofunctions import browse_path
 from .textedit import format_path
@@ -307,3 +309,10 @@ def trim_logfile(self):
     else:
         temp_parser.analyze_log_file()
     temp_parser.export_combat(0, log_path)
+
+
+def repair_logfile(self):
+    """
+    """
+    log_path = os.path.abspath(self.entry.text())
+    oscr_repair_logfile(log_path, self.config['templog_folder_path'])
