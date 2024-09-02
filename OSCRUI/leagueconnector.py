@@ -18,8 +18,8 @@ from .style import theme_font
 from .subwindows import show_warning, uploadresult_dialog
 from .textedit import format_datetime_str
 
-# OSCR_SERVER_BACKEND = "https://oscr.stobuilds.com/"
-OSCR_SERVER_BACKEND = "http://127.0.0.1:8000"
+OSCR_SERVER_BACKEND = "https://oscr.stobuilds.com/"
+# OSCR_SERVER_BACKEND = "http://127.0.0.1:8000"
 
 
 def establish_league_connection(self, translate):
