@@ -158,8 +158,14 @@ class OSCRUI():
         """
         Prepares settings. Loads stored settings. Saves current settings for next startup.
         """
-        settings_path = os.path.abspath(self.app_dir + self.config["settings_path"])
-        self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
+
+        # For Windows, Keep the Local settings for now as people are more familiar with that.
+        if os.name == "nt":
+            settings_path = os.path.abspath(self.app_dir + self.config["settings_path"])
+            self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
+        else:
+            self.settings = QSettings("OSCR", "OSCR-UI")
+
         for setting, value in self.config['default_settings'].items():
             if self.settings.value(setting, None) is None:
                 self.settings.setValue(setting, value)

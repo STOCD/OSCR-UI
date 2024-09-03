@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 class Launcher():
 
     version = '2024.08b210'
-    __version__ = '0.2'
+    __version__ = '0.4'
 
     # holds the style of the app
     theme = {
@@ -758,7 +758,7 @@ class Launcher():
                 'heal_columns|12': True,
                 'heal_columns_length': 13,
                 'split_log_after': 480000,
-                'seconds_between_combats': 100,
+                'seconds_between_combats': 45,
                 'excluded_event_ids': ['Autodesc.Combatevent.Falling', ''],
                 'graph_resolution': 0.2,
                 'combats_to_parse': 10,
