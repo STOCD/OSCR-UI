@@ -17,7 +17,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/Kraust/OSCR-UI.git
-        commit: 96ec4c80ae6dbba65c720398ee8b5516d4cc5e5d
+        commit: 7382363400da572994a8400fda574eab82c336fe
         dest: "src/deps/oscr-ui"
 build-options:
     build-args:
