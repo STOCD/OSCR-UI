@@ -35,5 +35,5 @@ def get_live_table_headers():
 
 def get_ladder_headers():
     return (
-        _('Name'), _('Handle'), _('DPS'), _('Total Damage'), _('Deaths'), _('Combat Time'), _('Date'), _('Max One Hit'), _('Debuff'), _('Build')
+        _('Name'), _('Handle'), _('DPS'), _('Total Damage'), _('Deaths'), _('Combat Time'), _('Date'), _('Max One Hit'), _('Debuff'), _('Highest Damage Ability')
     )
