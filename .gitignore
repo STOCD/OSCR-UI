@@ -1,3 +1,7 @@
 __pycache__
 build
+builddir
+.flatpak-builder
+dist
+repo
 .venv

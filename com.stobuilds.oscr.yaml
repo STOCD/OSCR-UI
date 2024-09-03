@@ -1,0 +1,18 @@
+id: com.stobuilds.oscr
+runtime: org.freedesktop.Platform
+runtime-version: "23.08"
+sdk: org.freedesktop.Sdk
+command: oscr
+modules:
+  - name: python3
+    buildsystem: simple
+    build-commands:
+      - python3 -m pip install --prefix=/app src/deps/oscr-ui
+    sources:
+      - type: git
+        url: https://github.com/STOCD/OSCR-UI.git
+        commit: bdde9e46f953004c131d7faae50b57dd91e5d28a
+        dest: "src/deps/oscr-ui"
+build-options:
+    build-args:
+      - --share=network

@@ -12,7 +12,7 @@ from .headers import (
 from .translation import init_translation
 
 from .leagueconnector import OSCRClient
-from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link, reset_temp_folder
+from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .textedit import format_path
 from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
 from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
@@ -87,7 +87,6 @@ class OSCRUI():
         self.update_translation()
         self.league_api = None
 
-        reset_temp_folder(self.config['templog_folder_path'])
         self.app, self.window = self.create_main_window()
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
@@ -173,8 +172,6 @@ class OSCRUI():
         """
         self.current_combat_id = -1
         self.current_combat_path = ''
-        self.config['templog_folder_path'] = os.path.abspath(
-                self.app_dir + self.config['templog_folder_path'])
         self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
         self.config['live_scale'] = self.settings.value('live_scale', type=float)
         self.config['icon_size'] = round(
@@ -193,7 +190,6 @@ class OSCRUI():
             setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
             if setting:
                 settings[setting_key] = setting
-        settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
 
     @property
