@@ -360,11 +360,11 @@ def create_live_parser_window(self, translate):
 
     live_window = LiveParserWindow()
     live_window.setStyleSheet(get_style(self, 'live_parser'))
+    live_window.setWindowTitle("Live Parser")
     live_window.setWindowFlags(
             live_window.windowFlags()
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.WindowDoesNotAcceptFocus
-            | Qt.WindowType.SubWindow
             | Qt.WindowType.FramelessWindowHint)
     # live_window.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
     live_window.setWindowOpacity(self.settings.value('live_parser_opacity', type=float))

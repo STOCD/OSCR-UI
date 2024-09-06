@@ -1,6 +1,7 @@
 import os
 
 from PySide6.QtWidgets import QFileDialog, QLineEdit
+from PySide6.QtCore import QTemporaryDir
 
 from OSCR import (
     LIVE_TABLE_HEADER, OSCR, repair_logfile as oscr_repair_logfile, split_log_by_combat,
@@ -315,4 +316,5 @@ def repair_logfile(self):
     """
     """
     log_path = os.path.abspath(self.entry.text())
-    oscr_repair_logfile(log_path, self.config['templog_folder_path'])
+    dir = QTemporaryDir()
+    oscr_repair_logfile(log_path, dir.path())

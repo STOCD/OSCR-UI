@@ -124,18 +124,6 @@ def store_json(data: dict | list, path: str):
         sys.stdout.write(f'[Error] Data could not be saved: {e}')
 
 
-def reset_temp_folder(path: str):
-    '''
-    Deletes and re-creates folder housing temporary log files.
-    '''
-    if os.path.exists(path):
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            raise FileExistsError(f'Expected path to folder, got "{path}"')
-    os.mkdir(path)
-
-
 def sanitize_file_name(txt, chr_set='extended') -> str:
     """Converts txt to a valid filename.
 

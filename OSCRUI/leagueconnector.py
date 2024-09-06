@@ -10,6 +10,7 @@ from OSCR.utilities import logline_to_str
 from OSCR_django_client.api import (CombatlogApi, LadderApi, LadderEntriesApi,
                                     VariantApi)
 from PySide6.QtWidgets import QMessageBox
+from PySide6.QtCore import QTemporaryDir
 
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
@@ -207,8 +208,13 @@ def download_and_view_combat(self, translation):
     log_id = table_model._combatlog_id_list[row]
     result = self.league_api.download(log_id)
     result = gzip.decompress(result)
+
+    dir = QTemporaryDir()
+    if not dir.isValid():
+        raise Exception("Invalid temporary directory")
+
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=self.config["templog_folder_path"], delete=False
+        mode="w", encoding="utf-8", dir=dir.path(), delete=False
     ) as file:
         file.write(result.decode())
     analyze_log_callback(
