@@ -21,7 +21,7 @@ jobs:
     - run: .\venv\Scripts\activate.bat
     - run: pip install .
     - run: cxfreeze bdist_msi
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: build_release
         path: dist/OSCR-UI-win64.msi
@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Download
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build_release
           path: .
