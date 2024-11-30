@@ -9,7 +9,7 @@ dependencies = [
   "PySide6==6.7.2",
   "pyqtgraph==0.13.7",
   "numpy==1.26.4",
-  "STO-OSCR>=2024.10.12.1",
+  "STO-OSCR>=2024.11.30.1",
   "OSCR-django-client>=2024.9.2.1",
   "pydantic==2.7.3",
 ]
