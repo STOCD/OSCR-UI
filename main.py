@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.02.2'
+    version = '2024.12.03.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -73,6 +73,7 @@ class Launcher():
             'bw': 1,  # border width
             'br': 2,  # border radius
             'sep': 2,  # seperator -> width of major seperating lines
+            'm': 3,  # outside margin
             'margin': 10,  # default margin between widgets
             'csp': 5,  # child spacing -> content margin
             'isp': 15,  # item spacing
@@ -176,10 +177,6 @@ class Launcher():
             'text-decoration': 'none',  # removes underline
             'border': 'none',
             'margin': (6, 10, 4, 10),
-            # 'margin-left': 10,
-            # 'margin-top': 6,
-            # 'margin-bottom': 4,
-            # 'margin-right': 10,
             'padding': 0,
             'font': ('Overpass', 20, 'bold'),
             ':hover': {
@@ -256,6 +253,32 @@ class Launcher():
             'border-style': 'none',
             'margin': (0, 10, 0, 10),
             'height': 2
+        },
+        # button that holds icon
+        'live_icon_button': {
+            'background': 'none',
+            'border-width': 1,
+            'border-style': 'none',
+            'border-color': '@fg',
+            'border-radius': 3,
+            'margin': (6, 10, 4, 10),
+            'padding': (2, 1, 2, 0),
+            ':hover': {
+                'border-style': 'solid'
+            },
+            ':checked': {
+                'border-style': 'solid',
+            },
+            # Tooltip
+            '~QToolTip': {
+                'background-color': '@mbg',
+                'border-style': 'solid',
+                'border-color': '@lbg',
+                'border-width': '@bw',
+                'padding': (0, 0, 0, 0),
+                'color': '@fg',
+                'font': 'Overpass'
+            }
         },
         # scrollable list of items; ::item refers to the rows
         'listbox': {

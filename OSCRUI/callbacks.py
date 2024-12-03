@@ -7,7 +7,7 @@ from OSCR import (
     LIVE_TABLE_HEADER, OSCR, repair_logfile as oscr_repair_logfile, split_log_by_combat,
     split_log_by_lines)
 
-from .iofunctions import browse_path, open_link
+from .iofunctions import browse_path
 from .textedit import format_path
 
 
@@ -45,7 +45,7 @@ def save_combat(self, combat_num: int):
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     if not base_dir:
         base_dir = self.app_dir
-    path = self.browse_path(base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
+    path = browse_path(self, base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
     if path:
         self.parser.export_combat(combat_num, path)
 

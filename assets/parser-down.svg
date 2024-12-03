@@ -19,5 +19,5 @@
     <line x1="20" y1="12.5" x2="23" y2="12.5"/>
     <line x1="20" y1="17" x2="23" y2="17"/>
 
-    <polyline points="15 8 9 12.5 15 17"></polyline>
+    <polyline points="9 11 12.5 15 16 11"></polyline>
 </svg>

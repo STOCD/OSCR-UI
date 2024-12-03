@@ -115,12 +115,8 @@ class OSCRUI():
             'collapse-left': 'collapse-left.svg',
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
-            'save': 'save.svg',
-            'page-up': 'page-up.svg',
-            'page-down': 'page-down.svg',
             'edit': 'edit.svg',
-            'parser-left': 'parser-left-3.svg',
-            'parser-right': 'parser-right-3.svg',
+            'parser-down': 'parser-down.svg',
             'export-parse': 'export.svg',
             'copy': 'copy.svg',
             'ladder': 'ladder.svg',
@@ -133,7 +129,8 @@ class OSCRUI():
             'expand-bottom': 'expand-bottom.svg',
             'collapse-bottom': 'collapse-bottom.svg',
             'check': 'check.svg',
-            'dash': 'dash.svg'
+            'dash': 'dash.svg',
+            'live-parser': 'live-parser.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -176,6 +173,7 @@ class OSCRUI():
         self.parser_signals.parser_error.connect(self.show_parser_error)
         self.parser.combat_analyzed_callback = lambda c: self.parser_signals.analyzed_combat.emit(c)
         self.parser.error_callback = lambda e: self.parser_signals.parser_error.emit(e)
+        self.thread = None  # used for logfile analyzation
 
     @property
     def parser_settings(self) -> dict:
@@ -262,46 +260,31 @@ class OSCRUI():
         layout, main_frame = self.create_master_layout(self.window)
         self.window.setLayout(layout)
 
-        content_layout = QGridLayout()
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(0)
+        margin = self.theme['defaults']['margin']
+        main_layout = QGridLayout()
+        main_layout.setContentsMargins(0, 0, margin, 0)
+        main_layout.setSpacing(0)
 
         left = self.create_frame(main_frame)
         left.setSizePolicy(SMAXMIN)
-        content_layout.addWidget(left, 0, 0)
+        main_layout.addWidget(left, 0, 0)
 
-        right = self.create_frame(main_frame, 'frame', style_override={
-                'border-left-style': 'solid', 'border-left-width': '@sep',
-                'border-left-color': '@oscr'})
-        right.setSizePolicy(SMINMIN)
-        right.hide()
-        content_layout.addWidget(right, 0, 4)
-
+        button_column = QVBoxLayout()
         csp = self.theme['defaults']['csp']
-        col_1 = QVBoxLayout()
-        col_1.setContentsMargins(csp, csp, csp, csp)
-        content_layout.addLayout(col_1, 0, 1)
-        col_3 = QVBoxLayout()
-        col_3.setContentsMargins(csp, csp, csp, csp)
-        content_layout.addLayout(col_3, 0, 3)
+        button_column.setContentsMargins(csp, csp, csp, csp)
+        main_layout.addLayout(button_column, 0, 1)
         icon_size = self.config['icon_size']
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
             'tooltip_r': tr('Collapse Sidebar'), 'tooltip_l': tr('Expand Sidebar')
         }
-        right_flip_config = {
-            'icon_r': self.icons['expand-right'], 'func_r': right.show,
-            'icon_l': self.icons['collapse-right'], 'func_l': right.hide,
-            'tooltip_r': tr('Expand'), 'tooltip_l': tr('Collapse')
-        }
-        for col, config in ((col_1, left_flip_config), (col_3, right_flip_config)):
-            flip_button = FlipButton('', '', main_frame)
-            flip_button.configure(config)
-            flip_button.setIconSize(QSize(icon_size, icon_size))
-            flip_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
-            flip_button.setSizePolicy(SMAXMAX)
-            col.addWidget(flip_button, alignment=ATOP)
+        sidebar_flip_button = FlipButton('', '', main_frame)
+        sidebar_flip_button.configure(left_flip_config)
+        sidebar_flip_button.setIconSize(QSize(icon_size, icon_size))
+        sidebar_flip_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
+        sidebar_flip_button.setSizePolicy(SMAXMAX)
+        button_column.addWidget(sidebar_flip_button, alignment=ATOP)
 
         table_flip_config = {
             'icon_r': self.icons['collapse-bottom'], 'tooltip_r': tr('Collapse Table'),
@@ -314,14 +297,14 @@ class OSCRUI():
         table_button.setIconSize(QSize(icon_size, icon_size))
         table_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
         table_button.setSizePolicy(SMAXMAX)
-        col_1.addWidget(table_button, alignment=ABOTTOM)
+        button_column.addWidget(table_button, alignment=ABOTTOM)
         self.widgets.overview_table_button = table_button
 
         center = self.create_frame(main_frame, 'frame')
         center.setSizePolicy(SMINMIN)
-        content_layout.addWidget(center, 0, 2)
+        main_layout.addWidget(center, 0, 2)
 
-        main_frame.setLayout(content_layout)
+        main_frame.setLayout(main_layout)
         self.setup_left_sidebar_tabber(left)
         self.setup_main_tabber(center)
         self.setup_overview_frame()
@@ -455,9 +438,9 @@ class OSCRUI():
         Sets up the log management tab of the left sidebar
         """
         frame = self.widgets.sidebar_tab_frames[0]
-        m = self.theme['defaults']['margin']
+        margin = self.theme['defaults']['margin']
         left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(m, m, m, m)
+        left_layout.setContentsMargins(margin, margin, margin, margin)
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
@@ -477,70 +460,26 @@ class OSCRUI():
         left_layout.addWidget(self.entry)
 
         entry_button_config = {
-            'default': {'margin-bottom': '@isp'},
-            tr('Browse ...'): {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
+            tr('Browse ...'): {
+                'callback': lambda: self.browse_log(self.entry), 'align': ALEFT,
+                'style': {'margin-left': 0}
+            },
             tr('Default'): {
                 'callback': lambda: self.entry.setText(self.settings.value('sto_log_path')),
                 'align': AHCENTER
             },
             tr('Analyze'): {
                 'callback': lambda: self.analyze_log_callback(path=self.entry.text()),
-                'align': ARIGHT
+                'align': ARIGHT, 'style': {'margin-right': 0}
             }
         }
         entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
+        entry_buttons.setContentsMargins(0, 0, 0, self.theme['defaults']['margin'])
         left_layout.addLayout(entry_buttons)
 
-        top_button_row = QHBoxLayout()
-        top_button_row.setContentsMargins(0, 0, 0, 0)
-        top_button_row.setSpacing(m)
-
-        combat_button_layout = QHBoxLayout()
-        combat_button_layout.setContentsMargins(0, 0, 0, 0)
-        combat_button_layout.setSpacing(m)
-        combat_button_layout.setAlignment(ALEFT)
-        export_button = self.create_icon_button(
-                self.icons['export-parse'], tr('Export Combat'), parent=frame)
-        combat_button_layout.addWidget(export_button)
-        save_button = self.create_icon_button(
-                self.icons['save'], tr('Save Combat to Cache'), parent=frame)
-        combat_button_layout.addWidget(save_button)
-        top_button_row.addLayout(combat_button_layout)
-
-        navigation_button_layout = QHBoxLayout()
-        navigation_button_layout.setContentsMargins(0, 0, 0, 0)
-        navigation_button_layout.setSpacing(m)
-        navigation_button_layout.setAlignment(AHCENTER)
-        up_button = self.create_icon_button(
-                self.icons['page-up'], tr('Load newer Combats'), parent=frame)
-        up_button.setEnabled(False)
-        navigation_button_layout.addWidget(up_button)
-        self.widgets.navigate_up_button = up_button
-        down_button = self.create_icon_button(
-                self.icons['page-down'], tr('Load older Combats'), parent=frame)
-        down_button.clicked.connect(lambda: self.analyze_log_background(
-                self.settings.value('combats_to_parse', type=int)))
-        navigation_button_layout.addWidget(down_button)
-        self.widgets.navigate_down_button = down_button
-        top_button_row.addLayout(navigation_button_layout)
-
-        parser_button_layout = QHBoxLayout()
-        parser_button_layout.setContentsMargins(0, 0, 0, 0)
-        parser_button_layout.setSpacing(m)
-        parser_button_layout.setAlignment(ARIGHT)
-        parser1_button = self.create_icon_button(
-                self.icons['parser-left'], tr('Analyze Combat'), parent=frame)
-        parser_button_layout.addWidget(parser1_button)
-        parser2_button = self.create_icon_button(
-                self.icons['parser-right'], tr('Analyze Combat'), parent=frame)
-        parser_button_layout.addWidget(parser2_button)
-        top_button_row.addLayout(parser_button_layout)
-
-        left_layout.addLayout(top_button_row)
-
         background_frame = self.create_frame(frame, 'light_frame', style_override={
-                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
-                size_policy=SMINMIN)
+                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp',
+                'margin-bottom': '@csp'}, size_policy=SMINMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -553,19 +492,20 @@ class OSCRUI():
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
-        parser1_button.clicked.connect(
-                lambda: self.analysis_data_slot(self.current_combats.currentRow()))
+        combat_button_row = QGridLayout()
+        combat_button_row.setContentsMargins(0, 0, 0, 0)
+        combat_button_row.setSpacing(self.theme['defaults']['csp'])
+        combat_button_row.setColumnStretch(2, 1)
+        export_button = self.create_icon_button(
+                self.icons['export-parse'], tr('Export Combat'), parent=frame)
+        combat_button_row.addWidget(export_button, 0, 0)
+        more_combats_button = self.create_icon_button(
+                self.icons['parser-down'], tr('Parse Older Combats'), parent=frame)
+        combat_button_row.addWidget(more_combats_button, 0, 1)
+        left_layout.addLayout(combat_button_row)
+        more_combats_button.clicked.connect(lambda: self.analyze_log_background(
+                self.settings.value('combats_to_parse', type=int)))
         export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
-
-        parser2_button.setEnabled(False)
-        save_button.setEnabled(False)
-
-        live_parser_button = self.create_button(
-                tr('Live Parser'), 'tab_button', style_override={'margin-top': '@isp'},
-                toggle=False)
-        live_parser_button.clicked[bool].connect(lambda checked: self.live_parser_toggle(checked))
-        left_layout.addWidget(live_parser_button, alignment=AHCENTER)
-        self.widgets.live_parser_button = live_parser_button
 
         frame.setLayout(left_layout)
 
@@ -949,13 +889,16 @@ class OSCRUI():
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         lbl = BannerLabel(get_asset_path('oscrbanner-slim-dark-label.png', self.app_dir), bg_frame)
-
         main_layout.addWidget(lbl)
 
         menu_frame = self.create_frame(bg_frame, 'frame', {'background': '@oscr'})
-        menu_frame.setSizePolicy(SMAXMAX)
+        menu_frame.setSizePolicy(SMINMAX)
         menu_frame.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(menu_frame)
+        menu_layout = QGridLayout()
+        menu_layout.setContentsMargins(0, 0, 0, 0)
+        menu_layout.setSpacing(0)
+        menu_layout.setColumnStretch(1, 1)
         menu_button_style = {
             tr('Overview'): {'style': {'margin-left': '@isp'}},
             tr('Analysis'): {},
@@ -964,8 +907,17 @@ class OSCRUI():
         }
         bt_lay, buttons = self.create_button_series(
                 menu_frame, menu_button_style, style='menu_button', seperator='•', ret=True)
-        menu_frame.setLayout(bt_lay)
+        menu_layout.addLayout(bt_lay, 0, 0)
         self.widgets.main_menu_buttons = buttons
+
+        size = [self.config['icon_size'] * 1.3] * 2
+        live_parser_button = self.create_icon_button(
+                self.icons['live-parser'], tr('Live Parser'), 'live_icon_button', icon_size=size)
+        live_parser_button.setCheckable(True)
+        live_parser_button.clicked[bool].connect(lambda checked: self.live_parser_toggle(checked))
+        menu_layout.addWidget(live_parser_button, 0, 2)
+        self.widgets.live_parser_button = live_parser_button
+        menu_frame.setLayout(menu_layout)
 
         w = self.theme['app']['frame_thickness']
         main_frame = self.create_frame(bg_frame, 'frame', {'margin': (0, w, w, w)})

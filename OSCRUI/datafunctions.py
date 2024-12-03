@@ -43,6 +43,9 @@ def analyze_log_callback(self, path=None, hidden_path=False):
                 tr('The Logfile you are trying to open does not exist.'))
         return
 
+    if self.thread is not None and self.thread.is_alive():
+        return
+
     if not hidden_path and path != self.settings.value('log_path'):
         self.settings.setValue('log_path', path)
 
@@ -60,8 +63,7 @@ def analyze_log_callback(self, path=None, hidden_path=False):
 def analyze_log_background(self, amount: int):
     """
     """
-    print(amount)
-    if self.parser.bytes_consumed > 0:
+    if self.parser.bytes_consumed > 0 and self.thread is not None and not self.thread.is_alive():
         self.thread = Thread(target=self.parser.analyze_log_file_mp, kwargs={'max_combats': amount})
         self.thread.start()
     else:
