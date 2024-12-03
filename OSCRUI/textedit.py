@@ -44,7 +44,7 @@ def format_damage_tree_data(data, column: int) -> str:
         return ''
     if column == 0:
         if isinstance(data, tuple):
-            return ''.join(data)
+            return data[0] + data[1]
         return data
     elif column in (3, 5, 6, 7):
         return f'{data * 100:,.2f}%'
@@ -70,7 +70,7 @@ def format_heal_tree_data(data, column: int) -> str:
         return ''
     if column == 0:
         if isinstance(data, tuple):
-            return ''.join(data)
+            return data[0] + data[1]
         return data
     elif column == 8:
         return f'{data * 100:,.2f}%'

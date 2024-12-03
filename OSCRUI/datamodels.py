@@ -66,18 +66,22 @@ class OverviewTableModel(TableModel):
     """
     Model for overview table
     """
+    MAGNITUDE_COLUMNS = {0, 3, 8, 11, 14, 15, 16}
+    SHARE_COLUMNS = {2, 4, 5, 6, 7, 9, 12, 13}
+    WHOLE_NUMBER_COLUMNS = {10, 17, 18, 19, 20, 21, 22, 23}
+
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
             cell = self._data[index.row()][current_col]
             column = index.column()
-            if column == 0:
+            if column == 1:
                 return f'{cell:.1f}s'
-            elif column in (1, 2, 7, 10, 13, 14, 15):
+            elif column in self.MAGNITUDE_COLUMNS:
                 return f'{cell:,.2f}'
-            elif column in (3, 4, 5, 6, 8, 11, 12):
-                return f'{cell:,.2f}%'
-            elif column in (9, 16, 17, 18, 19, 20, 21, 22):
+            elif column in self.SHARE_COLUMNS:
+                return f'{cell * 100:,.2f}%'
+            elif column in self.WHOLE_NUMBER_COLUMNS:
                 return str(cell)
             return cell
 
@@ -355,7 +359,7 @@ class DamageTreeModel(TreeModel):
                 return ''
             if column == 0:
                 if isinstance(data, tuple):
-                    return ''.join(data)
+                    return data[0] + data[1]
                 return data
             elif column in (3, 5, 6, 7):
                 return f'{data * 100:,.2f}%'
@@ -393,7 +397,7 @@ class HealTreeModel(TreeModel):
                 return ''
             if column == 0:
                 if isinstance(data, tuple):
-                    return ''.join(data)
+                    return data[0] + data[1]
                 return data
             elif column == 8:
                 return f'{data * 100:,.2f}%'

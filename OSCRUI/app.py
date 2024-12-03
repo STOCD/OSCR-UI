@@ -3,25 +3,22 @@ import os
 from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QScrollArea
 from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
-from PySide6.QtCore import QSize, QSettings, QTimer
-from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut
+from PySide6.QtCore import QSize, QSettings, QTimer, QThread
+from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut, QFont
 
-from .headers import (
-        init_header_trans, get_table_headers, get_tree_headers, get_heal_tree_headers,
-        get_live_table_headers)
-from .translation import init_translation
-
+from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
 from .leagueconnector import OSCRClient
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .textedit import format_path
-from .widgets import AnalysisPlot, BannerLabel, FlipButton, WidgetStorage
+from .translation import init_translation, tr
+from .widgets import AnalysisPlot, BannerLabel, FlipButton, ParserSignals, WidgetStorage
 from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
 from .widgetbuilder import SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
 from .widgetbuilder import SCROLLOFF, SCROLLON
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
-from signal import signal, SIGINT, SIG_DFL
-signal(SIGINT, SIG_DFL)
+# from signal import signal, SIGINT, SIG_DFL
+# signal(SIGINT, SIG_DFL)
 
 
 class OSCRUI():
@@ -30,12 +27,12 @@ class OSCRUI():
             browse_log, browse_sto_logpath, collapse_overview_table, expand_overview_table,
             favorite_button_callback, navigate_log, save_combat, set_live_scale_setting,
             set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
-            set_ui_scale_setting, switch_analysis_tab, switch_main_tab, switch_map_tab,
-            switch_overview_tab)
+            set_ui_scale_setting, show_parser_error, switch_analysis_tab, switch_main_tab,
+            switch_map_tab, switch_overview_tab)
     from .datafunctions import (
-            analyze_log_callback, copy_analysis_callback, copy_analysis_table_callback,
-            copy_summary_callback, init_parser, update_shown_columns_dmg,
-            update_shown_columns_heal)
+            analysis_data_slot, analyze_log_background, analyze_log_callback,
+            copy_analysis_callback, copy_analysis_table_callback, copy_summary_callback,
+            insert_combat, update_shown_columns_dmg, update_shown_columns_heal)
     from .displayer import create_legend_item
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
@@ -84,7 +81,7 @@ class OSCRUI():
         self.init_settings()
         self.init_config()
 
-        self.update_translation()
+        init_translation(self.settings.value('language'))
         self.league_api = None
 
         self.app, self.window = self.create_main_window()
@@ -98,21 +95,7 @@ class OSCRUI():
         if self.settings.value('auto_scan', type=bool):
             QTimer.singleShot(
                     100,
-                    lambda: self.analyze_log_callback(self.translate, path=self.entry.text(), parser_num=1)
-            )
-
-    def translate(self, text):
-        """Translate text."""
-        return self._(text)
-
-    def update_translation(self):
-        """Update the translation based on the current language setting."""
-        try:
-            self._ = init_translation(self.settings.value('language'))
-            init_header_trans(self.settings.value('language'))
-        except Exception as e:
-            print(f"Translation update failed: {e}")
-            self._ = lambda x: x
+                    lambda: self.analyze_log_callback(path=self.entry.text()))
 
     def run(self) -> int:
         """
@@ -183,6 +166,17 @@ class OSCRUI():
         self.config['icon_size'] = round(
                 self.config['ui_scale'] * self.theme['s.c']['button_icon_size'])
 
+    def init_parser(self):
+        """
+        Initializes Parser.
+        """
+        self.parser = OSCR(settings=self.parser_settings)
+        self.parser_signals = ParserSignals()
+        self.parser_signals.analyzed_combat.connect(self.insert_combat)
+        self.parser_signals.parser_error.connect(self.show_parser_error)
+        self.parser.combat_analyzed_callback = lambda c: self.parser_signals.analyzed_combat.emit(c)
+        self.parser.error_callback = lambda e: self.parser_signals.parser_error.emit(e)
+
     @property
     def parser_settings(self) -> dict:
         """
@@ -241,6 +235,7 @@ class OSCRUI():
         :return: QApplication, QWidget
         """
         app = QApplication(argv)
+        QThread.currentThread().setPriority(QThread.Priority.TimeCriticalPriority)
         font_database = QFontDatabase()
         font_database.addApplicationFont(get_asset_path('Overpass-Bold.ttf', self.app_dir))
         font_database.addApplicationFont(get_asset_path('Overpass-Medium.ttf', self.app_dir))
@@ -293,12 +288,12 @@ class OSCRUI():
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
-            'tooltip_r': self._('Collapse Sidebar'), 'tooltip_l': self._('Expand Sidebar')
+            'tooltip_r': tr('Collapse Sidebar'), 'tooltip_l': tr('Expand Sidebar')
         }
         right_flip_config = {
             'icon_r': self.icons['expand-right'], 'func_r': right.show,
             'icon_l': self.icons['collapse-right'], 'func_l': right.hide,
-            'tooltip_r': self._('Expand'), 'tooltip_l': self._('Collapse')
+            'tooltip_r': tr('Expand'), 'tooltip_l': tr('Collapse')
         }
         for col, config in ((col_1, left_flip_config), (col_3, right_flip_config)):
             flip_button = FlipButton('', '', main_frame)
@@ -309,9 +304,9 @@ class OSCRUI():
             col.addWidget(flip_button, alignment=ATOP)
 
         table_flip_config = {
-            'icon_r': self.icons['collapse-bottom'], 'tooltip_r': self._('Collapse Table'),
+            'icon_r': self.icons['collapse-bottom'], 'tooltip_r': tr('Collapse Table'),
             'func_r': self.collapse_overview_table,
-            'icon_l': self.icons['expand-bottom'], 'tooltip_l': self._('Expand Table'),
+            'icon_l': self.icons['expand-bottom'], 'tooltip_l': tr('Expand Table'),
             'func_l': self.expand_overview_table
         }
         table_button = FlipButton('', '', main_frame)
@@ -345,7 +340,7 @@ class OSCRUI():
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
-        map_label = self.create_label(self._('Available Maps:'), 'label_heading', frame)
+        map_label = self.create_label(tr('Available Maps:'), 'label_heading', frame)
         left_layout.addWidget(map_label)
 
         map_switch_layout = QGridLayout()
@@ -358,9 +353,9 @@ class OSCRUI():
         map_switch_layout.addWidget(map_switch_buttons_frame, 0, 1, alignment=ACENTER)
         map_switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            self._('All Maps'): {
+            tr('All Maps'): {
                 'callback': lambda: self.switch_map_tab(0), 'align': ACENTER, 'toggle': True},
-            self._('Favorites'): {
+            tr('Favorites'): {
                 'callback': lambda: self.switch_map_tab(1), 'align': ACENTER, 'toggle': False},
         }
         map_switcher, map_buttons = self.create_button_series(
@@ -370,7 +365,7 @@ class OSCRUI():
         map_switcher.setContentsMargins(0, 0, 0, 0)
         map_switch_buttons_frame.setLayout(map_switcher)
         self.widgets.map_menu_buttons = map_buttons
-        favorite_button = self.create_icon_button(self.icons['star'], self._('Add to Favorites'))
+        favorite_button = self.create_icon_button(self.icons['star'], tr('Add to Favorites'))
         favorite_button.clicked.connect(self.favorite_button_callback)
         map_switch_layout.addWidget(favorite_button, 0, 2, ARIGHT)
         left_layout.addLayout(map_switch_layout)
@@ -381,8 +376,8 @@ class OSCRUI():
         maps_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
         maps_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
         maps_tabber.setSizePolicy(SMINMIN)
-        maps_tabber.addTab(all_frame, self._('All Maps'))
-        maps_tabber.addTab(favorites_frame, self._('Favorites'))
+        maps_tabber.addTab(all_frame, tr('All Maps'))
+        maps_tabber.addTab(favorites_frame, tr('Favorites'))
         self.widgets.map_tabber = maps_tabber
         self.widgets.map_tab_frames.append(all_frame)
         self.widgets.map_tab_frames.append(favorites_frame)
@@ -430,7 +425,7 @@ class OSCRUI():
         favorites_frame.setLayout(favorites_layout)
 
         map_label = self.create_label(
-                self._('Seasonal Records:'), 'label_heading', frame, {'margin-top': '@isp'})
+                tr('Seasonal Records:'), 'label_heading', frame, {'margin-top': '@isp'})
         left_layout.addWidget(map_label)
 
         self.variant_list = self.create_combo_box(frame)
@@ -467,11 +462,11 @@ class OSCRUI():
         left_layout.setAlignment(ATOP)
 
         head_layout = QHBoxLayout()
-        head = self.create_label(self._('STO Combatlog:'), 'label_heading', frame)
+        head = self.create_label(tr('STO Combatlog:'), 'label_heading', frame)
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         cut_log_button = self.create_icon_button(
-                self.icons['edit'], self._('Manage Logfile'), parent=frame)
-        cut_log_button.clicked.connect(lambda _: self.split_dialog(self.translate))
+                self.icons['edit'], tr('Manage Logfile'), parent=frame)
+        cut_log_button.clicked.connect(self.split_dialog)
         head_layout.addWidget(cut_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
 
@@ -483,12 +478,15 @@ class OSCRUI():
 
         entry_button_config = {
             'default': {'margin-bottom': '@isp'},
-            self._('Browse ...'): {'callback': lambda: self.browse_log(self.entry, self.translate), 'align': ALEFT},
-            self._('Default'): {
+            tr('Browse ...'): {'callback': lambda: self.browse_log(self.entry), 'align': ALEFT},
+            tr('Default'): {
                 'callback': lambda: self.entry.setText(self.settings.value('sto_log_path')),
                 'align': AHCENTER
             },
-            self._('Scan'): {'callback': lambda: self.analyze_log_callback(self.translate, path=self.entry.text(), parser_num=1), 'align': ARIGHT}
+            tr('Analyze'): {
+                'callback': lambda: self.analyze_log_callback(path=self.entry.text()),
+                'align': ARIGHT
+            }
         }
         entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
         left_layout.addLayout(entry_buttons)
@@ -502,10 +500,10 @@ class OSCRUI():
         combat_button_layout.setSpacing(m)
         combat_button_layout.setAlignment(ALEFT)
         export_button = self.create_icon_button(
-                self.icons['export-parse'], self._('Export Combat'), parent=frame)
+                self.icons['export-parse'], tr('Export Combat'), parent=frame)
         combat_button_layout.addWidget(export_button)
         save_button = self.create_icon_button(
-                self.icons['save'], self._('Save Combat to Cache'), parent=frame)
+                self.icons['save'], tr('Save Combat to Cache'), parent=frame)
         combat_button_layout.addWidget(save_button)
         top_button_row.addLayout(combat_button_layout)
 
@@ -514,13 +512,14 @@ class OSCRUI():
         navigation_button_layout.setSpacing(m)
         navigation_button_layout.setAlignment(AHCENTER)
         up_button = self.create_icon_button(
-                self.icons['page-up'], self._('Load newer Combats'), parent=frame)
+                self.icons['page-up'], tr('Load newer Combats'), parent=frame)
         up_button.setEnabled(False)
         navigation_button_layout.addWidget(up_button)
         self.widgets.navigate_up_button = up_button
         down_button = self.create_icon_button(
-                self.icons['page-down'], self._('Load older Combats'), parent=frame)
-        down_button.setEnabled(False)
+                self.icons['page-down'], tr('Load older Combats'), parent=frame)
+        down_button.clicked.connect(lambda: self.analyze_log_background(
+                self.settings.value('combats_to_parse', type=int)))
         navigation_button_layout.addWidget(down_button)
         self.widgets.navigate_down_button = down_button
         top_button_row.addLayout(navigation_button_layout)
@@ -530,10 +529,10 @@ class OSCRUI():
         parser_button_layout.setSpacing(m)
         parser_button_layout.setAlignment(ARIGHT)
         parser1_button = self.create_icon_button(
-                self.icons['parser-left'], self._('Analyze Combat'), parent=frame)
+                self.icons['parser-left'], tr('Analyze Combat'), parent=frame)
         parser_button_layout.addWidget(parser1_button)
         parser2_button = self.create_icon_button(
-                self.icons['parser-right'], self._('Analyze Combat'), parent=frame)
+                self.icons['parser-right'], tr('Analyze Combat'), parent=frame)
         parser_button_layout.addWidget(parser2_button)
         top_button_row.addLayout(parser_button_layout)
 
@@ -550,22 +549,21 @@ class OSCRUI():
         self.current_combats.setFont(self.theme_font('listbox'))
         self.current_combats.setSizePolicy(SMIXMIN)
         self.current_combats.doubleClicked.connect(
-            lambda: self.analyze_log_callback(self.translate, self.current_combats.currentRow(), parser_num=1))
+            lambda: self.analysis_data_slot(self.current_combats.currentRow()))
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
         parser1_button.clicked.connect(
-                lambda: self.analyze_log_callback(self.translate, self.current_combats.currentRow(), parser_num=1))
+                lambda: self.analysis_data_slot(self.current_combats.currentRow()))
         export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
-        up_button.clicked.connect(lambda: self.navigate_log('up'))
-        down_button.clicked.connect(lambda: self.navigate_log('down'))
 
         parser2_button.setEnabled(False)
         save_button.setEnabled(False)
 
         live_parser_button = self.create_button(
-                self._('Live Parser'), 'tab_button', style_override={'margin-top': '@isp'}, toggle=False)
-        live_parser_button.clicked[bool].connect(lambda checked: self.live_parser_toggle(self.translate, checked))
+                tr('Live Parser'), 'tab_button', style_override={'margin-top': '@isp'},
+                toggle=False)
+        live_parser_button.clicked[bool].connect(lambda checked: self.live_parser_toggle(checked))
         left_layout.addWidget(live_parser_button, alignment=AHCENTER)
         self.widgets.live_parser_button = live_parser_button
 
@@ -582,22 +580,22 @@ class OSCRUI():
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
-        head_label = self.create_label(self._('About OSCR:'), 'label_heading')
+        head_label = self.create_label(tr('About OSCR:'), 'label_heading')
         left_layout.addWidget(head_label)
         about_label = self.create_label(
-                self._('Open Source Combatlog Reader (OSCR), developed by the STO Community ') + 
-                self._('Developers in cooperation with the STO Builds Discord.'))
+                tr('Open Source Combatlog Reader (OSCR), developed by the STO Community ')
+                + tr('Developers in cooperation with the STO Builds Discord.'))
         about_label.setWordWrap(True)
         left_layout.addWidget(about_label)
         version_label = self.create_label(
-                f'{self._("Current Version")}: {self.versions[0]} ({self.versions[1]})', 'label_subhead',
-                style_override={'margin-bottom': '@isp'})
+                f'{tr("Current Version")}: {self.versions[0]} ({self.versions[1]})',
+                'label_subhead', style_override={'margin-bottom': '@isp'})
         left_layout.addWidget(version_label)
         link_button_style = {
             'default': {},
-            self._('Website'): {'callback': lambda: open_link(self.config['link_website'])},
-            self._('Github'): {'callback': lambda: open_link(self.config['link_github'])},
-            self._('Downloads'): {
+            tr('Website'): {'callback': lambda: open_link(self.config['link_website'])},
+            tr('Github'): {'callback': lambda: open_link(self.config['link_github'])},
+            tr('Downloads'): {
                 'callback': lambda: open_link(self.config['link_downloads'])}
         }
         button_layout, buttons = self.create_button_series(
@@ -638,9 +636,9 @@ class OSCRUI():
         sidebar_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
         sidebar_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
         sidebar_tabber.setSizePolicy(SMAXMIN)
-        sidebar_tabber.addTab(log_frame, self._('Log'))
-        sidebar_tabber.addTab(league_frame, self._('League'))
-        sidebar_tabber.addTab(about_frame, self._('About'))
+        sidebar_tabber.addTab(log_frame, tr('Log'))
+        sidebar_tabber.addTab(league_frame, tr('League'))
+        sidebar_tabber.addTab(about_frame, tr('About'))
         self.widgets.sidebar_tabber = sidebar_tabber
         self.widgets.sidebar_tab_frames.append(log_frame)
         self.widgets.sidebar_tab_frames.append(league_frame)
@@ -684,7 +682,6 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
-        self.widgets.main_menu_buttons[2].clicked.connect(self.establish_league_connection(self.translate))
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
@@ -725,11 +722,11 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            self._('DPS Bar'): {
+            tr('DPS Bar'): {
                 'callback': lambda: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
-            self._('DPS Graph'): {
+            tr('DPS Graph'): {
                 'callback': lambda: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
-            self._('Damage Graph'): {
+            tr('Damage Graph'): {
                 'callback': lambda: self.switch_overview_tab(2), 'align': ACENTER, 'toggle': False}
         }
         switcher, buttons = self.create_button_series(
@@ -740,11 +737,11 @@ class OSCRUI():
         icon_layout = QHBoxLayout()
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
-        copy_button = self.create_icon_button(self.icons['copy'], self._('Copy Result'))
-        copy_button.clicked.connect(lambda: self.copy_summary_callback(self.translate))
+        copy_button = self.create_icon_button(self.icons['copy'], tr('Copy Result'))
+        copy_button.clicked.connect(self.copy_summary_callback)
         icon_layout.addWidget(copy_button)
-        ladder_button = self.create_icon_button(self.icons['ladder'], self._('Upload Result'))
-        ladder_button.clicked.connect(lambda: self.upload_callback(self.translate))
+        ladder_button = self.create_icon_button(self.icons['ladder'], tr('Upload Result'))
+        ladder_button.clicked.connect(self.upload_callback)
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
@@ -788,16 +785,16 @@ class OSCRUI():
 
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            self._('Damage Out'): {
+            tr('Damage Out'): {
                 'callback': lambda state: self.switch_analysis_tab(0), 'align': ACENTER,
                 'toggle': True},
-            self._('Damage Taken'): {
+            tr('Damage Taken'): {
                 'callback': lambda state: self.switch_analysis_tab(1),
                 'align': ACENTER, 'toggle': False},
-            self._('Heals Out'): {
+            tr('Heals Out'): {
                 'callback': lambda state: self.switch_analysis_tab(2), 'align': ACENTER,
                 'toggle': False},
-            self._('Heals In'): {
+            tr('Heals In'): {
                 'callback': lambda state: self.switch_analysis_tab(3), 'align': ACENTER,
                 'toggle': False}
         }
@@ -810,8 +807,9 @@ class OSCRUI():
         copy_layout.setContentsMargins(0, 0, 0, 0)
         copy_layout.setSpacing(self.theme['defaults']['csp'])
         copy_combobox = self.create_combo_box(switch_frame)
-        copy_combobox.addItems(
-                (self._('Selection'), self._('Global Max One Hit'), self._('Max One Hit'), self._('Magnitude'), self._('Magnitude / s')))
+        copy_combobox.addItems((
+                tr('Selection'), tr('Global Max One Hit'), tr('Max One Hit'), tr('Magnitude'),
+                tr('Magnitude / s')))
         copy_layout.addWidget(copy_combobox)
         self.widgets.analysis_copy_combobox = copy_combobox
         copy_button = self.create_icon_button(self.icons['copy'], 'Copy Data')
@@ -862,11 +860,11 @@ class OSCRUI():
             plot_button_layout.setContentsMargins(0, 0, 0, 0)
             plot_button_layout.setSpacing(0)
             freeze_button = self.create_button(
-                    self._('Freeze Graph'), 'toggle_button', plot_button_frame,
+                    tr('Freeze Graph'), 'toggle_button', plot_button_frame,
                     style_override={'border-color': '@bg'}, toggle=True)
             freeze_button.clicked.connect(plot_widget.toggle_freeze)
             plot_button_layout.addWidget(freeze_button, alignment=ARIGHT)
-            clear_button = self.create_button(self._('Clear Graph'), parent=plot_button_frame)
+            clear_button = self.create_button(tr('Clear Graph'), parent=plot_button_frame)
             clear_button.clicked.connect(plot_widget.clear_plot)
             plot_button_layout.addWidget(clear_button, alignment=ARIGHT)
             plot_button_frame.setLayout(plot_button_layout)
@@ -890,7 +888,7 @@ class OSCRUI():
             return
         name = item.data[0]
         if isinstance(name, tuple):
-            name = ''.join(name)
+            name = name[0] + name[1]
         legend_item = self.create_legend_item(color, name)
         plot_widget.add_legend_item(legend_item)
 
@@ -914,15 +912,16 @@ class OSCRUI():
         control_layout.setSpacing(0)
         control_layout.setColumnStretch(2, 1)
         search_label = self.create_label(
-                self._('Search:'), 'label_subhead', style_override={'margin-bottom': 0})
+                tr('Search:'), 'label_subhead', style_override={'margin-bottom': 0})
         control_layout.addWidget(search_label, 0, 0, alignment=AVCENTER)
         search_bar = self.create_entry(
-                placeholder=self._('name@handle'), style_override={'margin-left': '@isp', 'margin-top': 0})
+                placeholder=tr('name@handle'),
+                style_override={'margin-left': '@isp', 'margin-top': 0})
         search_bar.textChanged.connect(lambda text: self.apply_league_table_filter(text))
         control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
         control_button_style = {
-            self._('View Parse'): {'callback': lambda: self.download_and_view_combat(self.translate)},
-            self._('More'): {'callback': self.extend_ladder, 'style': {'margin-right': 0}}
+            tr('View Parse'): {'callback': self.download_and_view_combat},
+            tr('More'): {'callback': self.extend_ladder, 'style': {'margin-right': 0}}
         }
         control_button_layout = self.create_button_series(
                 l_frame, control_button_style, 'button', seperator='•')
@@ -958,10 +957,10 @@ class OSCRUI():
         menu_frame.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(menu_frame)
         menu_button_style = {
-            self._('Overview'): {'style': {'margin-left': '@isp'}},
-            self._( 'Analysis'): {},
-            self._('League Standings'): {},
-            self._('Settings'): {},
+            tr('Overview'): {'style': {'margin-left': '@isp'}},
+            tr('Analysis'): {},
+            tr('League Standings'): {},
+            tr('Settings'): {},
         }
         bt_lay, buttons = self.create_button_series(
                 menu_frame, menu_button_style, style='menu_button', seperator='•', ret=True)
@@ -1004,7 +1003,7 @@ class OSCRUI():
         sec_1.setContentsMargins(0, 0, 0, 0)
         sec_1.setVerticalSpacing(self.theme['defaults']['isp'])
         sec_1.setHorizontalSpacing(self.theme['defaults']['csp'])
-        combat_delta_label = self.create_label(self._('Seconds Between Combats:'), 'label_subhead')
+        combat_delta_label = self.create_label(tr('Seconds Between Combats:'), 'label_subhead')
         sec_1.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
         combat_delta_validator = QIntValidator()
         combat_delta_validator.setBottom(1)
@@ -1015,7 +1014,7 @@ class OSCRUI():
         combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'seconds_between_combats', combat_delta_entry.text()))
         sec_1.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
-        combat_num_label = self.create_label(self._('Number of combats to isolate:'), 'label_subhead')
+        combat_num_label = self.create_label(tr('Number of combats to isolate:'), 'label_subhead')
         sec_1.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
         combat_num_validator = QIntValidator()
         combat_num_validator.setBottom(1)
@@ -1027,13 +1026,13 @@ class OSCRUI():
                 'combats_to_parse', combat_num_entry.text()))
         sec_1.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
         graph_resolution_label = self.create_label(
-                self._('Graph resolution (interval in seconds):'), 'label_subhead')
+                tr('Graph resolution (interval in seconds):'), 'label_subhead')
         sec_1.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
         graph_resolution_layout = self.create_annotated_slider(
                 self.settings.value('graph_resolution', type=float) * 10, 1, 20,
                 callback=self.set_graph_resolution_setting)
         sec_1.addLayout(graph_resolution_layout, 2, 1, alignment=ALEFT)
-        split_length_label = self.create_label(self._('Auto Split After Lines:'), 'label_subhead')
+        split_length_label = self.create_label(tr('Auto Split After Lines:'), 'label_subhead')
         sec_1.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
         split_length_validator = QIntValidator()
         split_length_validator.setBottom(1)
@@ -1044,27 +1043,29 @@ class OSCRUI():
         split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'split_log_after', split_length_entry.text()))
         sec_1.addWidget(split_length_entry, 3, 1, alignment=AVCENTER)
-        overview_sort_label = self.create_label(self._('Sort overview table by column:'), 'label_subhead')
+        overview_sort_label = self.create_label(
+                tr('Sort overview table by column:'), 'label_subhead')
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
         overview_sort_combo = self.create_combo_box(
                 col_2_frame, style_override={'font': '@small_text'})
-        overview_sort_combo.addItems(get_table_headers())
+        overview_sort_combo.addItems(TABLE_HEADER)
         overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
         overview_sort_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('overview_sort_column', new_index))
         sec_1.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
-        overview_sort_order_label = self.create_label(self._('Overview table sort order:'), 'label_subhead')
+        overview_sort_order_label = self.create_label(
+                tr('Overview table sort order:'), 'label_subhead')
         sec_1.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
         overview_sort_order_combo = self.create_combo_box(
                 col_2_frame, style_override={'font': '@small_text'})
-        overview_sort_order_combo.addItems((self._('Descending'), self._('Ascending')))
+        overview_sort_order_combo.addItems((tr('Descending'), tr('Ascending')))
         overview_sort_order_combo.setCurrentText(self.settings.value('overview_sort_order'))
         overview_sort_order_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.setValue('overview_sort_order', new_text))
         sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
-        auto_scan_label = self.create_label(self._('Scan log automatically:'), 'label_subhead')
+        auto_scan_label = self.create_label(tr('Scan log automatically:'), 'label_subhead')
         sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
-        auto_scan_button = FlipButton(self._('Disabled'), self._('Enabled'), col_2_frame, checkable=True)
+        auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
         auto_scan_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         auto_scan_button.setFont(self.theme_font('app', '@font'))
@@ -1073,7 +1074,7 @@ class OSCRUI():
         if self.settings.value('auto_scan', type=bool):
             auto_scan_button.flip()
         sec_1.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
-        sto_log_path_button = self.create_button(self._('STO Logfile:'), style_override={
+        sto_log_path_button = self.create_button(tr('STO Logfile:'), style_override={
                 'margin': 0, 'font': '@subhead', 'border-color': '@bc', 'border-style': 'solid',
                 'border-width': '@bw'})
         sec_1.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
@@ -1084,7 +1085,7 @@ class OSCRUI():
                 lambda: self.set_sto_logpath_setting(sto_log_path_entry))
         sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
         sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
-        opacity_label = self.create_label(self._('Live Parser Opacity:'), 'label_subhead')
+        opacity_label = self.create_label(tr('Live Parser Opacity:'), 'label_subhead')
         sec_1.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
         opacity_slider_layout = self.create_annotated_slider(
                 default_value=round(self.settings.value('live_parser_opacity', type=float) * 20, 0),
@@ -1092,9 +1093,10 @@ class OSCRUI():
                 style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
                 callback=self.set_parser_opacity_setting)
         sec_1.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
-        live_graph_active_label = self.create_label(self._('LiveParser Graph:'), 'label_subhead')
+        live_graph_active_label = self.create_label(tr('LiveParser Graph:'), 'label_subhead')
         sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
-        live_graph_active_button = FlipButton(self._('Disabled'), self._('Enabled'), col_2_frame, checkable=True)
+        live_graph_active_button = FlipButton(
+                tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
         live_graph_active_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_graph_active_button.setFont(self.theme_font('app', '@font'))
@@ -1105,7 +1107,7 @@ class OSCRUI():
         if self.settings.value('live_graph_active', type=bool):
             live_graph_active_button.flip()
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
-        live_graph_field_label = self.create_label(self._('LiveParser Graph Field:'), 'label_subhead')
+        live_graph_field_label = self.create_label(tr('LiveParser Graph Field:'), 'label_subhead')
         sec_1.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
         live_graph_field_combo = self.create_combo_box(
                 col_2_frame, style_override={'font': '@small_text'})
@@ -1114,18 +1116,18 @@ class OSCRUI():
         live_graph_field_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('live_graph_field', new_index))
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
-        overview_tab_label = self.create_label(self._('Default Overview Tab:'), 'label_subhead')
+        overview_tab_label = self.create_label(tr('Default Overview Tab:'), 'label_subhead')
         sec_1.addWidget(overview_tab_label, 11, 0, alignment=ARIGHT)
         overview_tab_combo = self.create_combo_box(
                 col_2_frame, style_override={'font': '@small_text'})
-        overview_tab_combo.addItems((self._('DPS Bar'), self._('DPS Graph'), self._('Damage Graph')))
+        overview_tab_combo.addItems((tr('DPS Bar'), tr('DPS Graph'), tr('Damage Graph')))
         overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
         overview_tab_combo.currentIndexChanged.connect(
             lambda new_index: self.settings.setValue('first_overview_tab', new_index))
         sec_1.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
-        size_warning_label = self.create_label(self._('Logfile Size Warning:'), 'label_subhead')
+        size_warning_label = self.create_label(tr('Logfile Size Warning:'), 'label_subhead')
         sec_1.addWidget(size_warning_label, 12, 0, alignment=ARIGHT)
-        size_warning_button = FlipButton(self._('Disabled'), self._('Enabled'), col_2_frame, checkable=True)
+        size_warning_button = FlipButton(tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
         size_warning_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         size_warning_button.setFont(self.theme_font('app', '@font'))
@@ -1136,22 +1138,22 @@ class OSCRUI():
         if self.settings.value('log_size_warning', type=bool):
             size_warning_button.flip()
         sec_1.addWidget(size_warning_button, 12, 1, alignment=ALEFT)
-        ui_scale_label = self.create_label(self._('UI Scale:'), 'label_subhead')
+        ui_scale_label = self.create_label(tr('UI Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
         ui_scale_slider_layout = self.create_annotated_slider(
                 default_value=round(self.settings.value('ui_scale', type=float) * 50, 0),
                 min=25, max=75, callback=self.set_ui_scale_setting)
         sec_1.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
-        ui_scale_label = self.create_label(self._('LiveParser Scale:'), 'label_subhead')
+        ui_scale_label = self.create_label(tr('LiveParser Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 14, 0, alignment=ARIGHT)
         live_scale_slider_layout = self.create_annotated_slider(
                 default_value=round(self.settings.value('live_scale', type=float) * 50, 0),
                 min=25, max=75, callback=self.set_live_scale_setting)
         sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
         sec_1.setAlignment(AHCENTER)
-        live_enabled_label = self.create_label(self._('LiveParser default state:'), 'label_subhead')
+        live_enabled_label = self.create_label(tr('LiveParser default state:'), 'label_subhead')
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
-        live_enabled_button = FlipButton(self._('Disabled'), self._('Enabled'), col_2_frame, checkable=True)
+        live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
         live_enabled_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_enabled_button.setFont(self.theme_font('app', '@font'))
@@ -1162,24 +1164,17 @@ class OSCRUI():
         if self.settings.value('live_enabled', type=bool):
             live_enabled_button.flip()
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
-        
-        language_map = {
-        'English': 'en',
-        'Chinese': 'zh',
-        'French': 'fr',
-        'German': 'de'
-        }
 
-        language_label = self.create_label(self._('Language:'), 'label_subhead')
+        languages = ('English', 'Chinese', 'German')
+        language_codes = ('en', 'zh', 'de')
+        language_label = self.create_label(tr('Language:'), 'label_subhead')
         sec_1.addWidget(language_label, 16, 0, alignment=ARIGHT)
         language_combo = self.create_combo_box(col_2_frame, style_override={'font': '@small_text'})
-        language_combo.addItems(language_map.keys())
-        current_language_id = self.settings.value('language', 'en')
-        current_language_name = next((name for name, id in language_map.items() if id == current_language_id), 'English')
-        language_combo.setCurrentText(current_language_name)
+        language_combo.addItems(languages)
+        current_language_code = self.settings.value('language')
+        language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
         language_combo.currentIndexChanged.connect(
-        lambda index: self.settings.setValue('language', language_map[language_combo.itemText(index)])
-        )
+                lambda index: self.settings.setValue('language', language_codes[index]))
         sec_1.addWidget(language_combo, 16, 1, alignment=ALEFT | AVCENTER)
         scroll_layout.addLayout(sec_1)
 
@@ -1200,14 +1195,14 @@ class OSCRUI():
         sec_2.setSpacing(isp)
         sec_2.setAlignment(AHCENTER)
         dmg_hider_label = self.create_label(
-            self._('Damage table columns:'), 'label_subhead')
+            tr('Damage table columns:'), 'label_subhead')
         sec_2.addWidget(dmg_hider_label)
         dmg_hider_layout = QVBoxLayout()
         dmg_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
         dmg_hider_frame.setMinimumWidth(self.sidebar_item_width)
         self.set_buttons = list()
-        for i, head in enumerate(get_tree_headers()[1:]):
+        for i, head in enumerate(tr(TREE_HEADER)[1:]):
             bt = self.create_button(
                     head, 'toggle_button', dmg_hider_frame,
                     toggle=self.settings.value(f'dmg_columns|{i}', type=bool))
@@ -1220,19 +1215,19 @@ class OSCRUI():
                 size_policy=SMINMIN)
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)
-        apply_button = self.create_button(self._('Apply'), 'button', dmg_hider_frame)
+        apply_button = self.create_button(tr('Apply'), 'button', dmg_hider_frame)
         apply_button.clicked.connect(self.update_shown_columns_dmg)
         dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT | ATOP)
         dmg_hider_frame.setLayout(dmg_hider_layout)
         sec_2.addWidget(dmg_hider_frame, alignment=ATOP)
 
         heal_hider_label = self.create_label(
-                self._('Heal table columns:'), 'label_subhead')
+                tr('Heal table columns:'), 'label_subhead')
         sec_2.addWidget(heal_hider_label)
         heal_hider_layout = QVBoxLayout()
         heal_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
-        for i, head in enumerate(get_heal_tree_headers()[1:]):
+        for i, head in enumerate(tr(HEAL_TREE_HEADER)[1:]):
             bt = self.create_button(
                     head, 'toggle_button', heal_hider_frame,
                     toggle=self.settings.value(f'heal_columns|{i}', type=bool))
@@ -1245,19 +1240,19 @@ class OSCRUI():
             size_policy=SMINMIN)
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
-        apply_button_2 = self.create_button(self._('Apply'), 'button', heal_hider_frame)
+        apply_button_2 = self.create_button(tr('Apply'), 'button', heal_hider_frame)
         apply_button_2.clicked.connect(self.update_shown_columns_heal)
         heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
 
         sec_2.addWidget(heal_hider_frame, alignment=ATOP)
         live_hider_label = self.create_label(
-                self._('Live Parser columns:'), 'label_subhead')
+                tr('Live Parser columns:'), 'label_subhead')
         sec_2.addWidget(live_hider_label)
         live_hider_layout = QVBoxLayout()
         live_hider_frame = self.create_frame(
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
-        for i, head in enumerate(get_live_table_headers()):
+        for i, head in enumerate(tr(LIVE_TABLE_HEADER)):
             bt = self.create_button(
                     head, 'toggle_button', live_hider_frame,
                     toggle=self.settings.value(f'live_columns|{i}', type=bool))

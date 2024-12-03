@@ -1,30 +1,27 @@
 import os
 
-from PySide6.QtCore import QPoint, QSize, Qt, QUrl
-from PySide6.QtGui import QIntValidator, QMouseEvent, QDesktopServices
+from PySide6.QtCore import QPoint, QSize, Qt
+from PySide6.QtGui import QIntValidator, QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QDialog
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit
 from PySide6.QtWidgets import QMessageBox, QSpacerItem, QSplitter, QTableView
 from PySide6.QtWidgets import QVBoxLayout
 
-from OSCR import LiveParser
+from OSCR import LiveParser, LIVE_TABLE_HEADER
 
 from .callbacks import (
-        auto_split_callback, combat_split_callback, copy_live_data_callback, trim_logfile,
-        repair_logfile)
+        auto_split_callback, combat_split_callback, copy_live_data_callback, repair_logfile,
+        trim_logfile)
 from .displayer import create_live_graph, update_live_display, update_live_graph, update_live_table
 from .datamodels import LiveParserTableModel
-from .headers import get_live_table_headers
+from .iofunctions import open_link
 from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
+from .translation import tr
 from .widgetbuilder import create_button, create_frame, create_icon_button, create_label
 from .widgetbuilder import ABOTTOM, AHCENTER, ALEFT, ARIGHT, AVCENTER, RFIXED
 from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMAX, SMINMIN
 from .widgets import FlipButton, LiveParserWindow, SizeGrip
-
-import gettext
-
-_ = gettext.gettext
 
 
 def show_warning(self, title: str, message: str):
@@ -44,32 +41,24 @@ def show_warning(self, title: str, message: str):
     error.exec()
 
 
-def log_size_warning(self, translate):
+def log_size_warning(self):
     """
     Warns user about oversized logfile.
     Note: The default button counts as a two buttons
 
     :return: "cancel", "split dialog", "continue"
     """
-
-    if self._ is None:
-        self._ = translate
-
     dialog = QMessageBox()
     dialog.setIcon(QMessageBox.Icon.Warning)
-    message = (
-            self._('The combatlog file you are trying to open will impair the performance of the app ') +
-            self._('due to its size. It is advised to split the log. \n\nClick "Split Dialog" to split ') +
-            self._('the file, "Cancel" to abort combatlog analysis or "Continue" to analyze the log ') +
-            self._('nevertheless.'))
+    message = 'No Message'
     dialog.setText(message)
     dialog.setWindowTitle('Open Source Combalog Reader')
     dialog.setWindowIcon(self.icons['oscr'])
 
-    dialog.addButton(self._('Continue'), QMessageBox.ButtonRole.AcceptRole)
-    default_button = dialog.addButton(self._('Split Dialog'), QMessageBox.ButtonRole.ActionRole)
-    dialog.addButton(self._('Trim'), QMessageBox.ButtonRole.ActionRole)
-    dialog.addButton(self._('Cancel'), QMessageBox.ButtonRole.RejectRole)
+    dialog.addButton(tr('Continue'), QMessageBox.ButtonRole.AcceptRole)
+    default_button = dialog.addButton(tr('Split Dialog'), QMessageBox.ButtonRole.ActionRole)
+    dialog.addButton(tr('Trim'), QMessageBox.ButtonRole.ActionRole)
+    dialog.addButton(tr('Cancel'), QMessageBox.ButtonRole.RejectRole)
 
     dialog.setDefaultButton(default_button)
     clicked = dialog.exec()
@@ -86,14 +75,10 @@ def log_size_warning(self, translate):
     return 'cancel'
 
 
-def split_dialog(self, translate):
+def split_dialog(self):
     """
     Opens dialog to split the current logfile.
     """
-
-    if self._ is None:
-        self._ = translate
-
     main_layout = QVBoxLayout()
     thick = self.theme['app']['frame_thickness']
     item_spacing = self.theme['defaults']['isp']
@@ -107,7 +92,7 @@ def split_dialog(self, translate):
     log_layout = QHBoxLayout()
     log_layout.setContentsMargins(0, 0, 0, 0)
     log_layout.setSpacing(item_spacing)
-    current_log_heading = create_label(self, self._('Selected Logfile:'), 'label_subhead')
+    current_log_heading = create_label(self, tr('Selected Logfile:'), 'label_subhead')
     log_layout.addWidget(current_log_heading, alignment=ALEFT)
     current_log_label = create_label(self, format_path(current_logpath), 'label')
     log_layout.addWidget(current_log_label, alignment=AVCENTER)
@@ -122,16 +107,16 @@ def split_dialog(self, translate):
     grid_layout.setHorizontalSpacing(item_spacing)
     vertical_layout.addLayout(grid_layout)
 
-    trim_heading = create_label(self, self._('Trim Logfile:'), 'label_heading')
+    trim_heading = create_label(self, tr('Trim Logfile:'), 'label_heading')
     grid_layout.addWidget(trim_heading, 0, 0, alignment=ALEFT)
     label_text = (
-            self._('Removes all combats but the most recent one from the selected logfile. ') +
-            self._('All previous combats will be lost!'))
+            tr('Removes all combats but the most recent one from the selected logfile. ')
+            + tr('All previous combats will be lost!'))
     trim_text = create_label(self, label_text, 'label')
     trim_text.setWordWrap(True)
     trim_text.setFixedWidth(self.sidebar_item_width)
     grid_layout.addWidget(trim_text, 1, 0, alignment=ALEFT)
-    trim_button = create_button(self, self._('Trim'))
+    trim_button = create_button(self, tr('Trim'))
     trim_button.clicked.connect(lambda: trim_logfile(self))
     grid_layout.addWidget(trim_button, 1, 2, alignment=ARIGHT | ABOTTOM)
     grid_layout.setRowMinimumHeight(2, item_spacing)
@@ -140,19 +125,19 @@ def split_dialog(self, translate):
     grid_layout.addWidget(seperator_3, 3, 0, 1, 3)
     grid_layout.setRowMinimumHeight(4, item_spacing)
 
-    auto_split_heading = create_label(self, self._('Split Log Automatically:'), 'label_heading')
+    auto_split_heading = create_label(self, tr('Split Log Automatically:'), 'label_heading')
     grid_layout.addWidget(auto_split_heading, 5, 0, alignment=ALEFT)
     label_text = (
-            self._('Automatically splits the logfile at the next combat end after ') +
-            f'{self.settings.value("split_log_after", type=int):,}'+
-            self._(' lines until the entire file has ') +
-            self._(' been split. The new files are written to the selected folder. It is advised to ') +
-            self._('select an empty folder to ensure all files are saved correctly.'))
+            tr('Automatically splits the logfile at the next combat end after ')
+            + f'{self.settings.value("split_log_after", type=int):,}'
+            + tr(' lines until the entire file has ')
+            + tr(' been split. The new files are written to the selected folder. It is advised to ')
+            + tr('select an empty folder to ensure all files are saved correctly.'))
     auto_split_text = create_label(self, label_text, 'label')
     auto_split_text.setWordWrap(True)
     auto_split_text.setFixedWidth(self.sidebar_item_width)
     grid_layout.addWidget(auto_split_text, 6, 0, alignment=ALEFT)
-    auto_split_button = create_button(self, self._('Auto Split'))
+    auto_split_button = create_button(self, tr('Auto Split'))
     auto_split_button.clicked.connect(lambda: auto_split_callback(self, current_logpath))
     grid_layout.addWidget(auto_split_button, 6, 2, alignment=ARIGHT | ABOTTOM)
     grid_layout.setRowMinimumHeight(7, item_spacing)
@@ -160,13 +145,9 @@ def split_dialog(self, translate):
     seperator_8.setFixedHeight(self.theme['hr']['height'])
     grid_layout.addWidget(seperator_8, 8, 0, 1, 3)
     grid_layout.setRowMinimumHeight(9, item_spacing)
-    range_split_heading = create_label(self, self._('Export Range of Combats:'), 'label_heading')
+    range_split_heading = create_label(self, tr('Export Range of Combats:'), 'label_heading')
     grid_layout.addWidget(range_split_heading, 10, 0, alignment=ALEFT)
-    label_text = (
-            self._('Exports combats including and between lower and upper limit to selected file. ') +
-            self._('Both limits refer to the indexed list of all combats in the file starting with 1. ') +
-            self._('An upper limit larger than the total number of combats or of "-1", is treated as ') +
-            self._('being equal to the total number of combats.'))
+    label_text = 'Soon to be removed'
     range_split_text = create_label(self, label_text, 'label')
     range_split_text.setWordWrap(True)
     range_split_text.setFixedWidth(self.sidebar_item_width)
@@ -175,9 +156,9 @@ def split_dialog(self, translate):
     range_limit_layout.setContentsMargins(0, 0, 0, 0)
     range_limit_layout.setSpacing(0)
     range_limit_layout.setRowStretch(0, 1)
-    lower_range_label = create_label(self, self._('Lower Limit:'), 'label')
+    lower_range_label = create_label(self, tr('Lower Limit:'), 'label')
     range_limit_layout.addWidget(lower_range_label, 1, 0, alignment=AVCENTER)
-    upper_range_label = create_label(self, self._('Upper Limit:'), 'label')
+    upper_range_label = create_label(self, tr('Upper Limit:'), 'label')
     range_limit_layout.addWidget(upper_range_label, 2, 0, alignment=AVCENTER)
     lower_range_entry = QLineEdit()
     lower_validator = QIntValidator()
@@ -198,7 +179,7 @@ def split_dialog(self, translate):
     upper_range_entry.setFixedWidth(self.sidebar_item_width // 7)
     range_limit_layout.addWidget(upper_range_entry, 2, 1, alignment=AVCENTER)
     grid_layout.addLayout(range_limit_layout, 11, 1)
-    range_split_button = create_button(self, self._('Export Combats'))
+    range_split_button = create_button(self, tr('Export Combats'))
     range_split_button.clicked.connect(
             lambda le=lower_range_entry, ue=upper_range_entry:
             combat_split_callback(self, current_logpath, le.text(), ue.text()))
@@ -218,35 +199,19 @@ def split_dialog(self, translate):
 
     dialog = QDialog(self.window)
     dialog.setLayout(main_layout)
-    dialog.setWindowTitle(self._('OSCR - Split Logfile'))
+    dialog.setWindowTitle(tr('OSCR - Split Logfile'))
     dialog.setStyleSheet(get_style(self, 'dialog_window'))
     dialog.setSizePolicy(SMAXMAX)
     dialog.exec()
 
-def uploadresult_view_result(result):
-    """
-    Open the result up in the user's web browser.
 
-    Parameters:
-    - :param result: The Combat Log Upload Response
-    """
-    from .leagueconnector import OSCR_SERVER_BACKEND
-
-    url = QUrl(f"{OSCR_SERVER_BACKEND}/ui/combatlog/{result.combatlog}/")
-    QDesktopServices.openUrl(url)
-
-
-def uploadresult_dialog(self, result, translate):
+def uploadresult_dialog(self, result):
     """
     Shows a dialog that informs about the result of the triggered upload.
 
     Paramters:
     - :param result: dict containing result
     """
-
-    if self._ is None:
-        self._ = translate
-
     dialog = QDialog(self.window)
     main_layout = QVBoxLayout()
     thick = self.theme['app']['frame_thickness']
@@ -260,19 +225,19 @@ def uploadresult_dialog(self, result, translate):
     title_label = create_label(self, f"{result.detail}", 'label_heading', style_override=margin)
     content_layout.addWidget(title_label, 0, 0, 1, 4, alignment=ALEFT)
     view_button = create_button(self, 'View Online', style_override=margin)
-    view_button.clicked.connect(lambda: uploadresult_view_result(result))
+    view_button.clicked.connect(lambda: view_upload_result(self, result.combatlog))
     if result.results:
         content_layout.addWidget(view_button, 0, 0, 1, 4, alignment=ARIGHT)
     icon_size = QSize(self.config['icon_size'] / 1.5, self.config['icon_size'] / 1.5)
     row = 0
-    if (result.results):
+    if result.results:
         for row, line in enumerate(result.results, 1):
             if row % 2 == 1:
                 table_style = {'background-color': '@mbg', 'padding': (5, 3, 3, 3), 'margin': 0}
-                icon_table_style = {'background-color': '@mbg', 'padding': (3, 3, 3, 3), 'margin': 0}
+                icon_table_style = {'background-color': '@mbg', 'padding': 3, 'margin': 0}
             else:
                 table_style = {'background-color': '@bg', 'padding': (5, 3, 3, 3), 'margin': 0}
-                icon_table_style = {'background-color': '@bg', 'padding': (3, 3, 3, 3), 'margin': 0}
+                icon_table_style = {'background-color': '@bg', 'padding': 3, 'margin': 0}
             if line.updated:
                 icon = self.icons['check'].pixmap(icon_size)
             else:
@@ -298,30 +263,27 @@ def uploadresult_dialog(self, result, translate):
     content_frame.setLayout(content_layout)
 
     dialog.setLayout(main_layout)
-    dialog.setWindowTitle(self._('OSCR - Upload Results'))
+    dialog.setWindowTitle(tr('OSCR - Upload Results'))
     dialog.setStyleSheet(get_style(self, 'dialog_window'))
     dialog.setSizePolicy(SMAXMAX)
     dialog.setFixedSize(dialog.sizeHint())
     dialog.exec()
 
 
-def live_parser_toggle(self, translate, activate):
+def live_parser_toggle(self, activate):
     """
     Activates / Deactivates LiveParser.
 
     Parameters:
     - :param activate: True when parser should be shown; False when open parser should be closed.
     """
-
-    if self._ is None:
-        self._ = translate
-
     if activate:
         log_path = self.settings.value('sto_log_path')
         if not log_path or not os.path.isfile(log_path):
             show_warning(
-                    self, self._('Invalid Logfile'), self._('Make sure to set the STO Logfile setting in the ') +
-                    self._('settings tab to a valid logfile before starting the live parser.'))
+                    self, tr('Invalid Logfile'),
+                    tr('Make sure to set the STO Logfile setting in the ')
+                    + tr('settings tab to a valid logfile before starting the live parser.'))
             self.widgets.live_parser_button.setChecked(False)
             return
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
@@ -331,7 +293,7 @@ def live_parser_toggle(self, translate, activate):
         self.live_parser = LiveParser(log_path, update_callback=lambda data: update_live_display(
                 self, data, graph_active, data_buffer, data_field),
                 settings=self.live_parser_settings)
-        create_live_parser_window(self, translate)
+        create_live_parser_window(self)
     else:
         try:
             self.live_parser_window.close()
@@ -351,7 +313,7 @@ def live_parser_toggle(self, translate, activate):
         self.widgets.live_parser_button.setChecked(False)
 
 
-def create_live_parser_window(self, translate):
+def create_live_parser_window(self):
     """
     Creates the LiveParser window.
     """
@@ -415,13 +377,13 @@ def create_live_parser_window(self, translate):
     table.setMinimumWidth(self.sidebar_item_width * 0.1)
     table.setMinimumHeight(self.sidebar_item_width * 0.1)
     model = LiveParserTableModel(
-            [[0] * len(get_live_table_headers())], get_live_table_headers(), [''],
+            [[0] * len(LIVE_TABLE_HEADER)], tr(LIVE_TABLE_HEADER), [''],
             theme_font(self, 'live_table_header'), theme_font(self, 'live_table'),
             legend_col=graph_column, colors=graph_colors)
     table.setModel(model)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
-    for index in range(len(get_live_table_headers())):
+    for index in range(len(LIVE_TABLE_HEADER)):
         if not self.settings.value(f'live_columns|{index}', type=bool):
             table.hideColumn(index)
     self.widgets.live_parser_table = table
@@ -440,10 +402,10 @@ def create_live_parser_window(self, translate):
 
     icon_size = [self.theme['s.c']['button_icon_size'] * self.config['live_scale'] * 0.8] * 2
     copy_button = copy_button = create_icon_button(
-            self, self.icons['copy'], self._('Copy Result'), icon_size=icon_size)
+            self, self.icons['copy'], tr('Copy Result'), icon_size=icon_size)
     copy_button.clicked.connect(lambda: copy_live_data_callback(self))
     bottom_layout.addWidget(copy_button, 0, 0, alignment=ARIGHT | AVCENTER)
-    activate_button = FlipButton(self._('Activate'), self._('Deactivate'), live_window, checkable=True)
+    activate_button = FlipButton(tr('Activate'), tr('Deactivate'), live_window, checkable=True)
     activate_button.setStyleSheet(self.get_style_class(
             'QPushButton', 'toggle_button', {'margin': (0, 8, 0, 8)}))
     activate_button.setFont(self.theme_font('app', '@subhead'))
@@ -451,8 +413,8 @@ def create_live_parser_window(self, translate):
     activate_button.l_function = lambda: self.live_parser.stop()
     bottom_layout.addWidget(activate_button, 0, 1, alignment=AVCENTER)
     close_button = create_icon_button(
-            self, self.icons['close'], self._('Close Live Parser'), icon_size=icon_size)
-    close_button.clicked.connect(lambda: live_parser_toggle(self, translate, False))
+            self, self.icons['close'], tr('Close Live Parser'), icon_size=icon_size)
+    close_button.clicked.connect(lambda: live_parser_toggle(self, False))
     bottom_layout.addWidget(close_button, 0, 2, alignment=ALEFT | AVCENTER)
 
     grip = SizeGrip(live_window)
@@ -495,3 +457,10 @@ def live_parser_move_event(self, event: QMouseEvent):
     parser_window.move(parser_window.x() + pos_delta.x(), parser_window.y() + pos_delta.y())
     parser_window.start_pos = event.globalPosition().toPoint()
     event.accept()
+
+
+def view_upload_result(self, log_id: str):
+    """
+    Opens webbrowser to show the uploaded combatlog on the DPS League tables.
+    """
+    open_link(f"https://oscr.stobuilds.com/ui/combatlog/{log_id}/")

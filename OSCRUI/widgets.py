@@ -2,7 +2,7 @@ from math import sqrt, floor, frexp
 
 import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
-from PySide6.QtCore import QRect, Qt, Signal, Slot
+from PySide6.QtCore import QObject, QRect, Qt, QThread, Signal, Slot
 from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
 from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QSplitter
 from PySide6.QtWidgets import QTableView, QTabWidget, QTreeView, QWidget
@@ -395,3 +395,66 @@ class LiveParserWindow(QFrame):
     """
     update_table = Signal(tuple)
     update_graph = Signal(list)
+
+
+class ThreadObject(QObject):
+
+    result = Signal(object)
+    data = Signal(object)
+    finished = Signal()
+
+    def __init__(self, func, *args, **kwargs) -> None:
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+        super().__init__()
+
+    @Slot()
+    def run(self):
+        res = self._func(*self._args, **self._kwargs)
+        self.result.emit(res)
+        self.finished.emit()
+
+
+def exec_in_thread(
+        self, func, *args, result=None, data=None, finished=None, **kwargs):
+    """
+    Executes function `func` in separate thread. All positional and keyword parameters not listed
+    are passed to the function. The function must take a parameter `threaded_worker` which will
+    contain the worker object holding the signals: `start` (tuple), `result` (object),
+    `update_splash` (str), `finished` (no data)
+
+    Parameters:
+    - :param func: function to execute
+    - :param *args: positional parameters passed to the function [optional]
+    - :param result: callable that is executed when signal result is emitted (takes object)
+    [optional]
+    - :param update_splash: callable that is executed when signal update_splash is emitted
+    (takes str) [optional]
+    - :param finished: callable that is executed after `func` returns (takes no parameters)
+    [optional]
+    - :param start_later: set to True to defer execution of the function; makes this function
+    return signal that can be emitted to start execution. That signal takes a tuple with additional
+    positional parameters passed to `func` [optional]
+    - :param **kwargs: keyword parameters passed to the function [optional]
+    """
+    worker = ThreadObject(func, *args, **kwargs)
+    if result is not None:
+        worker.result.connect(result)
+    if finished is not None:
+        worker.finished.connect(finished)
+    if data is not None:
+        worker.data.connect(data)
+    thread = QThread(self.app)
+    worker.moveToThread(thread)
+    thread.started.connect(worker.run)
+    worker.finished.connect(thread.quit)
+    thread.finished.connect(worker.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+    thread.worker = worker
+    thread.start(QThread.Priority.IdlePriority)
+
+
+class ParserSignals(QObject):
+    analyzed_combat = Signal(object)
+    parser_error = Signal(object)

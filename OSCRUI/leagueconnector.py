@@ -1,4 +1,4 @@
-"""Backend inteface to the OSCR web server"""
+"""Backend interface to the OSCR web server"""
 
 import gzip
 import json
@@ -7,23 +7,28 @@ import tempfile
 
 import OSCR_django_client
 from OSCR.utilities import logline_to_str
-from OSCR_django_client.api import (CombatlogApi, LadderApi, LadderEntriesApi,
-                                    VariantApi)
+from OSCR_django_client.api import (
+        CombatlogApi, LadderApi, LadderEntriesApi, VariantApi)
 from PySide6.QtWidgets import QMessageBox
 from PySide6.QtCore import QTemporaryDir
 
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
-from .headers import get_ladder_headers
+from .iofunctions import open_link
 from .style import theme_font
 from .subwindows import show_warning, uploadresult_dialog
 from .textedit import format_datetime_str
+from .translation import tr
+
+LEAGUE_TABLE_HEADER = (
+        'Name', 'Handle', 'DPS', 'Total Damage', 'Deaths', 'Combat Time', 'Date', 'Max One Hit',
+        'Debuff', 'Highest Damage Ability')
 
 OSCR_SERVER_BACKEND = "https://oscr.stobuilds.com/"
 # OSCR_SERVER_BACKEND = "http://127.0.0.1:8000"
 
 
-def establish_league_connection(self, translate):
+def establish_league_connection(self):
     """
     Connects to the league server if not already connected.
 
@@ -31,7 +36,7 @@ def establish_league_connection(self, translate):
     - :param fetch_ladder: fetches available maps and updates map selector if true
     """
     if self.league_api is None:
-        self.league_api = OSCRClient(translate)
+        self.league_api = OSCRClient()
         map_fetch_thread = CustomThread(
             self.window, lambda: fetch_and_insert_maps(self)
         )
@@ -138,7 +143,7 @@ def slot_ladder(self, ladder_dict, selected_map):
 
     model = LeagueTableModel(
         table_data,
-        get_ladder_headers(),
+        tr(LEAGUE_TABLE_HEADER),
         table_index,
         theme_font(self, "table_header"),
         theme_font(self, "table"),
@@ -196,7 +201,7 @@ def extend_ladder(self):
         )
 
 
-def download_and_view_combat(self, translation):
+def download_and_view_combat(self):
     """
     Download a combat log and view its contents in the overview / analysis pages.
     """
@@ -218,36 +223,36 @@ def download_and_view_combat(self, translation):
     ) as file:
         file.write(result.decode())
     analyze_log_callback(
-        self, translation, path=file.name, parser_num=1, hidden_path=True
+        self, path=file.name, hidden_path=True
     )
     self.switch_overview_tab(0)
     self.switch_main_tab(0)
 
 
-def upload_callback(self, translate):
+def upload_callback(self):
     """
     Helper function to grab the current combat and upload it to the backend.
     """
     if (
-        self.parser1.active_combat is None
-        or self.parser1.active_combat.log_data is None
+        self.parser.active_combat is None
+        or self.parser.active_combat.log_data is None
     ):
-        show_warning(self, "OSCR - Logfile Upload", self._("No data to upload."))
+        show_warning(self, "OSCR - Logfile Upload", tr("No data to upload."))
         return
 
-    establish_league_connection(self, translate)
+    establish_league_connection(self)
 
     with tempfile.NamedTemporaryFile(delete=False) as file:
         data = gzip.compress(
             "".join(
-                [logline_to_str(line) for line in self.parser1.active_combat.log_data]
+                [logline_to_str(line) for line in self.parser.active_combat.log_data]
             ).encode()
         )
         file.write(data)
         file.flush()
     res = self.league_api.upload(file.name)
     if res:
-        uploadresult_dialog(self, res, translate)
+        uploadresult_dialog(self, res)
     os.remove(file.name)
 
 
@@ -267,12 +272,10 @@ def populate_variants(self):
 
 
 class OSCRClient:
-    def __init__(self, translate):
+    def __init__(self):
         """Initialize an instance of the OSCR backlend client"""
 
         self.address = OSCR_SERVER_BACKEND
-        self._ = translate
-
         self.api_client = OSCR_django_client.api_client.ApiClient()
         self.api_client.configuration.host = self.address
         self.api_combatlog = CombatlogApi(api_client=self.api_client)
@@ -296,10 +299,10 @@ class OSCRClient:
             try:
                 data = json.loads(e.body)
                 reply.setText(
-                    data.get("detail", self._("Failed to parse error from server"))
+                    data.get("detail", tr("Failed to parse error from server"))
                 )
-            except Exception as e:
-                reply.setText(self._("Failed to parse error from server"))
+            except Exception:
+                reply.setText(tr("Failed to parse error from server"))
             reply.exec()
 
     def download(self, id):
@@ -312,10 +315,10 @@ class OSCRClient:
             try:
                 data = json.loads(e.body)
                 reply.setText(
-                    data.get("detail", self._("Failed to parse error from server"))
+                    data.get("detail", tr("Failed to parse error from server"))
                 )
-            except Exception as e:
-                reply.setText(self._("Failed to parse error from server"))
+            except Exception:
+                reply.setText(tr("Failed to parse error from server"))
             reply.exec()
 
         return None
@@ -330,10 +333,10 @@ class OSCRClient:
             try:
                 data = json.loads(e.body)
                 reply.setText(
-                    data.get("detail", self._("Failed to parse error from server"))
+                    data.get("detail", tr("Failed to parse error from server"))
                 )
-            except Exception as e:
-                reply.setText(self._("Failed to parse error from server"))
+            except Exception:
+                reply.setText(tr("Failed to parse error from server"))
             reply.exec()
 
         return None
@@ -353,10 +356,10 @@ class OSCRClient:
             try:
                 data = json.loads(e.body)
                 reply.setText(
-                    data.get("detail", self._("Failed to parse error from server"))
+                    data.get("detail", tr("Failed to parse error from server"))
                 )
-            except Exception as e:
-                reply.setText(self._("Failed to parse error from server"))
+            except Exception:
+                reply.setText(tr("Failed to parse error from server"))
             reply.exec()
 
         return None
@@ -372,10 +375,10 @@ class OSCRClient:
             try:
                 data = json.loads(e.body)
                 reply.setText(
-                    data.get("detail", self._("Failed to parse error from server"))
+                    data.get("detail", tr("Failed to parse error from server"))
                 )
-            except Exception as e:
-                reply.setText(self._("Failed to parse error from server"))
+            except Exception:
+                reply.setText(tr("Failed to parse error from server"))
             reply.exec()
 
         return None

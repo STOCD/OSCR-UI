@@ -7,11 +7,11 @@ from OSCR import (
     LIVE_TABLE_HEADER, OSCR, repair_logfile as oscr_repair_logfile, split_log_by_combat,
     split_log_by_lines)
 
-from .iofunctions import browse_path
+from .iofunctions import browse_path, open_link
 from .textedit import format_path
 
 
-def browse_log(self, entry: QLineEdit, translate):
+def browse_log(self, entry: QLineEdit):
     """
     Callback for browse button.
 
@@ -25,7 +25,7 @@ def browse_log(self, entry: QLineEdit, translate):
     if path != '':
         entry.setText(format_path(path))
         if self.settings.value('auto_scan', type=bool):
-            self.analyze_log_callback(translate, path=path, parser_num=1)
+            self.analyze_log_callback(path=path, parser_num=1)
 
 
 def save_combat(self, combat_num: int):
@@ -35,7 +35,7 @@ def save_combat(self, combat_num: int):
     Parameters:
     - :param combat_num: number of combat in self.combats
     """
-    combat = self.parser1.active_combat
+    combat = self.parser.active_combat
     if not combat:
         return
     filename = combat.map
@@ -47,7 +47,7 @@ def save_combat(self, combat_num: int):
         base_dir = self.app_dir
     path = self.browse_path(base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
     if path:
-        self.parser1.export_combat(combat_num, path)
+        self.parser.export_combat(combat_num, path)
 
 
 def navigate_log(self, direction: str):
@@ -57,18 +57,20 @@ def navigate_log(self, direction: str):
     Parameters:
     - :param direction: "up" -> load newer combats; "down" -> load older combats
     """
-    logfile_changed = self.parser1.navigate_log(direction)
+    print('navigate_log')
+    return
+    logfile_changed = self.parser.navigate_log(direction)
     selected_row = self.current_combats.currentRow()
     self.current_combats.clear()
-    self.current_combats.addItems(self.parser1.analyzed_combats)
+    self.current_combats.addItems(self.parser.analyzed_combats)
     if logfile_changed:
         self.current_combats.setCurrentRow(0)
         self.current_combat_id = None
         self.analyze_log_callback(0, parser_num=1)
     else:
         self.current_combats.setCurrentRow(selected_row)
-    self.widgets.navigate_up_button.setEnabled(self.parser1.navigation_up)
-    self.widgets.navigate_down_button.setEnabled(self.parser1.navigation_down)
+    self.widgets.navigate_up_button.setEnabled(self.parser.navigation_up)
+    self.widgets.navigate_down_button.setEnabled(self.parser.navigation_down)
 
 
 def switch_analysis_tab(self, tab_index: int):
@@ -308,7 +310,7 @@ def trim_logfile(self):
     if os.path.getsize(log_path) > 125 * 1024 * 1024:
         temp_parser.analyze_massive_log_file()
     else:
-        temp_parser.analyze_log_file()
+        temp_parser.analyze_log_file_old()
     temp_parser.export_combat(0, log_path)
 
 
@@ -318,3 +320,9 @@ def repair_logfile(self):
     log_path = os.path.abspath(self.entry.text())
     dir = QTemporaryDir()
     oscr_repair_logfile(log_path, dir.path())
+
+
+def show_parser_error(self, error: BaseException):
+    """
+    """
+    print(error.args, flush=True)
