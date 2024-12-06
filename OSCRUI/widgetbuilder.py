@@ -112,7 +112,7 @@ def create_frame(self, parent=None, style='frame', style_override={}, size_polic
     return frame
 
 
-def create_label(self, text, style: str = 'label', parent=None, style_override={}):
+def create_label(self, text: str, style: str = 'label', style_override={}):
     """
     Creates a label according to style with parent.
 
@@ -124,7 +124,7 @@ def create_label(self, text, style: str = 'label', parent=None, style_override={
 
     :return: configured QLabel
     """
-    label = QLabel(parent)
+    label = QLabel()
     label.setText(text)
     label.setStyleSheet(get_style(self, style, style_override))
     label.setSizePolicy(SMAXMAX)
@@ -197,7 +197,7 @@ def create_button_series(
             layout.addWidget(bt, stretch)
         button_list.append(bt)
         if seperator != '' and i < (len(buttons) - 1):
-            sep_label = self.create_label(seperator, 'label', parent, sep_style)
+            sep_label = create_label(self, seperator, 'label', sep_style)
             sep_label.setSizePolicy(SMAXMIN)
             layout.addWidget(sep_label)
 

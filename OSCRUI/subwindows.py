@@ -323,6 +323,7 @@ def create_live_parser_window(self):
     live_window = LiveParserWindow()
     live_window.setStyleSheet(get_style(self, 'live_parser'))
     live_window.setWindowTitle("Live Parser")
+    live_window.setWindowIcon(self.icons['oscr'])
     live_window.setWindowFlags(
             live_window.windowFlags()
             | Qt.WindowType.WindowStaysOnTopHint
@@ -464,3 +465,75 @@ def view_upload_result(self, log_id: str):
     Opens webbrowser to show the uploaded combatlog on the DPS League tables.
     """
     open_link(f"https://oscr.stobuilds.com/ui/combatlog/{log_id}/")
+
+
+def show_detection_info(self, combat_index: int):
+    """
+    Shows a subwindow containing information on the detection process
+    """
+    if combat_index < 0:
+        return
+    dialog = QDialog(self.window)
+    thick = self.theme['app']['frame_thickness']
+    item_spacing = self.theme['defaults']['isp']
+    main_layout = QVBoxLayout()
+    main_layout.setContentsMargins(thick, thick, thick, thick)
+    content_frame = create_frame(self)
+    main_layout.addWidget(content_frame)
+    content_layout = QVBoxLayout()
+    content_layout.setContentsMargins(thick, thick, thick, thick)
+    content_layout.setSpacing(item_spacing)
+
+    for detection_info in self.parser.combats[combat_index].meta['detection_info']:
+        if detection_info.success:
+            if detection_info.step == 'existence':
+                detection_method = tr('by checking whether the following entities exist in the log')
+            elif detection_info.step == 'deaths':
+                detection_method = tr('by checking the death counts of following entities')
+            else:
+                detection_method = tr('by checking the hull values of following entities')
+            if detection_info.type == 'both':
+                detected_type = tr('Map and Difficulty were')
+            elif detection_info.type == 'difficulty':
+                detected_type = f"{tr('Difficulty')} ({detection_info.difficulty}) {tr('was')}"
+            else:
+                detected_type = f"{tr('Map')} ({detection_info.map}) {tr('was')}"
+            t = f"{tr('The')} {detected_type} {tr('successfully detected')} {detection_method}"
+            t += ': ' + ', '.join(detection_info.identificators) + '.'
+        else:
+            if detection_info.type == 'both':
+                detected_type = tr('Map and Difficulty')
+            elif detection_info.type == 'difficulty':
+                detected_type = f"{tr('Difficulty')} ({detection_info.difficulty})"
+            else:
+                detected_type = f"{tr('Map')} ({detection_info.map}) {tr('was')}"
+            t = f"{tr('The')} {tr(detected_type)} {tr('could not be detected, because')} "
+            if detection_info.step == 'existence':
+                t += tr('no entity identifying a map was found in the log.')
+            elif detection_info.step == 'deaths':
+                t += f'{tr("the entity")} "{detection_info.identificators[0]}" {tr("was killed")} '
+                t += f"{detection_info.retrieved_value} {tr('times instead of the expected')} "
+                t += f"{detection_info.target_value} {tr('times')}."
+            else:
+                t += f'{tr("the entities")} "{detection_info.identificators[0]}" '
+                t += f"{tr('average hull capacity of')} {detection_info.retrieved_value:.0f} "
+                t += f"{tr('was higher than the allowed')} {detection_info.target_value:.0f}."
+        info_label = create_label(self, t)
+        info_label.setSizePolicy(SMINMAX)
+        info_label.setWordWrap(True)
+        content_layout.addWidget(info_label)
+
+    seperator = create_frame(self, style='light_frame', size_policy=SMINMAX)
+    seperator.setFixedHeight(1)
+    content_layout.addWidget(seperator)
+    ok_button = create_button(self, tr('OK'))
+    ok_button.clicked.connect(lambda: dialog.done(0))
+    content_layout.addWidget(ok_button, alignment=AHCENTER)
+    content_frame.setLayout(content_layout)
+
+    dialog = QDialog(self.window)
+    dialog.setLayout(main_layout)
+    dialog.setWindowTitle(tr('OSCR - Map Detection Details'))
+    dialog.setStyleSheet(get_style(self, 'dialog_window'))
+    dialog.setSizePolicy(SMAXMAX)
+    dialog.exec()

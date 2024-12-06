@@ -326,5 +326,5 @@ def repair_logfile(self):
 def show_parser_error(self, error: BaseException):
     """
     """
-    print(''.join(traceback.format_exception(error)))
+    print(''.join(traceback.format_exception(error)), flush=True)
     print(error, error.args, flush=True)

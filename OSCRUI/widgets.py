@@ -5,8 +5,8 @@ from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
 from PySide6.QtCore import QObject, QRect, QSize, Qt, QThread, Signal, Slot
 from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPixmap
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle, QStyledItemDelegate,
-    QTableView, QTabWidget, QTreeView, QWidget)
+    QComboBox, QFrame, QLabel, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle,
+    QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QWidget)
 
 from .widgetbuilder import SMINMIN
 
@@ -31,8 +31,8 @@ class WidgetStorage():
         self.map_tab_frames: list[QFrame] = list()
         self.map_menu_buttons: list[QPushButton] = list()
 
-        self.navigate_up_button: QPushButton
-        self.navigate_down_button: QPushButton
+        self.log_duration_value: QLabel
+        self.player_duration_value: QLabel
 
         self.overview_menu_buttons: list[QPushButton] = list()
         self.overview_tabber: QTabWidget

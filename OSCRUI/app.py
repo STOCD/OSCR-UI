@@ -39,7 +39,7 @@ class OSCRUI():
     from .displayer import create_legend_item
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
-    from .subwindows import live_parser_toggle, split_dialog
+    from .subwindows import live_parser_toggle, show_detection_info, split_dialog
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
     from .widgetbuilder import create_icon_button, create_label, style_table
@@ -326,7 +326,7 @@ class OSCRUI():
         left_layout.setSpacing(0)
         left_layout.setAlignment(ATOP)
 
-        map_label = self.create_label(tr('Available Maps:'), 'label_heading', frame)
+        map_label = self.create_label(tr('Available Maps:'), 'label_heading')
         left_layout.addWidget(map_label)
 
         map_switch_layout = QGridLayout()
@@ -411,7 +411,7 @@ class OSCRUI():
         favorites_frame.setLayout(favorites_layout)
 
         map_label = self.create_label(
-                tr('Seasonal Records:'), 'label_heading', frame, {'margin-top': '@isp'})
+                tr('Seasonal Records:'), 'label_heading', {'margin-top': '@isp'})
         left_layout.addWidget(map_label)
 
         self.variant_list = self.create_combo_box(frame)
@@ -448,15 +448,15 @@ class OSCRUI():
         left_layout.setAlignment(ATOP)
 
         head_layout = QHBoxLayout()
-        head = self.create_label(tr('STO Combatlog:'), 'label_heading', frame)
+        head = self.create_label(tr('STO Combatlog:'), 'label_heading')
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         cut_log_button = self.create_icon_button(
-                self.icons['edit'], tr('Manage Logfile'), parent=frame)
+                self.icons['edit'], tr('Manage Logfile'))
         cut_log_button.clicked.connect(self.split_dialog)
         head_layout.addWidget(cut_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
 
-        self.entry = QLineEdit(self.settings.value('log_path', ''), frame)
+        self.entry = QLineEdit(self.settings.value('log_path', ''))
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
         self.entry.setFont(self.theme_font('entry'))
         self.entry.setSizePolicy(SMIXMAX)
@@ -493,11 +493,12 @@ class OSCRUI():
         self.current_combats.setAlternatingRowColors(True)
         self.current_combats.setSizePolicy(SMIXMIN)
         self.current_combats.setModel(CombatModel())
-        border_width = 1 * self.config['ui_scale']
-        padding = 4 * self.config['ui_scale']
+        ui_scale = self.config['ui_scale']
+        border_width = 1 * ui_scale
+        padding = 4 * ui_scale
         self.current_combats.setItemDelegate(CombatDelegate(border_width, padding))
         self.current_combats.doubleClicked.connect(
-            lambda: self.analysis_data_slot(self.current_combats.currentIndex().row()))
+            lambda: self.analysis_data_slot(self.current_combats.currentIndex().data()[0]))
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 
@@ -515,6 +516,32 @@ class OSCRUI():
         more_combats_button.clicked.connect(lambda: self.analyze_log_background(
                 self.settings.value('combats_to_parse', type=int)))
         export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
+
+        sep = self.create_frame(style='medium_frame')
+        sep.setFixedHeight(margin)
+        left_layout.addWidget(sep)
+        log_layout = QHBoxLayout()
+        log_layout.setContentsMargins(0, 0, 0, 0)
+        log_layout.setSpacing(margin)
+        log_layout.setAlignment(ALEFT)
+        player_duration_label = self.create_label(tr('Log Duration:'))
+        log_layout.addWidget(player_duration_label)
+        self.widgets.log_duration_value = self.create_label('')
+        log_layout.addWidget(self.widgets.log_duration_value)
+        left_layout.addLayout(log_layout)
+        player_layout = QHBoxLayout()
+        player_layout.setContentsMargins(0, 0, 0, 0)
+        player_layout.setSpacing(margin)
+        player_layout.setAlignment(ALEFT)
+        player_duration_label = self.create_label(tr('Active Player Duration:'))
+        player_layout.addWidget(player_duration_label)
+        self.widgets.player_duration_value = self.create_label('')
+        player_layout.addWidget(self.widgets.player_duration_value)
+        left_layout.addLayout(player_layout)
+        detection_button = self.create_button(tr('Map Detection Details'))
+        detection_button.clicked.connect(
+                lambda: self.show_detection_info(self.current_combats.currentIndex().data()[0]))
+        left_layout.addWidget(detection_button, alignment=AHCENTER)
 
         frame.setLayout(left_layout)
 

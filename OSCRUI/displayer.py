@@ -108,6 +108,9 @@ def create_overview(self, combat: Combat):
     self.widgets.overview_table_frame.setLayout(table_layout)
     table.resizeColumnsToContents()
 
+    self.widgets.log_duration_value.setText(f'{combat.meta['log_duration']:.1f}s')
+    self.widgets.player_duration_value.setText(f'{combat.meta['player_duration']:.1f}s')
+
 
 @setup_plot
 def create_grouped_bar_plot(
