@@ -50,7 +50,7 @@ def analyze_log_callback(self, path=None, hidden_path=False):
         self.settings.setValue('log_path', path)
 
     self.parser.reset_parser()
-    self.current_combats.clear()
+    self.current_combats.model().clear()
     self.parser.log_path = path
     self.thread = Thread(target=self.parser.analyze_log_file, kwargs={'max_combats': 1})
     self.thread.start()
@@ -109,10 +109,14 @@ def insert_combat(self, combat: Combat):
     """
     Called by parser as soon as combat has been analyzed. Inserts combat into UI.
     """
-    print(combat.id, self.current_combats.count(), combat.description)
-    self.current_combats.insertItem(combat.id, combat.description)
+    print(combat.id, self.current_combats.model().rowCount(), combat.description)
+    difficulty = combat.difficulty if combat.difficulty is not None else ''
+    dt = combat.start_time
+    date = f'{dt.year}-{dt.month:02d}-{dt.day:02d}'
+    time = f'{dt.hour:02d}:{dt.minute:02d}:{dt.second:02d}'
+    self.current_combats.model().insert_item((combat.id, combat.map, date, time, difficulty))
     if combat.id == 0:
-        self.current_combats.setCurrentRow(0)
+        self.current_combats.setCurrentIndex(self.current_combats.model().createIndex(0, 0, 0))
         create_overview(self, combat)
         populate_analysis(self, combat)
         analyze_log_background(self, self.settings.value('combats_to_parse', type=int) - 1)

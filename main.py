@@ -6,7 +6,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.03.1'
+    version = '2024.12.06.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -234,7 +234,7 @@ class Launcher():
         },
         # line of user-editable text
         'entry': {
-            'background-color': '@lbg',
+            'background-color': '@bg',
             'color': '@fg',
             'border-width': '@bw',
             'border-style': 'solid',
@@ -242,6 +242,8 @@ class Launcher():
             'border-radius': '@br',
             'margin-top': '@csp',
             'font': '@small_text',
+            'padding': 2,
+            'selection-background-color': '#80c82934',
             # cursor is inside the line
             ':focus': {
                 'border-color': '@oscr'
@@ -282,7 +284,7 @@ class Launcher():
         },
         # scrollable list of items; ::item refers to the rows
         'listbox': {
-            'background-color': '@lbg',
+            'background-color': '@bg',
             'color': '@fg',
             'border-width': '@bw',
             'border-style': 'solid',
@@ -292,23 +294,24 @@ class Launcher():
             'font': '@small_text',
             'outline': '0',  # removes dotted line around clicked item
             '::item': {
-                'border-width': '@bw',
+                'border-width': 1,  # hardcoded into the delegate!
                 'border-style': 'solid',
-                'border-color': '@lbg',
+                'border-color': '@bg',
+                'padding': 4  # hardcoded into the delegate!
+            },
+            '::item:alternate': {
+                'background-color': '@mbg',
+                'border-color': '@mbg'
             },
             '::item:selected': {
-                'background': 'none',
-                'border-width': '@bw',
-                'border-style': 'solid',
                 'border-color': '@oscr',
-                'border-radius': '@br',
             },
             # selected but not the last click of the user
             '::item:selected:!active': {
                 'color': '@fg'
             },
             '::item:hover': {
-                'background-color': '@loscr',
+                'border-color': '@oscr',
             },
         },
         # horizontal sliding selector

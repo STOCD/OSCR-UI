@@ -1,20 +1,23 @@
 import os
 
-from PySide6.QtWidgets import QApplication, QWidget, QLineEdit, QFrame, QListWidget, QScrollArea
-from PySide6.QtWidgets import QSpacerItem, QTabWidget, QTableView
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
+from PySide6.QtWidgets import (
+        QApplication, QWidget, QLineEdit, QFrame, QListView, QListWidget, QScrollArea,
+        QSpacerItem, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout)
 from PySide6.QtCore import QSize, QSettings, QTimer, QThread
-from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut, QFont
+from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
-from .leagueconnector import OSCRClient
+from .datamodels import CombatModel
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
+from .leagueconnector import OSCRClient
 from .textedit import format_path
 from .translation import init_translation, tr
-from .widgets import AnalysisPlot, BannerLabel, FlipButton, ParserSignals, WidgetStorage
-from .widgetbuilder import ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER
-from .widgetbuilder import SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN
-from .widgetbuilder import SCROLLOFF, SCROLLON
+from .widgetbuilder import (
+        ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER,
+        SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN,
+        SCROLLOFF, SCROLLON)
+from .widgets import (
+        AnalysisPlot, BannerLabel, CombatDelegate, FlipButton, ParserSignals, WidgetStorage)
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 # from signal import signal, SIGINT, SIG_DFL
@@ -477,18 +480,24 @@ class OSCRUI():
         entry_buttons.setContentsMargins(0, 0, 0, self.theme['defaults']['margin'])
         left_layout.addLayout(entry_buttons)
 
-        background_frame = self.create_frame(frame, 'light_frame', style_override={
+        background_frame = self.create_frame(frame, 'frame', style_override={
                 'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp',
                 'margin-bottom': '@csp'}, size_policy=SMINMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
-        self.current_combats = QListWidget(background_frame)
-        self.current_combats.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
+        self.current_combats = QListView(background_frame)
+        self.current_combats.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
+        self.current_combats.setStyleSheet(self.get_style_class('QListView', 'listbox'))
         self.current_combats.setFont(self.theme_font('listbox'))
+        self.current_combats.setAlternatingRowColors(True)
         self.current_combats.setSizePolicy(SMIXMIN)
+        self.current_combats.setModel(CombatModel())
+        border_width = 1 * self.config['ui_scale']
+        padding = 4 * self.config['ui_scale']
+        self.current_combats.setItemDelegate(CombatDelegate(border_width, padding))
         self.current_combats.doubleClicked.connect(
-            lambda: self.analysis_data_slot(self.current_combats.currentRow()))
+            lambda: self.analysis_data_slot(self.current_combats.currentIndex().row()))
         background_layout.addWidget(self.current_combats)
         left_layout.addWidget(background_frame, stretch=1)
 

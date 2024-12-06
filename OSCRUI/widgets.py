@@ -1,13 +1,20 @@
-from math import sqrt, floor, frexp
+from math import sqrt, frexp
 
 import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
-from PySide6.QtCore import QObject, QRect, Qt, QThread, Signal, Slot
-from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
-from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QSplitter
-from PySide6.QtWidgets import QTableView, QTabWidget, QTreeView, QWidget
+from PySide6.QtCore import QObject, QRect, QSize, Qt, QThread, Signal, Slot
+from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPixmap
+from PySide6.QtWidgets import (
+    QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle, QStyledItemDelegate,
+    QTableView, QTabWidget, QTreeView, QWidget)
 
 from .widgetbuilder import SMINMIN
+
+
+ATOPLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+ATOPRIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
+ABOTTOMLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom
+ABOTTOMRIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom
 
 
 class WidgetStorage():
@@ -238,7 +245,7 @@ class CustomPlotAxis(AxisItem):
         majorMaxSpacing = dif / minNumberOfIntervals
 
         mantissa, exp2 = frexp(majorMaxSpacing)
-        p10unit = 10. ** (floor((exp2 - 1) / 3.32192809488736) - 1)
+        p10unit = 10. ** (int((exp2 - 1) / 3.32192809488736) - 1)
         if 100. * p10unit <= majorMaxSpacing:
             majorScaleFactor = 10
             p10unit *= 10.
@@ -395,6 +402,43 @@ class LiveParserWindow(QFrame):
     """
     update_table = Signal(tuple)
     update_graph = Signal(list)
+
+
+class CombatDelegate(QStyledItemDelegate):
+
+    def __init__(self, border_width: int = 0, padding: int = 0):
+        super().__init__()
+        self.border_width = border_width
+        self.padding = padding
+
+    def paint(self, painter: QPainter, option, index) -> None:
+        painter.save()
+        self.initStyleOption(option, index)
+        w = option.widget
+        data = index.data()
+        style: QStyle = option.widget.style().proxy()
+        if painter.hasClipping():
+            painter.setClipRegion(painter.clipRegion() & option.rect)
+        else:
+            painter.setClipRegion(option.rect)
+        style.drawPrimitive(QStyle.PrimitiveElement.PE_PanelItemViewItem, option, painter, w)
+        text_rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemFocusRect, option, w)
+        pal = option.palette
+        style.drawItemText(painter, text_rect, ATOPLEFT, pal, True, data[1])
+        style.drawItemText(painter, text_rect, ABOTTOMRIGHT, pal, True, data[2])
+        style.drawItemText(painter, text_rect, ABOTTOMLEFT, pal, True, data[3])
+        style.drawItemText(painter, text_rect, ATOPRIGHT, pal, True, data[4])
+        painter.restore()
+
+    def sizeHint(self, option, index) -> QSize:
+        data = index.data()
+        line_height = option.fontMetrics.height()
+        line_width = max(
+                option.fontMetrics.horizontalAdvance(data[1] + data[4]),
+                option.fontMetrics.horizontalAdvance(data[2] + data[3]))
+        return QSize(
+            line_width + 2 * self.border_width + 2 * self.padding + line_height,
+            line_height * 2 + 2 * self.border_width + 2.5 * self.padding)
 
 
 class ThreadObject(QObject):

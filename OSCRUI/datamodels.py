@@ -2,8 +2,9 @@ from typing import Iterable
 import sys
 
 from OSCR import TreeItem
-from PySide6.QtCore import QAbstractItemModel, QAbstractTableModel, QItemSelectionModel
-from PySide6.QtCore import QItemSelection, QModelIndex, QSortFilterProxyModel, Qt
+from PySide6.QtCore import (
+        QAbstractItemModel, QAbstractTableModel, QItemSelectionModel, QItemSelection, QModelIndex,
+        QSortFilterProxyModel, QStringListModel, Qt)
 from PySide6.QtGui import QColor, QFont
 
 ARIGHT = Qt.AlignmentFlag.AlignRight
@@ -446,3 +447,34 @@ class TreeSelectionModel(QItemSelectionModel):
                 super().select(index_or_selection, flag)
             else:
                 self.clear()
+
+
+class CombatModel(QStringListModel):
+    def __init__(self):
+        super().__init__()
+        self._data = list()
+
+    def insert_item(self, item: tuple):
+        try:
+            index = 0
+            while self._data[index][0] < item[0]:
+                index += 1
+                self.beginInsertRows(QModelIndex(), index, index)
+            self._data.insert(index, item)
+        except IndexError:
+            self.beginInsertRows(QModelIndex(), len(self._data), len(self._data))
+            self._data.append(item)
+        self.endInsertRows()
+
+    def clear(self):
+        self.beginResetModel()
+        self._data.clear()
+        self.endResetModel()
+
+    def data(self, index, role):
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self._data[index.row()]
+        return super().data(index, role)
+
+    def rowCount(self, parent=None) -> int:
+        return len(self._data)

@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from PySide6.QtWidgets import QFileDialog, QLineEdit
 from PySide6.QtCore import QTemporaryDir
@@ -325,4 +326,5 @@ def repair_logfile(self):
 def show_parser_error(self, error: BaseException):
     """
     """
-    print(error.args, flush=True)
+    print(''.join(traceback.format_exception(error)))
+    print(error, error.args, flush=True)
