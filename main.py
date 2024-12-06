@@ -1,3 +1,4 @@
+from multiprocessing import freeze_support, set_start_method
 import os
 import sys
 
@@ -6,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.06.2'
+    version = '2024.12.06.3'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -822,4 +823,6 @@ class Launcher():
 
 
 if __name__ == '__main__':
+    freeze_support()
+    set_start_method('spawn')
     Launcher.launch()
