@@ -172,7 +172,7 @@ class LiveParserTableModel(TableModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return AVCENTER + ARIGHT
 
-        if role == Qt.ItemDataRole.DecorationRole:
+        if role == Qt.ItemDataRole.ForegroundRole:
             if self._legend_column is not None and index.column() == self._legend_column:
                 row = index.row()
                 if row < len(self._colors):
@@ -200,6 +200,11 @@ class LiveParserTableModel(TableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 return AVCENTER + ARIGHT
+
+        if role == Qt.ItemDataRole.ForegroundRole:
+            if self._colors is not None and section < len(self._colors):
+                return self._colors[section]
+            return ModuleNotFoundError
 
     def replace_data(self, index: list, rows: list):
         self.beginResetModel()

@@ -92,21 +92,22 @@ def create_overview(self, combat: Combat):
 
     time_data, DPS_graph_data, DMG_graph_data, current_table = extract_overview_data(combat)
 
-    line_layout = create_line_graph(self, DPS_graph_data, time_data)
-    self.widgets.overview_tab_frames[1].setLayout(line_layout)
+    if len(current_table) > 0:
+        line_layout = create_line_graph(self, DPS_graph_data, time_data)
+        self.widgets.overview_tab_frames[1].setLayout(line_layout)
 
-    group_bar_layout = create_grouped_bar_plot(self, DMG_graph_data, time_data)
-    self.widgets.overview_tab_frames[2].setLayout(group_bar_layout)
+        group_bar_layout = create_grouped_bar_plot(self, DMG_graph_data, time_data)
+        self.widgets.overview_tab_frames[2].setLayout(group_bar_layout)
 
-    bar_layout = create_horizontal_bar_graph(self, current_table)
-    self.widgets.overview_tab_frames[0].setLayout(bar_layout)
+        bar_layout = create_horizontal_bar_graph(self, current_table)
+        self.widgets.overview_tab_frames[0].setLayout(bar_layout)
 
-    table_layout = QVBoxLayout()
-    table_layout.setContentsMargins(0, 0, 0, 0)
-    table = create_overview_table(self, current_table)
-    table_layout.addWidget(table)
-    self.widgets.overview_table_frame.setLayout(table_layout)
-    table.resizeColumnsToContents()
+        table_layout = QVBoxLayout()
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table = create_overview_table(self, current_table)
+        table_layout.addWidget(table)
+        self.widgets.overview_table_frame.setLayout(table_layout)
+        table.resizeColumnsToContents()
 
     self.widgets.log_duration_value.setText(f'{combat.meta['log_duration']:.1f}s')
     self.widgets.player_duration_value.setText(f'{combat.meta['player_duration']:.1f}s')
@@ -322,7 +323,7 @@ def create_live_graph(self) -> tuple[QFrame, list]:
         curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
 
     frame = create_frame(self, None, 'plot_widget', size_policy=SMIXMAX, style_override={
-            'margin': 4, 'padding': 2})
+            'margin': 4, 'padding': 2, 'border': 'none'})
     frame.setMinimumWidth(self.sidebar_item_width * 0.25)
     frame.setMinimumHeight(self.sidebar_item_width * 0.25)
     layout = QHBoxLayout()

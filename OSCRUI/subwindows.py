@@ -346,7 +346,8 @@ def create_live_parser_window(self):
     graph_active = self.settings.value('live_graph_active', type=bool)
     if graph_active:
         splitter = QSplitter(Qt.Orientation.Vertical)
-        splitter.setStyleSheet(get_style_class(self, 'QSplitter', 'splitter'))
+        splitter.setStyleSheet(get_style_class(
+                self, 'QSplitter', 'splitter', {'border': 'none', 'margin': 0}))
         splitter.setChildrenCollapsible(False)
         self.widgets.live_parser_splitter = splitter
         graph_frame, curves = create_live_graph(self)

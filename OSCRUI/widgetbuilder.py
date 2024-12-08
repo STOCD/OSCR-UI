@@ -32,6 +32,8 @@ AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
 RFIXED = QHeaderView.ResizeMode.Fixed
 
+OVERTICAL = Qt.Orientation.Vertical
+
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
 SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff

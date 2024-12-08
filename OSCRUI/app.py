@@ -1,8 +1,9 @@
 import os
 
 from PySide6.QtWidgets import (
-        QApplication, QWidget, QLineEdit, QFrame, QListView, QListWidget, QScrollArea,
-        QSpacerItem, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout)
+        QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QScrollArea,
+        QSpacerItem, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout,
+        QSizePolicy)
 from PySide6.QtCore import QSize, QSettings, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut
 
@@ -13,7 +14,7 @@ from .leagueconnector import OSCRClient
 from .textedit import format_path
 from .translation import init_translation, tr
 from .widgetbuilder import (
-        ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER,
+        ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL,
         SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN,
         SCROLLOFF, SCROLLON)
 from .widgets import (
@@ -27,7 +28,8 @@ from .widgets import (
 class OSCRUI():
 
     from .callbacks import (
-            browse_log, browse_sto_logpath, collapse_overview_table, expand_overview_table,
+            browse_log, browse_sto_logpath, collapse_analysis_graph, collapse_overview_table,
+            expand_analysis_graph, expand_overview_table,
             favorite_button_callback, navigate_log, save_combat, set_live_scale_setting,
             set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
             set_ui_scale_setting, show_parser_error, switch_analysis_tab, switch_main_tab,
@@ -133,7 +135,9 @@ class OSCRUI():
             'collapse-bottom': 'collapse-bottom.svg',
             'check': 'check.svg',
             'dash': 'dash.svg',
-            'live-parser': 'live-parser.svg'
+            'live-parser': 'live-parser.svg',
+            'freeze': 'snowflake.svg',
+            'clear-plot': 'clear-plot.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -216,6 +220,8 @@ class OSCRUI():
         """
         window_geometry = self.window.saveGeometry()
         self.settings.setValue('geometry', window_geometry)
+        self.settings.setValue('overview_splitter', self.widgets.overview_splitter.saveState())
+        self.settings.setValue('analysis_splitter', self.widgets.analysis_splitter.saveState())
         event.accept()
 
     def main_window_resize_callback(self, event):
@@ -272,9 +278,10 @@ class OSCRUI():
         left.setSizePolicy(SMAXMIN)
         main_layout.addWidget(left, 0, 0)
 
-        button_column = QVBoxLayout()
+        button_column = QGridLayout()
         csp = self.theme['defaults']['csp']
         button_column.setContentsMargins(csp, csp, csp, csp)
+        button_column.setRowStretch(0, 1)
         main_layout.addLayout(button_column, 0, 1)
         icon_size = self.config['icon_size']
         left_flip_config = {
@@ -287,7 +294,22 @@ class OSCRUI():
         sidebar_flip_button.setIconSize(QSize(icon_size, icon_size))
         sidebar_flip_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
         sidebar_flip_button.setSizePolicy(SMAXMAX)
-        button_column.addWidget(sidebar_flip_button, alignment=ATOP)
+        button_column.addWidget(sidebar_flip_button, 0, 0, alignment=ATOP)
+
+        graph_flip_config = {
+            'icon_r': self.icons['collapse-top'], 'tooltip_r': tr('Collapse Graph'),
+            'func_r': self.collapse_analysis_graph,
+            'icon_l': self.icons['expand-top'], 'tooltip_l': tr('Expand Graph'),
+            'func_l': self.expand_analysis_graph
+        }
+        graph_button = FlipButton('', '')
+        graph_button.configure(graph_flip_config)
+        graph_button.setIconSize(QSize(icon_size, icon_size))
+        graph_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
+        graph_button.setSizePolicy(SMAXMAX)
+        button_column.addWidget(graph_button, 2, 0)
+        graph_button.hide()
+        self.widgets.analysis_graph_button = graph_button
 
         table_flip_config = {
             'icon_r': self.icons['collapse-bottom'], 'tooltip_r': tr('Collapse Table'),
@@ -300,7 +322,7 @@ class OSCRUI():
         table_button.setIconSize(QSize(icon_size, icon_size))
         table_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
         table_button.setSizePolicy(SMAXMAX)
-        button_column.addWidget(table_button, alignment=ABOTTOM)
+        button_column.addWidget(table_button, 3, 0)
         self.widgets.overview_table_button = table_button
 
         center = self.create_frame(main_frame, 'frame')
@@ -515,7 +537,8 @@ class OSCRUI():
         left_layout.addLayout(combat_button_row)
         more_combats_button.clicked.connect(lambda: self.analyze_log_background(
                 self.settings.value('combats_to_parse', type=int)))
-        export_button.clicked.connect(lambda: self.save_combat(self.current_combats.currentRow()))
+        export_button.clicked.connect(
+                lambda: self.save_combat(self.current_combats.currentIndex().data()[0]))
 
         sep = self.create_frame(style='medium_frame')
         sep.setFixedHeight(margin)
@@ -682,6 +705,11 @@ class OSCRUI():
         switch_layout = QGridLayout()
         switch_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(switch_layout)
+        splitter = QSplitter(OVERTICAL)
+        splitter.setStyleSheet(self.get_style_class('QSplitter', 'splitter'))
+        splitter.setChildrenCollapsible(False)
+        self.widgets.overview_splitter = splitter
+        layout.addWidget(splitter)
 
         o_tabber = QTabWidget(o_frame)
         o_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
@@ -689,7 +717,9 @@ class OSCRUI():
         o_tabber.addTab(bar_frame, 'BAR')
         o_tabber.addTab(dps_graph_frame, 'DPS')
         o_tabber.addTab(dmg_graph_frame, 'DMG')
-        layout.addWidget(o_tabber, stretch=self.theme['s.c']['overview_graph_stretch'])
+        o_tabber.setMinimumHeight(self.sidebar_item_width * 0.8)
+        splitter.addWidget(o_tabber)
+        splitter.setStretchFactor(0, self.theme['s.c']['overview_graph_stretch'])
 
         switch_layout.setColumnStretch(0, 1)
         switch_frame = self.create_frame(o_frame, 'frame')
@@ -722,9 +752,15 @@ class OSCRUI():
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
         table_frame = self.create_frame(size_policy=SMINMIN)
-        layout.addWidget(table_frame, stretch=self.theme['s.c']['overview_table_stretch'])
+        table_frame.setMinimumHeight(self.sidebar_item_width * 0.4)
+        splitter.addWidget(table_frame)
         self.widgets.overview_table_frame = table_frame
         o_frame.setLayout(layout)
+        if self.settings.value('overview_splitter'):
+            splitter.restoreState(self.settings.value('overview_splitter'))
+        else:
+            h = splitter.height()
+            splitter.setSizes((h * 0.5, h * 0.5))
         self.widgets.overview_tabber = o_tabber
 
     def setup_analysis_frame(self):
@@ -732,27 +768,50 @@ class OSCRUI():
         Sets up the frame housing the detailed analysis table and graph
         """
         a_frame = self.widgets.main_tab_frames[1]
-        dout_frame = self.create_frame(None, 'frame')
-        dtaken_frame = self.create_frame(None, 'frame')
-        hout_frame = self.create_frame(None, 'frame')
-        hin_frame = self.create_frame(None, 'frame')
-        self.widgets.analysis_tab_frames.extend((dout_frame, dtaken_frame, hout_frame, hin_frame))
+        dout_graph_frame = self.create_frame(None, 'frame')
+        dtaken_graph_frame = self.create_frame(None, 'frame')
+        hout_graph_frame = self.create_frame(None, 'frame')
+        hin_graph_frame = self.create_frame(None, 'frame')
+        self.widgets.analysis_graph_frames.extend(
+                (dout_graph_frame, dtaken_graph_frame, hout_graph_frame, hin_graph_frame))
+        dout_tree_frame = self.create_frame(None, 'frame')
+        dtaken_tree_frame = self.create_frame(None, 'frame')
+        hout_tree_frame = self.create_frame(None, 'frame')
+        hin_tree_frame = self.create_frame(None, 'frame')
+        self.widgets.analysis_tree_frames.extend(
+                (dout_tree_frame, dtaken_tree_frame, hout_tree_frame, hin_tree_frame))
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         switch_layout = QGridLayout()
         switch_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(switch_layout)
+        splitter = QSplitter(OVERTICAL)
+        splitter.setStyleSheet(self.get_style_class('QSplitter', 'splitter'))
+        splitter.setChildrenCollapsible(False)
+        self.widgets.analysis_splitter = splitter
+        layout.addWidget(splitter)
 
-        a_tabber = QTabWidget(a_frame)
-        a_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
-        a_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
-        a_tabber.addTab(dout_frame, 'DOUT')
-        a_tabber.addTab(dtaken_frame, 'DTAKEN')
-        a_tabber.addTab(hout_frame, 'HOUT')
-        a_tabber.addTab(hin_frame, 'HIN')
-        self.widgets.analysis_tabber = a_tabber
-        layout.addWidget(a_tabber)
+        a_graph_tabber = QTabWidget(a_frame)
+        a_graph_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        a_graph_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
+        a_graph_tabber.addTab(dout_graph_frame, 'DOUT')
+        a_graph_tabber.addTab(dtaken_graph_frame, 'DTAKEN')
+        a_graph_tabber.addTab(hout_graph_frame, 'HOUT')
+        a_graph_tabber.addTab(hin_graph_frame, 'HIN')
+        self.widgets.analysis_graph_tabber = a_graph_tabber
+        splitter.addWidget(a_graph_tabber)
+        if not self.settings.value('analysis_graph', type=bool):
+            self.widgets.analysis_graph_button.flip()
+        a_tree_tabber = QTabWidget(a_frame)
+        a_tree_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        a_tree_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
+        a_tree_tabber.addTab(dout_tree_frame, 'DOUT')
+        a_tree_tabber.addTab(dtaken_tree_frame, 'DTAKEN')
+        a_tree_tabber.addTab(hout_tree_frame, 'HOUT')
+        a_tree_tabber.addTab(hin_tree_frame, 'HIN')
+        self.widgets.analysis_tree_tabber = a_tree_tabber
+        splitter.addWidget(a_tree_tabber)
 
         switch_layout.setColumnStretch(0, 1)
         switch_frame = self.create_frame(a_frame, 'frame')
@@ -765,8 +824,8 @@ class OSCRUI():
                 'callback': lambda state: self.switch_analysis_tab(0), 'align': ACENTER,
                 'toggle': True},
             tr('Damage Taken'): {
-                'callback': lambda state: self.switch_analysis_tab(1),
-                'align': ACENTER, 'toggle': False},
+                'callback': lambda state: self.switch_analysis_tab(1), 'align': ACENTER,
+                'toggle': False},
             tr('Heals Out'): {
                 'callback': lambda state: self.switch_analysis_tab(2), 'align': ACENTER,
                 'toggle': False},
@@ -795,26 +854,23 @@ class OSCRUI():
         switch_layout.setColumnStretch(2, 1)
 
         tabs = (
-            (dout_frame, 'analysis_table_dout', 'analysis_plot_dout'),
-            (dtaken_frame, 'analysis_table_dtaken', 'analysis_plot_dtaken'),
-            (hout_frame, 'analysis_table_hout', 'analysis_plot_hout'),
-            (hin_frame, 'analysis_table_hin', 'analysis_plot_hin')
+            (dout_graph_frame, dout_tree_frame, 'analysis_table_dout', 'analysis_plot_dout'),
+            (dtaken_graph_frame, dtaken_tree_frame, 'analysis_table_dtaken',
+             'analysis_plot_dtaken'),
+            (hout_graph_frame, hout_tree_frame, 'analysis_table_hout', 'analysis_plot_hout'),
+            (hin_graph_frame, hin_tree_frame, 'analysis_table_hin', 'analysis_plot_hin')
         )
-        for tab, table_name, plot_name in tabs:
-            tab_layout = QVBoxLayout()
-            tab_layout.setContentsMargins(0, 0, 0, 0)
-            tab_layout.setSpacing(0)
+        csp = self.theme['defaults']['csp'] * self.config['ui_scale']
+        for graph_frame, tree_frame, table_name, plot_name in tabs:
+            graph_layout = QHBoxLayout()
+            graph_layout.setContentsMargins(csp, csp, csp, 0)
+            graph_layout.setSpacing(csp)
 
-            # graph
-            plot_frame = self.create_frame(tab, 'plot_widget', size_policy=SMINMAX)
-            plot_layout = QHBoxLayout()
-            plot_layout.setContentsMargins(0, 0, 0, 0)
-            plot_layout.setSpacing(self.theme['defaults']['isp'])
-
-            plot_bundle_frame = self.create_frame(plot_frame, size_policy=SMINMAX)
+            plot_bundle_frame = self.create_frame(None, size_policy=SMINMAX)
             plot_bundle_layout = QVBoxLayout()
             plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
             plot_bundle_layout.setSpacing(0)
+            plot_bundle_layout.setSizeConstraint(QLayout.SizeConstraint.SetMaximumSize)
             plot_legend_frame = self.create_frame(plot_bundle_frame)
             plot_legend_layout = QHBoxLayout()
             plot_legend_layout.setContentsMargins(0, 0, 0, 0)
@@ -829,33 +885,40 @@ class OSCRUI():
             plot_bundle_layout.addWidget(plot_widget)
             plot_bundle_layout.addWidget(plot_legend_frame, alignment=AHCENTER)
             plot_bundle_frame.setLayout(plot_bundle_layout)
-            plot_layout.addWidget(plot_bundle_frame, stretch=1)
+            graph_layout.addWidget(plot_bundle_frame, stretch=1)
 
-            plot_button_frame = self.create_frame(plot_frame, size_policy=SMAXMIN)
+            plot_button_frame = self.create_frame(None, size_policy=SMAXMIN)
             plot_button_layout = QVBoxLayout()
             plot_button_layout.setContentsMargins(0, 0, 0, 0)
             plot_button_layout.setSpacing(0)
-            freeze_button = self.create_button(
-                    tr('Freeze Graph'), 'toggle_button', plot_button_frame,
-                    style_override={'border-color': '@bg'}, toggle=True)
+            plot_button_layout.setAlignment(AVCENTER)
+            freeze_button = self.create_icon_button(self.icons['freeze'], tr('Freeze Graph'))
+            freeze_button.setCheckable(True)
+            freeze_button.setChecked(True)
             freeze_button.clicked.connect(plot_widget.toggle_freeze)
-            plot_button_layout.addWidget(freeze_button, alignment=ARIGHT)
-            clear_button = self.create_button(tr('Clear Graph'), parent=plot_button_frame)
+            plot_button_layout.addWidget(freeze_button, alignment=ABOTTOM)
+            clear_button = self.create_icon_button(self.icons['clear-plot'], tr('Clear Graph'))
             clear_button.clicked.connect(plot_widget.clear_plot)
-            plot_button_layout.addWidget(clear_button, alignment=ARIGHT)
+            plot_button_layout.addWidget(clear_button, alignment=ATOP)
             plot_button_frame.setLayout(plot_button_layout)
-            plot_layout.addWidget(plot_button_frame, stretch=0)
+            graph_layout.addWidget(plot_button_frame, stretch=0)
+            graph_frame.setLayout(graph_layout)
 
-            plot_frame.setLayout(plot_layout)
-            tab_layout.addWidget(plot_frame, stretch=3)
-
-            tree = self.create_analysis_table(tab, 'tree_table')
+            tree_layout = QVBoxLayout()
+            tree_layout.setContentsMargins(0, 0, 0, 0)
+            tree_layout.setSpacing(0)
+            tree = self.create_analysis_table(None, 'tree_table')
             setattr(self.widgets, table_name, tree)
             tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
-            tab_layout.addWidget(tree, stretch=7)
-            tab.setLayout(tab_layout)
+            tree_layout.addWidget(tree)
+            tree_frame.setLayout(tree_layout)
 
         a_frame.setLayout(layout)
+        if self.settings.value('analysis_splitter'):
+            splitter.restoreState(self.settings.value('analysis_splitter'))
+        else:
+            h = splitter.height()
+            splitter.setSizes((h * 0.5, h * 0.5))
 
     def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):
         item = index.internalPointer()

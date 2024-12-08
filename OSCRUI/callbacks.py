@@ -36,7 +36,7 @@ def save_combat(self, combat_num: int):
     Parameters:
     - :param combat_num: number of combat in self.combats
     """
-    combat = self.parser.active_combat
+    combat = self.parser.combats[combat_num]
     if not combat:
         return
     filename = combat.map
@@ -81,7 +81,9 @@ def switch_analysis_tab(self, tab_index: int):
     Parameters:
     - :param tab_index: index of the tab to switch to
     """
-    self.widgets.analysis_tabber.setCurrentIndex(tab_index)
+    self.widgets.analysis_graph_tabber.setCurrentIndex(tab_index)
+    self.widgets.analysis_tree_tabber.setCurrentIndex(tab_index)
+    self.widgets.analysis_graph_controls.setCurrentIndex(tab_index)
     for index, button in enumerate(self.widgets.analysis_menu_buttons):
         if not index == tab_index:
             button.setChecked(False)
@@ -138,6 +140,10 @@ def switch_main_tab(self, tab_index: int):
         self.widgets.overview_table_button.show()
     else:
         self.widgets.overview_table_button.hide()
+    if tab_index == 1:
+        self.widgets.analysis_graph_button.show()
+    else:
+        self.widgets.analysis_graph_button.hide()
 
 
 def favorite_button_callback(self):
@@ -300,6 +306,22 @@ def collapse_overview_table(self):
     Hides the overview table
     """
     self.widgets.overview_table_frame.hide()
+
+
+def expand_analysis_graph(self):
+    """
+    Shows the analysis graph
+    """
+    self.widgets.analysis_graph_tabber.show()
+    self.settings.setValue('analysis_graph', True)
+
+
+def collapse_analysis_graph(self):
+    """
+    Hides the analysis graph
+    """
+    self.widgets.analysis_graph_tabber.hide()
+    self.settings.setValue('analysis_graph', False)
 
 
 def trim_logfile(self):

@@ -39,11 +39,15 @@ class WidgetStorage():
         self.overview_tab_frames: list[QFrame] = list()
         self.overview_table_frame: QFrame
         self.overview_table_button: FlipButton
+        self.overview_splitter: QSplitter
 
+        self.analysis_splitter: QSplitter
         self.analysis_menu_buttons: list[QPushButton] = list()
         self.analysis_copy_combobox: QComboBox
-        self.analysis_tabber: QTabWidget
-        self.analysis_tab_frames: list[QFrame] = list()
+        self.analysis_graph_tabber: QTabWidget
+        self.analysis_tree_tabber: QTabWidget
+        self.analysis_graph_frames: list[QFrame] = list()
+        self.analysis_tree_frames: list[QFrame] = list()
         self.analysis_table_dout: QTreeView
         self.analysis_table_dtaken: QTreeView
         self.analysis_table_hout: QTreeView
@@ -52,6 +56,9 @@ class WidgetStorage():
         self.analysis_plot_dtaken: AnalysisPlot
         self.analysis_plot_hout: AnalysisPlot
         self.analysis_plot_hin: AnalysisPlot
+        self.analysis_graph_button: FlipButton
+        self.analysis_graph_controls: QTabWidget
+        self.analysis_graph_control_frames: list[QFrame] = list()
 
         self.ladder_selector: QListWidget
         self.favorite_ladder_selector: QListWidget
@@ -73,8 +80,8 @@ class FlipButton(QPushButton):
     """
     QPushButton with two sets of commands, texts and icons that alter on click.
     """
-    def __init__(self, r_text, l_text, parent, checkable=False, *ar, **kw):
-        super().__init__(r_text, parent, *ar, **kw)
+    def __init__(self, r_text, l_text, parent=None, checkable=False, *ar, **kw):
+        super().__init__(r_text, *ar, **kw)
         self._r = True
         self._checkable = checkable
         if checkable:

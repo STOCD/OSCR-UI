@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.06.3'
+    version = '2024.12.08.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -222,6 +222,9 @@ class Launcher():
             ':hover': {
                 'border-color': '@oscr'
             },
+            ':checked': {
+                'border-color': '@oscr'
+            },
             # Tooltip
             '~QToolTip': {
                 'background-color': '@mbg',
@@ -351,6 +354,8 @@ class Launcher():
             'padding': 0,
             '::pane': {
                 'border': 'none',
+                'padding': 0,
+                'margin': 0
             }
         },
         # default tabber buttons (hidden)
@@ -387,12 +392,9 @@ class Launcher():
         'table': {
             'color': '@fg',
             'background-color': '@bg',
-            'border-width': '@bw',
-            'border-style': 'solid',
-            'border-color': '@bc',
             'gridline-color': 'rgba(0,0,0,0)',  # -> s.c: table_gridline
             'outline': '0',  # removes dotted line around clicked item
-            'margin': (0, 0, 10, 0),
+            'margin': (5, 0, 0, 0),
             'font': ('Roboto Mono', 12, 'Medium'),
             '::item': {
                 'padding': (0, 5, 0, 5),
@@ -478,11 +480,10 @@ class Launcher():
         # analysis table; ::item refers to the cells;
         #                 ::branch refers to the space on the left of the rows
         'tree_table': {
-            'border': '1px solid #888888',
             'background-color': '@bg',
             'alternate-background-color': '@mbg',
             'color': '@fg',
-            'margin': (5, 0, 15, 0),
+            'margin': (5, 0, 0, 0),
             'outline': '0',  # removes dotted line around clicked item
             'font': ('Overpass', 12, 'Normal'),
             '::item': {
@@ -579,10 +580,8 @@ class Launcher():
         },
         # frame of the plot widgets
         'plot_widget': {
-            'border-style': 'solid',
-            'border-width': '@bw',
-            'border-color': '@bc',
-            'margin': (10, 0, 10, 0),
+            'border-bottom-color': '@bg',
+            'margin': (0, 0, 5, 0),
             'padding': 10,
             'font': ('Overpass', 10, 'bold')
         },
@@ -687,18 +686,20 @@ class Launcher():
             'image': 'url(assets/resize.svg)',
         },
         'splitter': {
-            'border': 'none',
-            'margin': 0,
+            'margin': (10, 0, 10, 0),
             'padding': 0,
+            'border-style': 'solid',
+            'border-width': '@bw',
+            'border-color': '@bc',
             '::handle': {
-                'background-color': '@oscr'
+                'background-color': '@bc'
             },
             '::handle:pressed': {
-                'background-color': '@bc'
+                'background-color': '@oscr'
             },
             '::handle:vertical': {
                 'height': '@bw',
-                'margin': (0, 13, 0, 13)
+                'margin': (0, 13, 0, 13),
             }
         },
         # other style decisions
@@ -707,8 +708,8 @@ class Launcher():
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
-            'overview_graph_stretch': 10,
-            'overview_table_stretch': 3
+            'overview_graph_stretch': 1,
+            'overview_table_stretch': 1
         }
     }
 
@@ -808,6 +809,9 @@ class Launcher():
                 'ui_scale': 1,
                 'live_scale': 1,
                 'live_enabled': False,
+                'overview_splitter': None,
+                'analysis_splitter': None,
+                'analysis_graph': True
             }
         }
         return config
