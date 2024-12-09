@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.08.1'
+    version = '2024.12.09.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -260,7 +260,7 @@ class Launcher():
             'margin': (0, 10, 0, 10),
             'height': 2
         },
-        # button that holds icon
+        # button that holds LiveParser icon
         'live_icon_button': {
             'background': 'none',
             'border-width': 1,
@@ -627,6 +627,7 @@ class Launcher():
             'font': ('Roboto Mono', 10, 'Medium'),
             '::item': {
                 'padding': (0, 2, 0, 2),
+                'margin': 0,
                 'border-width': '@bw',
                 'border-style': 'solid',
                 'border-color': '@bg',
@@ -635,14 +636,7 @@ class Launcher():
                 'border-right-color': '@bc',
             },
             '::item:alternate': {
-                'padding': (0, 2, 0, 2),
                 'background-color': '@mbg',
-                'border-width': '@bw',
-                'border-style': 'solid',
-                'border-color': '@mbg',
-                'border-right-width': '@bw',
-                'border-right-style': 'solid',
-                'border-right-color': '@bc',
             }
         },
         # heading of the table; ::section refers to the individual buttons
@@ -811,7 +805,8 @@ class Launcher():
                 'live_enabled': False,
                 'overview_splitter': None,
                 'analysis_splitter': None,
-                'analysis_graph': True
+                'analysis_graph': True,
+                'live_player': 'Handle'
             }
         }
         return config

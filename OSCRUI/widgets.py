@@ -69,6 +69,7 @@ class WidgetStorage():
         self.live_parser_button: QPushButton
         self.live_parser_curves: list
         self.live_parser_splitter: QSplitter
+        self.live_parser_duration_label: QLabel
 
     @property
     def analysis_table(self):

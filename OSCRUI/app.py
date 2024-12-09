@@ -1167,28 +1167,24 @@ class OSCRUI():
         live_graph_field_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('live_graph_field', new_index))
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
+        live_name_label = self.create_label(tr('LiveParser Player:'), 'label_subhead')
+        sec_1.addWidget(live_name_label, 11, 0, alignment=ARIGHT)
+        live_player_combo = self.create_combo_box(
+                col_2_frame, style_override={'font': '@small_text'})
+        live_player_combo.addItems(('Name', 'Handle'))
+        live_player_combo.setCurrentText(self.settings.value('live_player', type=str))
+        live_player_combo.currentTextChanged.connect(
+                lambda new_text: self.settings.setValue('live_player', new_text))
+        sec_1.addWidget(live_player_combo, 11, 1, alignment=ALEFT)
         overview_tab_label = self.create_label(tr('Default Overview Tab:'), 'label_subhead')
-        sec_1.addWidget(overview_tab_label, 11, 0, alignment=ARIGHT)
+        sec_1.addWidget(overview_tab_label, 12, 0, alignment=ARIGHT)
         overview_tab_combo = self.create_combo_box(
                 col_2_frame, style_override={'font': '@small_text'})
         overview_tab_combo.addItems((tr('DPS Bar'), tr('DPS Graph'), tr('Damage Graph')))
         overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
         overview_tab_combo.currentIndexChanged.connect(
             lambda new_index: self.settings.setValue('first_overview_tab', new_index))
-        sec_1.addWidget(overview_tab_combo, 11, 1, alignment=ALEFT)
-        size_warning_label = self.create_label(tr('Logfile Size Warning:'), 'label_subhead')
-        sec_1.addWidget(size_warning_label, 12, 0, alignment=ARIGHT)
-        size_warning_button = FlipButton(tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
-        size_warning_button.setStyleSheet(self.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        size_warning_button.setFont(self.theme_font('app', '@font'))
-        size_warning_button.r_function = (
-                lambda: self.settings.setValue('log_size_warning', True))
-        size_warning_button.l_function = (
-                lambda: self.settings.setValue('log_size_warning', False))
-        if self.settings.value('log_size_warning', type=bool):
-            size_warning_button.flip()
-        sec_1.addWidget(size_warning_button, 12, 1, alignment=ALEFT)
+        sec_1.addWidget(overview_tab_combo, 12, 1, alignment=ALEFT)
         ui_scale_label = self.create_label(tr('UI Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
         ui_scale_slider_layout = self.create_annotated_slider(

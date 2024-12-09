@@ -334,20 +334,21 @@ def create_live_graph(self) -> tuple[QFrame, list]:
 
 
 def update_live_display(
-        self, data: dict, graph_active: bool = False, graph_data_buffer: list = [],
-        graph_data_field: int = 0):
+        self, player_data: dict, combat_time: float, graph_active: bool = False,
+        graph_data_buffer: list = [], graph_data_field: int = 0):
     """
     Updates display of live parser to show the new data.
 
     Parameters:
-    - :param data: dictionary containing the new data
+    - :param player_data: dictionary containing the new data
+    - :param combat_time: duration of the entire combat
     - :param graph_active: Set to True to update the graph as well
     - :param graph_data_buffer: contains the past graph data
     """
     index = list()
     cells = list()
     curves = list()
-    for player, player_data in data.items():
+    for player, player_data in player_data.items():
         index.append(player)
         cells.append(list(player_data.values()))
     if graph_active:
@@ -363,6 +364,7 @@ def update_live_display(
 
     if len(index) > 0 and len(cells) > 0:
         self.live_parser_window.update_table.emit((index, cells))
+    self.widgets.live_parser_duration_label.setText(f'Duration: {combat_time:.1f}s')
 
 
 @Slot()
@@ -375,6 +377,7 @@ def update_live_table(self, data: tuple):
     """
     table = self.widgets.live_parser_table
     table.model().replace_data(*data)
+    table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
 

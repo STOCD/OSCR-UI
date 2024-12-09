@@ -142,9 +142,10 @@ class LiveParserTableModel(TableModel):
     """
     Model for LiveParser Table
     """
-    def __init__(self, *args, legend_col=None, colors=None, **kwargs):
+    def __init__(self, *args, legend_col=None, colors=None, name_index=1, **kwargs):
         super().__init__(*args, **kwargs)
         self._legend_column = legend_col
+        self._name_index = name_index
         if colors is not None:
             self._colors = [QColor.fromString(color) for color in colors]
         else:
@@ -187,7 +188,7 @@ class LiveParserTableModel(TableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 try:
-                    return self._index[section]
+                    return self._index[section][self._name_index]
                 except IndexError:
                     sys.stdout.write(f'Section:{section}|Data{self._data}|Index{self._index}\n')
 
@@ -201,16 +202,16 @@ class LiveParserTableModel(TableModel):
             if orientation == Qt.Orientation.Vertical:
                 return AVCENTER + ARIGHT
 
-        if role == Qt.ItemDataRole.ForegroundRole:
-            if self._colors is not None and section < len(self._colors):
-                return self._colors[section]
-            return ModuleNotFoundError
-
     def replace_data(self, index: list, rows: list):
         self.beginResetModel()
         self._index = index
         self._data = rows
         self.endResetModel()
+
+    def sort(self, column, order=None):
+        self.layoutAboutToBeChanged.emit()
+        self._data.sort(key=lambda el: el[column], reverse=True)
+        self.layoutChanged.emit()
 
 
 class SortingProxy(QSortFilterProxyModel):

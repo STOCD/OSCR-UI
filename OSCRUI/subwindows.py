@@ -290,8 +290,8 @@ def live_parser_toggle(self, activate):
         graph_active = self.settings.value('live_graph_active', type=bool)
         data_buffer = []
         data_field = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
-        self.live_parser = LiveParser(log_path, update_callback=lambda data: update_live_display(
-                self, data, graph_active, data_buffer, data_field),
+        self.live_parser = LiveParser(log_path, update_callback=lambda p, t: update_live_display(
+                self, p, t, graph_active, data_buffer, data_field),
                 settings=self.live_parser_settings)
         create_live_parser_window(self)
     else:
@@ -369,7 +369,7 @@ def create_live_parser_window(self):
             get_style_class(self, 'QHeaderView', 'live_table_header'))
     table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'live_table_index'))
     table.verticalHeader().setMinimumHeight(1)
-    table.verticalHeader().setDefaultSectionSize(1)
+    table.verticalHeader().setDefaultSectionSize(table.verticalHeader().fontMetrics().height() + 2)
     table.horizontalHeader().setMinimumWidth(1)
     table.horizontalHeader().setDefaultSectionSize(1)
     table.horizontalHeader().setSectionResizeMode(RFIXED)
@@ -378,10 +378,15 @@ def create_live_parser_window(self):
     table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
     table.setMinimumWidth(self.sidebar_item_width * 0.1)
     table.setMinimumHeight(self.sidebar_item_width * 0.1)
+    table.setSortingEnabled(True)
+    if self.settings.value('live_player', defaultValue='Handle') == 'Handle':
+        name_index = 1
+    else:
+        name_index = 0
     model = LiveParserTableModel(
-            [[0] * len(LIVE_TABLE_HEADER)], tr(LIVE_TABLE_HEADER), [''],
+            [[0] * len(LIVE_TABLE_HEADER)], tr(LIVE_TABLE_HEADER), [('Name', '@handle')],
             theme_font(self, 'live_table_header'), theme_font(self, 'live_table'),
-            legend_col=graph_column, colors=graph_colors)
+            legend_col=graph_column, colors=graph_colors, name_index=name_index)
     table.setModel(model)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
@@ -396,32 +401,37 @@ def create_live_parser_window(self):
     else:
         layout.addWidget(table, 1)
 
+    margin = self.config['ui_scale'] * 6
     bottom_layout = QGridLayout()
-    bottom_layout.setContentsMargins(self.theme['defaults']['isp'], 0, 0, 0)
-    bottom_layout.setSpacing(0)
-    bottom_layout.setColumnStretch(0, 1)
-    bottom_layout.setColumnStretch(2, 1)
+    bottom_layout.setContentsMargins(margin, 0, 0, 0)
+    bottom_layout.setSpacing(margin)
+    bottom_layout.setColumnStretch(4, 1)
 
-    icon_size = [self.theme['s.c']['button_icon_size'] * self.config['live_scale'] * 0.8] * 2
-    copy_button = copy_button = create_icon_button(
-            self, self.icons['copy'], tr('Copy Result'), icon_size=icon_size)
-    copy_button.clicked.connect(lambda: copy_live_data_callback(self))
-    bottom_layout.addWidget(copy_button, 0, 0, alignment=ARIGHT | AVCENTER)
     activate_button = FlipButton(tr('Activate'), tr('Deactivate'), live_window, checkable=True)
     activate_button.setStyleSheet(self.get_style_class(
-            'QPushButton', 'toggle_button', {'margin': (0, 8, 0, 8)}))
+            'QPushButton', 'toggle_button', {'margin': 0}))
     activate_button.setFont(self.theme_font('app', '@subhead'))
     activate_button.r_function = lambda: self.live_parser.start()
     activate_button.l_function = lambda: self.live_parser.stop()
-    bottom_layout.addWidget(activate_button, 0, 1, alignment=AVCENTER)
+    bottom_layout.addWidget(activate_button, 0, 0, alignment=ALEFT | AVCENTER)
+    icon_size = [self.theme['s.c']['button_icon_size'] * self.config['live_scale'] * 0.8] * 2
+    copy_button = create_icon_button(
+            self, self.icons['copy'], tr('Copy Result'), style_override={'margin': 0},
+            icon_size=icon_size)
+    copy_button.clicked.connect(lambda: copy_live_data_callback(self))
+    bottom_layout.addWidget(copy_button, 0, 1, alignment=ALEFT | AVCENTER)
     close_button = create_icon_button(
-            self, self.icons['close'], tr('Close Live Parser'), icon_size=icon_size)
+            self, self.icons['close'], tr('Close Live Parser'), style_override={'margin': 0},
+            icon_size=icon_size)
     close_button.clicked.connect(lambda: live_parser_toggle(self, False))
     bottom_layout.addWidget(close_button, 0, 2, alignment=ALEFT | AVCENTER)
+    time_label = create_label(self, 'Duration: 0s')
+    bottom_layout.addWidget(time_label, 0, 3, alignment=ALEFT | AVCENTER)
+    self.widgets.live_parser_duration_label = time_label
 
     grip = SizeGrip(live_window)
     grip.setStyleSheet(get_style(self, 'resize_handle'))
-    bottom_layout.addWidget(grip, 0, 3, alignment=ARIGHT | ABOTTOM)
+    bottom_layout.addWidget(grip, 0, 4, alignment=ARIGHT | ABOTTOM)
 
     layout.addLayout(bottom_layout)
     live_window.setLayout(layout)
