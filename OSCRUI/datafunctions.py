@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QThread, Signal, Slot
 from .callbacks import switch_main_tab, switch_overview_tab
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
 from .displayer import create_overview
-from .subwindows import show_warning
+from .subwindows import show_message
 from .textedit import format_damage_number, format_damage_tree_data, format_heal_tree_data
 from .translation import tr
 
@@ -38,9 +38,9 @@ def analyze_log_callback(self, path=None, hidden_path=False):
     - :param hidden_path: True when settings should not be updated with log path
     """
     if path == '' or not os.path.isfile(path):
-        show_warning(
+        show_message(
                 self, tr('Invalid Logfile'),
-                tr('The Logfile you are trying to open does not exist.'))
+                tr('The Logfile you are trying to open does not exist.'), 'warning')
         return
 
     if self.thread is not None and self.thread.is_alive():

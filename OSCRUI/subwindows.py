@@ -1,11 +1,11 @@
 import os
+from traceback import format_exception
 
 from PySide6.QtCore import QPoint, QSize, Qt
-from PySide6.QtGui import QIntValidator, QMouseEvent
-from PySide6.QtWidgets import QAbstractItemView, QDialog
-from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit
-from PySide6.QtWidgets import QMessageBox, QSpacerItem, QSplitter, QTableView
-from PySide6.QtWidgets import QVBoxLayout
+from PySide6.QtGui import QIntValidator, QMouseEvent, QTextOption
+from PySide6.QtWidgets import (
+        QAbstractItemView, QDialog, QGridLayout, QHBoxLayout, QLineEdit, QMessageBox, QSpacerItem,
+        QSplitter, QTableView, QTextEdit, QVBoxLayout)
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
 
@@ -19,26 +19,66 @@ from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
 from .translation import tr
 from .widgetbuilder import create_button, create_frame, create_icon_button, create_label
-from .widgetbuilder import ABOTTOM, AHCENTER, ALEFT, ARIGHT, AVCENTER, RFIXED
+from .widgetbuilder import ABOTTOM, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, RFIXED
 from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMAX, SMINMIN
 from .widgets import FlipButton, LiveParserWindow, SizeGrip
 
 
-def show_warning(self, title: str, message: str):
+def show_message(self, title: str, message: str, icon: str = 'info'):
     """
-    Displays a warning in form of a message box
+    Displays a message in a dialog
 
     Parameters:
     - :param title: title of the warning
     - :param message: message to be displayed
+    - :param icon: "warning" or "info"
     """
-    error = QMessageBox()
-    error.setIcon(QMessageBox.Icon.Warning),
-    error.setText(message)
-    error.setWindowTitle(title)
-    error.setStandardButtons(QMessageBox.StandardButton.Ok)
-    error.setWindowIcon(self.icons['oscr'])
-    error.exec()
+    dialog = QDialog(self.window)
+    thick = self.theme['app']['frame_thickness']
+    item_spacing = self.theme['defaults']['isp']
+    main_layout = QVBoxLayout()
+    main_layout.setContentsMargins(thick, thick, thick, thick)
+    dialog_frame = create_frame(self, size_policy=SMINMIN)
+    main_layout.addWidget(dialog_frame)
+    dialog_layout = QVBoxLayout()
+    dialog_layout.setContentsMargins(thick, thick, thick, thick)
+    dialog_layout.setSpacing(thick)
+    content_frame = create_frame(self, size_policy=SMINMIN)
+    content_layout = QVBoxLayout()
+    content_layout.setContentsMargins(0, 0, 0, 0)
+    content_layout.setSpacing(item_spacing)
+    content_layout.setAlignment(ATOP)
+
+    top_layout = QHBoxLayout()
+    top_layout.setContentsMargins(0, 0, 0, 0)
+    top_layout.setSpacing(2 * thick)
+    icon_label = create_label(self, '')
+    icon_size = self.theme['s.c']['big_icon_size'] * self.config['ui_scale']
+    icon_label.setPixmap(self.icons[icon].pixmap(icon_size))
+    top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
+    message_label = create_label(self, message)
+    message_label.setWordWrap(True)
+    message_label.setSizePolicy(SMINMAX)
+    top_layout.addWidget(message_label, stretch=1)
+    content_layout.addLayout(top_layout)
+
+    content_frame.setLayout(content_layout)
+    dialog_layout.addWidget(content_frame, stretch=1)
+
+    seperator = create_frame(self, style='light_frame', size_policy=SMINMAX)
+    seperator.setFixedHeight(1)
+    dialog_layout.addWidget(seperator)
+    ok_button = create_button(self, tr('OK'))
+    ok_button.clicked.connect(lambda: dialog.done(0))
+    dialog_layout.addWidget(ok_button, alignment=AHCENTER)
+    dialog_frame.setLayout(dialog_layout)
+
+    dialog = QDialog(self.window)
+    dialog.setLayout(main_layout)
+    dialog.setWindowTitle('OSCR - ' + title)
+    dialog.setStyleSheet(get_style(self, 'dialog_window'))
+    dialog.setSizePolicy(SMAXMAX)
+    dialog.exec()
 
 
 def log_size_warning(self):
@@ -280,10 +320,9 @@ def live_parser_toggle(self, activate):
     if activate:
         log_path = self.settings.value('sto_log_path')
         if not log_path or not os.path.isfile(log_path):
-            show_warning(
-                    self, tr('Invalid Logfile'),
-                    tr('Make sure to set the STO Logfile setting in the ')
-                    + tr('settings tab to a valid logfile before starting the live parser.'))
+            show_message(self, tr('Invalid Logfile'), tr(
+                    'Make sure to set the STO Logfile setting in the settings tab to a valid '
+                    'logfile before starting the live parser.'), 'warning')
             self.widgets.live_parser_button.setChecked(False)
             return
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
@@ -547,4 +586,83 @@ def show_detection_info(self, combat_index: int):
     dialog.setWindowTitle(tr('OSCR - Map Detection Details'))
     dialog.setStyleSheet(get_style(self, 'dialog_window'))
     dialog.setSizePolicy(SMAXMAX)
+    dialog.exec()
+
+
+def show_parser_error(self, error: BaseException):
+    """
+    Displays subwindow showing an error message and the given error traceback.
+
+    - :param error: captured error with optionally additional data in the error.args attribute
+    """
+    default_message, *additional_messages = error.args
+    error.args = (default_message,)
+    error_text = ''.join(format_exception(error))
+    if len(additional_messages) > 0:
+        error_text += '\n\n++++++++++++++++++++++++++++++++++++++++++++++++++\n\n'
+        error_text += '\n'.join(additional_messages)
+    dialog = QDialog(self.window)
+    thick = self.theme['app']['frame_thickness']
+    item_spacing = self.theme['defaults']['isp']
+    main_layout = QVBoxLayout()
+    main_layout.setContentsMargins(thick, thick, thick, thick)
+    dialog_frame = create_frame(self, size_policy=SMINMIN)
+    main_layout.addWidget(dialog_frame)
+    dialog_layout = QVBoxLayout()
+    dialog_layout.setContentsMargins(thick, thick, thick, thick)
+    dialog_layout.setSpacing(thick)
+    content_frame = create_frame(self, size_policy=SMINMIN)
+    content_layout = QVBoxLayout()
+    content_layout.setContentsMargins(0, 0, 0, 0)
+    content_layout.setSpacing(item_spacing)
+    content_layout.setAlignment(ATOP)
+
+    top_layout = QHBoxLayout()
+    top_layout.setContentsMargins(0, 0, 0, 0)
+    top_layout.setSpacing(2 * thick)
+    icon_label = create_label(self, '')
+    icon_size = self.theme['s.c']['big_icon_size'] * self.config['ui_scale']
+    icon_label.setPixmap(self.icons['error'].pixmap(icon_size))
+    top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
+    msg = tr(
+            'An error occurred while parsing the selected combatlog. You can try repairing the '
+            'log file using the repair functionality in the "Manage Logfile" dialog. If the error '
+            'persists, please report it to the #oscr-support channel in the STOBuilds Discord.')
+    message_label = create_label(self, msg)
+    message_label.setWordWrap(True)
+    message_label.setSizePolicy(SMINMAX)
+    top_layout.addWidget(message_label, stretch=1)
+    content_layout.addLayout(top_layout)
+    error_field = QTextEdit()
+    error_field.setSizePolicy(SMINMIN)
+    error_field.setText(error_text)
+    error_field.setReadOnly(True)
+    error_field.setWordWrapMode(QTextOption.WrapMode.NoWrap)
+    error_field.setFont(theme_font(self, 'textedit'))
+    error_field.setStyleSheet(get_style_class(self, 'QTextEdit', 'textedit'))
+    expand_button = FlipButton(tr('Show Error'), tr('Hide Error'))
+    expand_button.set_icon_r(self.icons['chevron-right'])
+    expand_button.set_icon_l(self.icons['chevron-down'])
+    expand_button.r_function = error_field.show
+    expand_button.l_function = error_field.hide
+    expand_button.setStyleSheet(get_style_class(self, 'FlipButton', 'button'))
+    expand_button.setFont(theme_font(self, 'button'))
+    content_layout.addWidget(expand_button, alignment=ALEFT)
+    content_layout.addWidget(error_field, stretch=1)
+    error_field.hide()
+    content_frame.setLayout(content_layout)
+    dialog_layout.addWidget(content_frame, stretch=1)
+
+    seperator = create_frame(self, style='light_frame', size_policy=SMINMAX)
+    seperator.setFixedHeight(1)
+    dialog_layout.addWidget(seperator)
+    ok_button = create_button(self, tr('OK'))
+    ok_button.clicked.connect(lambda: dialog.done(0))
+    dialog_layout.addWidget(ok_button, alignment=AHCENTER)
+    dialog_frame.setLayout(dialog_layout)
+
+    dialog = QDialog(self.window)
+    dialog.setLayout(main_layout)
+    dialog.setWindowTitle(tr('OSCR - Parser Error'))
+    dialog.setStyleSheet(get_style(self, 'dialog_window'))
     dialog.exec()

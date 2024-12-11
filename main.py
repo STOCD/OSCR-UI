@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.09.1'
+    version = '2024.12.11.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -696,6 +696,16 @@ class Launcher():
                 'margin': (0, 13, 0, 13),
             }
         },
+        # multiline text edit widget
+        'textedit': {
+            'border-style': 'solid',
+            'border-width': '@bw',
+            'border-color': '@bc',
+            'border-radius': '@br',
+            'background-color': '@bg',
+            'color': '@fg',
+            'font': ('Roboto Mono', 11, 'normal')
+        },
         # other style decisions
         's.c': {
             'sidebar_item_width': 0.2,
@@ -703,7 +713,8 @@ class Launcher():
             'table_alternate': True,
             'table_gridline': False,
             'overview_graph_stretch': 1,
-            'overview_table_stretch': 1
+            'overview_table_stretch': 1,
+            'big_icon_size': 70
         }
     }
 

@@ -114,7 +114,7 @@ def create_frame(self, parent=None, style='frame', style_override={}, size_polic
     return frame
 
 
-def create_label(self, text: str, style: str = 'label', style_override={}):
+def create_label(self, text: str, style: str = 'label', style_override={}) -> QLabel:
     """
     Creates a label according to style with parent.
 

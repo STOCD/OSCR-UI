@@ -16,7 +16,7 @@ from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
 from .iofunctions import open_link
 from .style import theme_font
-from .subwindows import show_warning, uploadresult_dialog
+from .subwindows import show_message, uploadresult_dialog
 from .textedit import format_datetime_str
 from .translation import tr
 
@@ -237,7 +237,7 @@ def upload_callback(self):
         self.parser.active_combat is None
         or self.parser.active_combat.log_data is None
     ):
-        show_warning(self, "OSCR - Logfile Upload", tr("No data to upload."))
+        show_message(self, tr("Logfile Upload"), tr("No data to upload."), 'info')
         return
 
     establish_league_connection(self)

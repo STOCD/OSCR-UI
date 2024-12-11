@@ -32,7 +32,7 @@ class OSCRUI():
             expand_analysis_graph, expand_overview_table,
             favorite_button_callback, navigate_log, save_combat, set_live_scale_setting,
             set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
-            set_ui_scale_setting, show_parser_error, switch_analysis_tab, switch_main_tab,
+            set_ui_scale_setting, switch_analysis_tab, switch_main_tab,
             switch_map_tab, switch_overview_tab)
     from .datafunctions import (
             analysis_data_slot, analyze_log_background, analyze_log_callback,
@@ -41,7 +41,7 @@ class OSCRUI():
     from .displayer import create_legend_item
     from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
-    from .subwindows import live_parser_toggle, show_detection_info, split_dialog
+    from .subwindows import live_parser_toggle, show_detection_info, show_parser_error, split_dialog
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
     from .widgetbuilder import create_icon_button, create_label, style_table
@@ -137,7 +137,12 @@ class OSCRUI():
             'dash': 'dash.svg',
             'live-parser': 'live-parser.svg',
             'freeze': 'snowflake.svg',
-            'clear-plot': 'clear-plot.svg'
+            'clear-plot': 'clear-plot.svg',
+            'error': 'error.svg',
+            'warning': 'warning.svg',
+            'info': 'info.svg',
+            'chevron-right': 'chevron-right.svg',
+            'chevron-down': 'chevron-down.svg',
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
