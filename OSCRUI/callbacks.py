@@ -83,7 +83,6 @@ def switch_analysis_tab(self, tab_index: int):
     """
     self.widgets.analysis_graph_tabber.setCurrentIndex(tab_index)
     self.widgets.analysis_tree_tabber.setCurrentIndex(tab_index)
-    self.widgets.analysis_graph_controls.setCurrentIndex(tab_index)
     for index, button in enumerate(self.widgets.analysis_menu_buttons):
         if not index == tab_index:
             button.setChecked(False)

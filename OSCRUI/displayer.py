@@ -131,7 +131,7 @@ def create_grouped_bar_plot(
     bottom_axis.unit = 's'
     legend_data = list()
 
-    group_width = 0.18
+    group_width = self.settings.value('graph_resolution', type=float) * 0.9
     player_num = len(data)
     if player_num == 0:
         return

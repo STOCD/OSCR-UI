@@ -57,8 +57,6 @@ class WidgetStorage():
         self.analysis_plot_hout: AnalysisPlot
         self.analysis_plot_hin: AnalysisPlot
         self.analysis_graph_button: FlipButton
-        self.analysis_graph_controls: QTabWidget
-        self.analysis_graph_control_frames: list[QFrame] = list()
 
         self.ladder_selector: QListWidget
         self.favorite_ladder_selector: QListWidget
