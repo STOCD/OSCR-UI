@@ -477,6 +477,12 @@ class CombatModel(QStringListModel):
         self._data.clear()
         self.endResetModel()
 
+    def set_items(self, items: list[tuple]):
+        self.beginResetModel()
+        self._data.clear()
+        self._data = items
+        self.endResetModel()
+
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             return self._data[index.row()]

@@ -22,6 +22,7 @@ def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', s
     allowed.
     Format: "<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]"
     Example: "Logfile (*.log);;Any File (*.*)"
+    - :param save: False => open file with dialog; True => save file with dialog
     """
     if default_path is None or default_path == '':
         default_path = self.app_dir

@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.12.1'
+    version = '2024.12.14.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -69,7 +69,7 @@ class Launcher():
             'subhead': ('Overpass', 12, 'medium'),
             'small_text': ('Overpass', 10, 'normal'),
             'fg': '#eeeeee',  # foreground (usually text)
-            'mfg': '#bbbbbb',  # medium foreground
+            'mfg': '#cccccc',  # medium foreground
             'bc': '#888888',  # border color
             'bw': 1,  # border width
             'br': 2,  # border radius
@@ -120,6 +120,14 @@ class Launcher():
             'border-style': 'none',
             'margin-bottom': 3,
             'font': '@subhead'
+        },
+        # label for less intrusive text
+        'label_light': {
+            'color': '@mfg',
+            'qproperty-indent': '0',
+            'border-style': 'none',
+            'margin': (3, 0, 3, 0),
+            'font': ('Overpass', 12, 'normal')
         },
         # default button
         'button': {
@@ -255,10 +263,9 @@ class Launcher():
         },
         # horizontal seperator
         'hr': {
-            'background-color': '@oscr',
+            'background-color': '@lbg',
             'border-style': 'none',
-            'margin': (0, 10, 0, 10),
-            'height': 2
+            'height': 1
         },
         # button that holds LiveParser icon
         'live_icon_button': {

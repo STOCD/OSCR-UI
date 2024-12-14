@@ -1,15 +1,15 @@
 import os
 import traceback
 
-from PySide6.QtWidgets import QFileDialog, QLineEdit
-from PySide6.QtCore import QTemporaryDir
+from PySide6.QtWidgets import QLineEdit
 
 from OSCR import (
-    LIVE_TABLE_HEADER, OSCR, repair_logfile as oscr_repair_logfile, split_log_by_combat,
-    split_log_by_lines)
+    LIVE_TABLE_HEADER, compose_logfile, repair_logfile as oscr_repair_logfile, extract_bytes)
 
+from .dialogs import confirmation_dialog, show_message
 from .iofunctions import browse_path
 from .textedit import format_path
+from .translation import tr
 
 
 def browse_log(self, entry: QLineEdit):
@@ -256,24 +256,24 @@ def auto_split_callback(self, path: str):
     """
     Callback for auto split button
     """
-    folder_path = QFileDialog.getExistingDirectory(
-            self.window, 'Select Folder', os.path.dirname(path))
-    if folder_path:
-        split_log_by_lines(
-                path, folder_path, self.settings.value('split_log_after', type=int),
-                self.settings.value('combat_distance', type=int))
+    # folder_path = QFileDialog.getExistingDirectory(
+    #         self.window, 'Select Folder', os.path.dirname(path))
+    # if folder_path:
+    #     split_log_by_lines(
+    #             path, folder_path, self.settings.value('split_log_after', type=int),
+    #             self.settings.value('combat_distance', type=int))
 
 
 def combat_split_callback(self, path: str, first_num: str, last_num: str):
     """
     Callback for combat split button
     """
-    target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
-    if target_path:
-        split_log_by_combat(
-                path, target_path, int(first_num), int(last_num),
-                self.settings.value('seconds_between_combats', type=int),
-                self.settings.value('excluded_event_ids', type=list))
+    # target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
+    # if target_path:
+    #     split_log_by_combat(
+    #             path, target_path, int(first_num), int(last_num),
+    #             self.settings.value('seconds_between_combats', type=int),
+    #             self.settings.value('excluded_event_ids', type=list))
 
 
 def copy_live_data_callback(self):
@@ -323,25 +323,85 @@ def collapse_analysis_graph(self):
     self.settings.setValue('analysis_graph', False)
 
 
-def trim_logfile(self):
+def confirm_trim_logfile(self):
+    """
+    Prompts the user to confirm whether the logfile should be trimmed
+    """
+    title = tr('Trim Logfile')
+    text = tr(
+            'Trimming the logfile will delete all combats except for the most recent combat. '
+            'Continue?')
+    if confirmation_dialog(self, title, text):
+        success = trim_logfile(self)
+        if success:
+            show_message(self, title, tr('Logfile has been trimmed.'))
+        else:
+            show_message(self, title, tr('Trimming the logfile failed.'), 'error')
+
+
+def trim_logfile(self) -> bool:
     """
     Removes all combats but the most recent one from a logfile
+
+    :return: True if successful, False if not
     """
     log_path = os.path.abspath(self.entry.text())
-    temp_parser = OSCR(log_path, self.parser_settings)
-    if os.path.getsize(log_path) > 125 * 1024 * 1024:
-        temp_parser.analyze_massive_log_file()
+    if self.parser.log_path == log_path:
+        self.parser.export_combat(0, log_path)
     else:
-        temp_parser.analyze_log_file_old()
-    temp_parser.export_combat(0, log_path)
+        combats = self.parser.isolate_combats(log_path, 1)
+        if len(combats) < 1:
+            return False
+        combat = combats[0]
+        extract_bytes(log_path, log_path, combat[5], combat[6])
+    return True
 
 
 def repair_logfile(self):
     """
+    Repairs current logfile.
     """
     log_path = os.path.abspath(self.entry.text())
-    dir = QTemporaryDir()
-    oscr_repair_logfile(log_path, dir.path())
+    if os.path.isfile(log_path):
+        oscr_repair_logfile(log_path, self.config['templog_folder_path'])
+        show_message(self, tr('Repair Logfile'), tr('The Logfile has been repaired.'))
+    else:
+        show_message(
+                self, tr('Repair Logfile'),
+                tr('The Logfile you are trying to open does not exist.'), 'warning')
+
+
+def extract_combats(self, selected_indices: list):
+    """
+    Extracts combats in `selected_indices` from current logfile and prompts the user to select a
+    file to write them to.
+
+    Parameters:
+    - :param selected_indices: list of model indices refering to the selected combats
+    """
+    combat_intervals = list()
+    for index in selected_indices:
+        data = index.data()
+        combat_intervals.append((data[5], data[6]))
+    combat_intervals.sort(key=lambda element: element[0])
+    source_path = self.entry.text()
+    target_path = browse_path(
+            self, os.path.dirname(source_path), 'Logfile (*.log);;Any File (*.*)', save=True)
+    if target_path != '':
+        compose_logfile(
+                source_path, target_path, combat_intervals, self.config['templog_folder_path'])
+        show_message(self, tr('Split Logfile'), tr('Logfile has been saved.'))
+
+
+def populate_split_combats_list(self, combat_list):
+    """
+    Isolates all combats in the current logfile and inserts them into `combat_list`
+
+    Parameters:
+    - :param combat_list: QListView with CombatModel to insert the isolated combats into
+    """
+    combats = self.parser.isolate_combats(self.entry.text())
+    combat_list.model().set_items(combats)
 
 
 def show_parser_error(self, error: BaseException):

@@ -40,7 +40,7 @@ SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 
 
-def create_button(self, text, style: str = 'button', parent=None, style_override={}, toggle=None):
+def create_button(self, text, style: str = 'button', style_override={}, toggle=None):
     """
     Creates a button according to style with parent.
 
@@ -54,7 +54,7 @@ def create_button(self, text, style: str = 'button', parent=None, style_override
 
     :return: configured QPushButton
     """
-    button = QPushButton(text, parent)
+    button = QPushButton(text)
     button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
     if 'font' in style_override:
         button.setFont(theme_font(self, style, style_override['font']))
@@ -138,7 +138,7 @@ def create_label(self, text: str, style: str = 'label', style_override={}) -> QL
 
 
 def create_button_series(
-        self, parent, buttons: dict, style, shape: str = 'row', seperator: str = '', ret=False):
+        self, buttons: dict, style, shape: str = 'row', seperator: str = '', ret=False):
     """
     Creates a row / column of buttons.
 
@@ -186,7 +186,7 @@ def create_button_series(
         else:
             button_style = defaults
         toggle_button = detail['toggle'] if 'toggle' in detail else None
-        bt = self.create_button(name, style, parent, button_style, toggle_button)
+        bt = create_button(self, name, style, button_style, toggle_button)
         if 'callback' in detail and isinstance(detail['callback'], CALLABLE):
             if toggle_button:
                 bt.clicked[bool].connect(detail['callback'])
@@ -201,7 +201,7 @@ def create_button_series(
         if seperator != '' and i < (len(buttons) - 1):
             sep_label = create_label(self, seperator, 'label', sep_style)
             sep_label.setSizePolicy(SMAXMIN)
-            layout.addWidget(sep_label)
+            layout.addWidget(sep_label, alignment=AVCENTER)
 
     if ret:
         return layout, button_list

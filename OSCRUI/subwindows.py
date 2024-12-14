@@ -2,83 +2,28 @@ import os
 from traceback import format_exception
 
 from PySide6.QtCore import QPoint, QSize, Qt
-from PySide6.QtGui import QIntValidator, QMouseEvent, QTextOption
+from PySide6.QtGui import QMouseEvent, QTextOption
 from PySide6.QtWidgets import (
-        QAbstractItemView, QDialog, QGridLayout, QHBoxLayout, QLineEdit, QMessageBox, QSpacerItem,
+        QDialog, QGridLayout, QHBoxLayout, QListView, QMessageBox, QSpacerItem,
         QSplitter, QTableView, QTextEdit, QVBoxLayout)
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
 
 from .callbacks import (
-        auto_split_callback, combat_split_callback, copy_live_data_callback, repair_logfile,
-        trim_logfile)
+        confirm_trim_logfile, copy_live_data_callback, extract_combats, populate_split_combats_list,
+        repair_logfile)
+from .dialogs import show_message
 from .displayer import create_live_graph, update_live_display, update_live_graph, update_live_table
-from .datamodels import LiveParserTableModel
+from .datamodels import CombatModel, LiveParserTableModel
 from .iofunctions import open_link
 from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
 from .translation import tr
-from .widgetbuilder import create_button, create_frame, create_icon_button, create_label
+from .widgetbuilder import (
+        create_button, create_button_series, create_frame, create_icon_button, create_label)
 from .widgetbuilder import ABOTTOM, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, RFIXED
-from .widgetbuilder import SEXPAND, SMAX, SMAXMAX, SMINMAX, SMINMIN
-from .widgets import FlipButton, LiveParserWindow, SizeGrip
-
-
-def show_message(self, title: str, message: str, icon: str = 'info'):
-    """
-    Displays a message in a dialog
-
-    Parameters:
-    - :param title: title of the warning
-    - :param message: message to be displayed
-    - :param icon: "warning" or "info"
-    """
-    dialog = QDialog(self.window)
-    thick = self.theme['app']['frame_thickness']
-    item_spacing = self.theme['defaults']['isp']
-    main_layout = QVBoxLayout()
-    main_layout.setContentsMargins(thick, thick, thick, thick)
-    dialog_frame = create_frame(self, size_policy=SMINMIN)
-    main_layout.addWidget(dialog_frame)
-    dialog_layout = QVBoxLayout()
-    dialog_layout.setContentsMargins(thick, thick, thick, thick)
-    dialog_layout.setSpacing(thick)
-    content_frame = create_frame(self, size_policy=SMINMIN)
-    content_layout = QVBoxLayout()
-    content_layout.setContentsMargins(0, 0, 0, 0)
-    content_layout.setSpacing(item_spacing)
-    content_layout.setAlignment(ATOP)
-
-    top_layout = QHBoxLayout()
-    top_layout.setContentsMargins(0, 0, 0, 0)
-    top_layout.setSpacing(2 * thick)
-    icon_label = create_label(self, '')
-    icon_size = self.theme['s.c']['big_icon_size'] * self.config['ui_scale']
-    icon_label.setPixmap(self.icons[icon].pixmap(icon_size))
-    top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
-    message_label = create_label(self, message)
-    message_label.setWordWrap(True)
-    message_label.setSizePolicy(SMINMAX)
-    top_layout.addWidget(message_label, stretch=1)
-    content_layout.addLayout(top_layout)
-
-    content_frame.setLayout(content_layout)
-    dialog_layout.addWidget(content_frame, stretch=1)
-
-    seperator = create_frame(self, style='light_frame', size_policy=SMINMAX)
-    seperator.setFixedHeight(1)
-    dialog_layout.addWidget(seperator)
-    ok_button = create_button(self, tr('OK'))
-    ok_button.clicked.connect(lambda: dialog.done(0))
-    dialog_layout.addWidget(ok_button, alignment=AHCENTER)
-    dialog_frame.setLayout(dialog_layout)
-
-    dialog = QDialog(self.window)
-    dialog.setLayout(main_layout)
-    dialog.setWindowTitle('OSCR - ' + title)
-    dialog.setStyleSheet(get_style(self, 'dialog_window'))
-    dialog.setSizePolicy(SMAXMAX)
-    dialog.exec()
+from .widgetbuilder import SMAXMAX, SMINMAX, SMINMIN, SMIXMIN
+from .widgets import CombatDelegate, FlipButton, LiveParserWindow, SizeGrip
 
 
 def log_size_warning(self):
@@ -121,121 +66,102 @@ def split_dialog(self):
     """
     main_layout = QVBoxLayout()
     thick = self.theme['app']['frame_thickness']
-    item_spacing = self.theme['defaults']['isp']
     main_layout.setContentsMargins(thick, thick, thick, thick)
     content_frame = create_frame(self)
     main_layout.addWidget(content_frame)
     current_logpath = self.entry.text()
-    vertical_layout = QVBoxLayout()
-    vertical_layout.setContentsMargins(thick, thick, thick, thick)
-    vertical_layout.setSpacing(item_spacing)
+    content_layout = QVBoxLayout()
+    content_layout.setContentsMargins(thick, thick, thick, thick)
+    content_layout.setSpacing(thick)
     log_layout = QHBoxLayout()
     log_layout.setContentsMargins(0, 0, 0, 0)
-    log_layout.setSpacing(item_spacing)
-    current_log_heading = create_label(self, tr('Selected Logfile:'), 'label_subhead')
-    log_layout.addWidget(current_log_heading, alignment=ALEFT)
-    current_log_label = create_label(self, format_path(current_logpath), 'label')
-    log_layout.addWidget(current_log_label, alignment=AVCENTER)
-    log_layout.addSpacerItem(QSpacerItem(1, 1, hData=SEXPAND, vData=SMAX))
-    vertical_layout.addLayout(log_layout)
-    seperator_1 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_1.setFixedHeight(self.theme['hr']['height'])
-    vertical_layout.addWidget(seperator_1)
-    grid_layout = QGridLayout()
-    grid_layout.setContentsMargins(0, 0, 0, 0)
-    grid_layout.setVerticalSpacing(0)
-    grid_layout.setHorizontalSpacing(item_spacing)
-    vertical_layout.addLayout(grid_layout)
-
+    log_layout.setSpacing(thick)
+    log_layout.setAlignment(ALEFT)
+    current_log_heading = create_label(
+            self, tr('Selected Logfile:'), 'label_light')
+    log_layout.addWidget(current_log_heading)
+    current_log_label = create_label(
+            self, format_path(current_logpath), 'label_subhead', {'margin-bottom': 0})
+    log_layout.addWidget(current_log_label)
+    content_layout.addLayout(log_layout)
+    seperator = create_frame(self, style='hr', size_policy=SMINMAX)
+    seperator.setFixedHeight(self.theme['hr']['height'])
+    content_layout.addWidget(seperator)
+    trim_layout = QGridLayout()
+    trim_layout.setContentsMargins(0, 0, 0, 0)
+    trim_layout.setSpacing(thick)
+    trim_layout.setColumnStretch(0, 1)
     trim_heading = create_label(self, tr('Trim Logfile:'), 'label_heading')
-    grid_layout.addWidget(trim_heading, 0, 0, alignment=ALEFT)
-    label_text = (
-            tr('Removes all combats but the most recent one from the selected logfile. ')
-            + tr('All previous combats will be lost!'))
-    trim_text = create_label(self, label_text, 'label')
+    trim_layout.addWidget(trim_heading, 0, 0, alignment=ALEFT)
+    label_text = tr(
+            'Removes all combats except for the most recent one from the selected logfile. '
+            'All previous combats will be lost!')
+    trim_text = create_label(self, label_text)
+    trim_text.setSizePolicy(SMINMAX)
     trim_text.setWordWrap(True)
-    trim_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(trim_text, 1, 0, alignment=ALEFT)
+    trim_layout.addWidget(trim_text, 1, 0)
     trim_button = create_button(self, tr('Trim'))
-    trim_button.clicked.connect(lambda: trim_logfile(self))
-    grid_layout.addWidget(trim_button, 1, 2, alignment=ARIGHT | ABOTTOM)
-    grid_layout.setRowMinimumHeight(2, item_spacing)
-    seperator_3 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_3.setFixedHeight(self.theme['hr']['height'])
-    grid_layout.addWidget(seperator_3, 3, 0, 1, 3)
-    grid_layout.setRowMinimumHeight(4, item_spacing)
-
-    auto_split_heading = create_label(self, tr('Split Log Automatically:'), 'label_heading')
-    grid_layout.addWidget(auto_split_heading, 5, 0, alignment=ALEFT)
-    label_text = (
-            tr('Automatically splits the logfile at the next combat end after ')
-            + f'{self.settings.value("split_log_after", type=int):,}'
-            + tr(' lines until the entire file has ')
-            + tr(' been split. The new files are written to the selected folder. It is advised to ')
-            + tr('select an empty folder to ensure all files are saved correctly.'))
-    auto_split_text = create_label(self, label_text, 'label')
-    auto_split_text.setWordWrap(True)
-    auto_split_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(auto_split_text, 6, 0, alignment=ALEFT)
-    auto_split_button = create_button(self, tr('Auto Split'))
-    auto_split_button.clicked.connect(lambda: auto_split_callback(self, current_logpath))
-    grid_layout.addWidget(auto_split_button, 6, 2, alignment=ARIGHT | ABOTTOM)
-    grid_layout.setRowMinimumHeight(7, item_spacing)
-    seperator_8 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_8.setFixedHeight(self.theme['hr']['height'])
-    grid_layout.addWidget(seperator_8, 8, 0, 1, 3)
-    grid_layout.setRowMinimumHeight(9, item_spacing)
-    range_split_heading = create_label(self, tr('Export Range of Combats:'), 'label_heading')
-    grid_layout.addWidget(range_split_heading, 10, 0, alignment=ALEFT)
-    label_text = 'Soon to be removed'
-    range_split_text = create_label(self, label_text, 'label')
-    range_split_text.setWordWrap(True)
-    range_split_text.setFixedWidth(self.sidebar_item_width)
-    grid_layout.addWidget(range_split_text, 11, 0, alignment=ALEFT)
-    range_limit_layout = QGridLayout()
-    range_limit_layout.setContentsMargins(0, 0, 0, 0)
-    range_limit_layout.setSpacing(0)
-    range_limit_layout.setRowStretch(0, 1)
-    lower_range_label = create_label(self, tr('Lower Limit:'), 'label')
-    range_limit_layout.addWidget(lower_range_label, 1, 0, alignment=AVCENTER)
-    upper_range_label = create_label(self, tr('Upper Limit:'), 'label')
-    range_limit_layout.addWidget(upper_range_label, 2, 0, alignment=AVCENTER)
-    lower_range_entry = QLineEdit()
-    lower_validator = QIntValidator()
-    lower_validator.setBottom(1)
-    lower_range_entry.setValidator(lower_validator)
-    lower_range_entry.setText('1')
-    lower_range_entry.setStyleSheet(
-            get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
-    lower_range_entry.setFixedWidth(self.sidebar_item_width // 7)
-    range_limit_layout.addWidget(lower_range_entry, 1, 1, alignment=AVCENTER)
-    upper_range_entry = QLineEdit()
-    upper_validator = QIntValidator()
-    upper_validator.setBottom(-1)
-    upper_range_entry.setValidator(upper_validator)
-    upper_range_entry.setText('1')
-    upper_range_entry.setStyleSheet(
-            get_style(self, 'entry', {'margin-top': 0, 'margin-left': '@csp'}))
-    upper_range_entry.setFixedWidth(self.sidebar_item_width // 7)
-    range_limit_layout.addWidget(upper_range_entry, 2, 1, alignment=AVCENTER)
-    grid_layout.addLayout(range_limit_layout, 11, 1)
-    range_split_button = create_button(self, tr('Export Combats'))
-    range_split_button.clicked.connect(
-            lambda le=lower_range_entry, ue=upper_range_entry:
-            combat_split_callback(self, current_logpath, le.text(), ue.text()))
-    grid_layout.addWidget(range_split_button, 11, 2, alignment=ARIGHT | ABOTTOM)
-    grid_layout.setRowMinimumHeight(12, item_spacing)
-    seperator_13 = create_frame(self, content_frame, 'hr', size_policy=SMINMIN)
-    seperator_13.setFixedHeight(self.theme['hr']['height'])
-    grid_layout.addWidget(seperator_13, 13, 0, 1, 3)
-    grid_layout.setRowMinimumHeight(14, item_spacing)
-    repair_log_heading = create_label(self, 'Repair Logfile', 'label_heading')
-    grid_layout.addWidget(repair_log_heading, 15, 0, alignment=ALEFT)
-    repair_log_button = create_button(self, 'Repair')
+    trim_button.clicked.connect(lambda: confirm_trim_logfile(self))
+    trim_layout.addWidget(trim_button, 0, 1, alignment=ARIGHT | ABOTTOM)
+    content_layout.addLayout(trim_layout)
+    seperator = create_frame(self, style='hr', size_policy=SMINMAX)
+    seperator.setFixedHeight(self.theme['hr']['height'])
+    content_layout.addWidget(seperator)
+    repair_layout = QGridLayout()
+    repair_layout.setContentsMargins(0, 0, 0, 0)
+    repair_layout.setSpacing(thick)
+    repair_layout.setColumnStretch(0, 1)
+    repair_log_heading = create_label(self, tr('Repair Logfile:'), 'label_heading')
+    repair_layout.addWidget(repair_log_heading, 0, 0, alignment=ALEFT)
+    label_text = tr('Attempts to repair the logfile by replacing sections known to break parsing.')
+    repair_label = create_label(self, label_text)
+    repair_layout.addWidget(repair_label, 1, 0)
+    repair_log_button = create_button(self, tr('Repair'))
     repair_log_button.clicked.connect(lambda: repair_logfile(self))
-    grid_layout.addWidget(repair_log_button, 16, 2, alignment=ARIGHT | ABOTTOM)
+    repair_layout.addWidget(repair_log_button, 0, 1, alignment=ARIGHT | ABOTTOM)
+    content_layout.addLayout(repair_layout)
+    seperator = create_frame(self, style='hr', size_policy=SMINMAX)
+    seperator.setFixedHeight(self.theme['hr']['height'])
+    content_layout.addWidget(seperator)
 
-    content_frame.setLayout(vertical_layout)
+    combat_list = QListView()
+    split_heading_layout = QHBoxLayout()
+    split_heading_layout.setContentsMargins(0, 0, 0, 0)
+    split_heading_layout.setSpacing(thick)
+    split_heading = create_label(self, tr('Split Logfile:'), 'label_heading')
+    split_heading_layout.addWidget(split_heading, alignment=ALEFT, stretch=1)
+    split_button_style = {
+        tr('Load Combats'): {'callback': lambda: populate_split_combats_list(self, combat_list)},
+        tr('Split'): {'callback': lambda: extract_combats(
+                self, combat_list.selectionModel().selectedIndexes())},
+    }
+    buttons_layout = create_button_series(self, split_button_style, 'button', seperator='•')
+    split_heading_layout.addLayout(buttons_layout)
+    content_layout.addLayout(split_heading_layout)
+    label_text = tr('Extracts (multiple) combats from selected file and saves them to new file.')
+    split_label = create_label(self, label_text)
+    content_layout.addWidget(split_label)
+    background_frame = create_frame(self, style='frame', style_override={
+            'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp',
+            'margin-bottom': '@csp'}, size_policy=SMINMIN)
+    background_layout = QVBoxLayout()
+    background_layout.setContentsMargins(0, 0, 0, 0)
+    background_frame.setLayout(background_layout)
+    combat_list.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
+    combat_list.setSelectionMode(QListView.SelectionMode.MultiSelection)
+    combat_list.setStyleSheet(get_style_class(self, 'QListView', 'listbox'))
+    combat_list.setFont(theme_font(self, 'listbox'))
+    combat_list.setAlternatingRowColors(True)
+    combat_list.setSizePolicy(SMIXMIN)
+    combat_list.setModel(CombatModel())
+    ui_scale = self.config['ui_scale']
+    border_width = 1 * ui_scale
+    padding = 4 * ui_scale
+    combat_list.setItemDelegate(CombatDelegate(border_width, padding))
+    background_layout.addWidget(combat_list)
+    content_layout.addWidget(background_frame, alignment=AHCENTER)
+
+    content_frame.setLayout(content_layout)
 
     dialog = QDialog(self.window)
     dialog.setLayout(main_layout)
@@ -414,7 +340,7 @@ def create_live_parser_window(self):
     table.horizontalHeader().setSectionResizeMode(RFIXED)
     table.verticalHeader().setSectionResizeMode(RFIXED)
     table.setSizePolicy(SMINMIN)
-    table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+    table.setSelectionMode(QTableView.SelectionMode.NoSelection)
     table.setMinimumWidth(self.sidebar_item_width * 0.1)
     table.setMinimumHeight(self.sidebar_item_width * 0.1)
     table.setSortingEnabled(True)

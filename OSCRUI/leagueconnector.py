@@ -14,9 +14,10 @@ from PySide6.QtCore import QTemporaryDir
 
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
+from .dialogs import show_message
 from .iofunctions import open_link
 from .style import theme_font
-from .subwindows import show_message, uploadresult_dialog
+from .subwindows import uploadresult_dialog
 from .textedit import format_datetime_str
 from .translation import tr
 

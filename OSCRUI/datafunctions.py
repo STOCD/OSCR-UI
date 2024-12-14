@@ -7,8 +7,8 @@ from PySide6.QtCore import Qt, QThread, Signal, Slot
 
 from .callbacks import switch_main_tab, switch_overview_tab
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
+from .dialogs import show_message
 from .displayer import create_overview
-from .subwindows import show_message
 from .textedit import format_damage_number, format_damage_tree_data, format_heal_tree_data
 from .translation import tr
 

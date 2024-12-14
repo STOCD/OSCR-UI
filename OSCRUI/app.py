@@ -174,6 +174,9 @@ class OSCRUI():
         self.config['live_scale'] = self.settings.value('live_scale', type=float)
         self.config['icon_size'] = round(
                 self.config['ui_scale'] * self.theme['s.c']['button_icon_size'])
+        self.config['settings_path'] = os.path.abspath(self.app_dir + self.config['settings_path'])
+        self.config['templog_folder_path'] = os.path.abspath(
+                self.app_dir + self.config['templog_folder_path'])
 
     def init_parser(self):
         """
@@ -198,8 +201,9 @@ class OSCRUI():
         settings = dict()
         for setting_key, settings_type in relevant_settings:
             setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
-            if setting:
+            if setting != '':
                 settings[setting_key] = setting
+        settings['templog_folder_path'] = self.config['templog_folder_path']
         return settings
 
     @property
@@ -372,7 +376,7 @@ class OSCRUI():
                 'callback': lambda: self.switch_map_tab(1), 'align': ACENTER, 'toggle': False},
         }
         map_switcher, map_buttons = self.create_button_series(
-                map_switch_buttons_frame, map_switch_style, 'tab_button', ret=True)
+                map_switch_style, 'tab_button', ret=True)
         for button in map_buttons:
             button.setSizePolicy(SMAXMIN)
         map_switcher.setContentsMargins(0, 0, 0, 0)
@@ -503,7 +507,7 @@ class OSCRUI():
                 'align': ARIGHT, 'style': {'margin-right': 0}
             }
         }
-        entry_buttons = self.create_button_series(frame, entry_button_config, 'button')
+        entry_buttons = self.create_button_series(entry_button_config, 'button')
         entry_buttons.setContentsMargins(0, 0, 0, self.theme['defaults']['margin'])
         left_layout.addLayout(entry_buttons)
 
@@ -603,7 +607,7 @@ class OSCRUI():
                 'callback': lambda: open_link(self.config['link_downloads'])}
         }
         button_layout, buttons = self.create_button_series(
-                frame, link_button_style, 'button', seperator='•', ret=True)
+                link_button_style, 'button', seperator='•', ret=True)
         buttons[0].setToolTip(self.config['link_website'])
         buttons[1].setToolTip(self.config['link_github'])
         buttons[2].setToolTip(self.config['link_downloads'])
@@ -741,7 +745,7 @@ class OSCRUI():
                 'callback': lambda: self.switch_overview_tab(2), 'align': ACENTER, 'toggle': False}
         }
         switcher, buttons = self.create_button_series(
-                switch_frame, switch_style, 'tab_button', ret=True)
+                switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
         self.widgets.overview_menu_buttons = buttons
@@ -839,7 +843,7 @@ class OSCRUI():
                 'toggle': False}
         }
         switcher, buttons = self.create_button_series(
-                switch_frame, switch_style, 'tab_button', ret=True)
+                switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
         self.widgets.analysis_menu_buttons = buttons
@@ -968,7 +972,7 @@ class OSCRUI():
             tr('More'): {'callback': self.extend_ladder, 'style': {'margin-right': 0}}
         }
         control_button_layout = self.create_button_series(
-                l_frame, control_button_style, 'button', seperator='•')
+                control_button_style, 'button', seperator='•')
         control_layout.addLayout(control_button_layout, 0, 3, alignment=AVCENTER)
         layout.addLayout(control_layout)
 
@@ -1010,7 +1014,7 @@ class OSCRUI():
             tr('Settings'): {},
         }
         bt_lay, buttons = self.create_button_series(
-                menu_frame, menu_button_style, style='menu_button', seperator='•', ret=True)
+                menu_button_style, style='menu_button', seperator='•', ret=True)
         menu_layout.addLayout(bt_lay, 0, 0)
         self.widgets.main_menu_buttons = buttons
 
@@ -1256,7 +1260,7 @@ class OSCRUI():
         self.set_buttons = list()
         for i, head in enumerate(tr(TREE_HEADER)[1:]):
             bt = self.create_button(
-                    head, 'toggle_button', dmg_hider_frame,
+                    head, 'toggle_button',
                     toggle=self.settings.value(f'dmg_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
@@ -1267,7 +1271,7 @@ class OSCRUI():
                 size_policy=SMINMIN)
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)
-        apply_button = self.create_button(tr('Apply'), 'button', dmg_hider_frame)
+        apply_button = self.create_button(tr('Apply'), 'button')
         apply_button.clicked.connect(self.update_shown_columns_dmg)
         dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT | ATOP)
         dmg_hider_frame.setLayout(dmg_hider_layout)
@@ -1281,7 +1285,7 @@ class OSCRUI():
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(tr(HEAL_TREE_HEADER)[1:]):
             bt = self.create_button(
-                    head, 'toggle_button', heal_hider_frame,
+                    head, 'toggle_button',
                     toggle=self.settings.value(f'heal_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
@@ -1292,7 +1296,7 @@ class OSCRUI():
             size_policy=SMINMIN)
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
-        apply_button_2 = self.create_button(tr('Apply'), 'button', heal_hider_frame)
+        apply_button_2 = self.create_button(tr('Apply'), 'button')
         apply_button_2.clicked.connect(self.update_shown_columns_heal)
         heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
@@ -1306,7 +1310,7 @@ class OSCRUI():
                 col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(tr(LIVE_TABLE_HEADER)):
             bt = self.create_button(
-                    head, 'toggle_button', live_hider_frame,
+                    head, 'toggle_button',
                     toggle=self.settings.value(f'live_columns|{i}', type=bool))
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
