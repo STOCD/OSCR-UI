@@ -1,11 +1,11 @@
 import os
 
 from PySide6.QtWidgets import (
-        QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QScrollArea,
-        QSpacerItem, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout,
-        QSizePolicy)
-from PySide6.QtCore import QSize, QSettings, QTimer, QThread
-from PySide6.QtGui import QFontDatabase, QIntValidator, QKeySequence, QShortcut
+        QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QListWidgetItem,
+        QScrollArea, QSpacerItem, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout,
+        QGridLayout)
+from PySide6.QtCore import QSize, QSettings, Qt, QTimer, QThread
+from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
 from .datamodels import CombatModel
@@ -28,12 +28,11 @@ from .widgets import (
 class OSCRUI():
 
     from .callbacks import (
-            browse_log, browse_sto_logpath, collapse_analysis_graph, collapse_overview_table,
-            expand_analysis_graph, expand_overview_table,
-            favorite_button_callback, navigate_log, save_combat, set_live_scale_setting,
-            set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
-            set_ui_scale_setting, switch_analysis_tab, switch_main_tab,
-            switch_map_tab, switch_overview_tab)
+            add_favorite_ladder, browse_log, browse_sto_logpath, collapse_analysis_graph,
+            collapse_overview_table, expand_analysis_graph, expand_overview_table, navigate_log,
+            remove_favorite_ladder, save_combat, set_live_scale_setting, set_parser_opacity_setting,
+            set_graph_resolution_setting, set_sto_logpath_setting, set_ui_scale_setting,
+            switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab)
     from .datafunctions import (
             analysis_data_slot, analyze_log_background, analyze_log_callback,
             copy_analysis_callback, copy_analysis_table_callback, copy_summary_callback,
@@ -47,7 +46,7 @@ class OSCRUI():
     from .widgetbuilder import create_icon_button, create_label, style_table
     from .leagueconnector import apply_league_table_filter, download_and_view_combat
     from .leagueconnector import (
-            establish_league_connection, extend_ladder, slot_ladder_default, slot_ladder_season,
+            establish_league_connection, extend_ladder, slot_ladder,
             update_seasonal_records)
     from .leagueconnector import upload_callback
 
@@ -125,7 +124,8 @@ class OSCRUI():
             'export-parse': 'export.svg',
             'copy': 'copy.svg',
             'ladder': 'ladder.svg',
-            'star': 'star.svg',
+            'star-plus': 'star_plus.svg',
+            'star-minus': 'star_minus.svg',
             'stocd': 'section31badge.png',
             'stobuilds': 'stobuildslogo.png',
             'close': 'close.svg',
@@ -143,6 +143,9 @@ class OSCRUI():
             'info': 'info.svg',
             'chevron-right': 'chevron-right.svg',
             'chevron-down': 'chevron-down.svg',
+            'TFO-normal': 'TFO_normal.png',
+            'TFO-advanced': 'TFO_advanced.png',
+            'TFO-elite': 'TFO_elite.png'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -354,116 +357,79 @@ class OSCRUI():
         m = self.theme['defaults']['margin']
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(m, m, m, m)
-        left_layout.setSpacing(0)
+        left_layout.setSpacing(self.theme['defaults']['csp'])
         left_layout.setAlignment(ATOP)
 
+        map_layout = QHBoxLayout()
         map_label = self.create_label(tr('Available Maps:'), 'label_heading')
-        left_layout.addWidget(map_label)
+        map_layout.addWidget(map_label, alignment=ALEFT | ABOTTOM)
+        fav_add_button = self.create_icon_button(
+                self.icons['star-plus'], tr('Add to Favorites'))
+        fav_add_button.clicked.connect(self.add_favorite_ladder)
+        map_layout.addWidget(fav_add_button, alignment=ARIGHT)
+        left_layout.addLayout(map_layout)
 
-        map_switch_layout = QGridLayout()
-        map_switch_layout.setContentsMargins(0, 0, 0, 0)
-        map_switch_layout.setSpacing(0)
-        map_switch_layout.setColumnStretch(0, 1)
-        map_switch_layout.setColumnStretch(1, 3)
-        map_switch_layout.setColumnStretch(2, 1)
-        map_switch_buttons_frame = self.create_frame(frame, 'medium_frame')
-        map_switch_layout.addWidget(map_switch_buttons_frame, 0, 1, alignment=ACENTER)
-        map_switch_style = {
-            'default': {'margin-left': '@margin', 'margin-right': '@margin'},
-            tr('All Maps'): {
-                'callback': lambda: self.switch_map_tab(0), 'align': ACENTER, 'toggle': True},
-            tr('Favorites'): {
-                'callback': lambda: self.switch_map_tab(1), 'align': ACENTER, 'toggle': False},
-        }
-        map_switcher, map_buttons = self.create_button_series(
-                map_switch_style, 'tab_button', ret=True)
-        for button in map_buttons:
-            button.setSizePolicy(SMAXMIN)
-        map_switcher.setContentsMargins(0, 0, 0, 0)
-        map_switch_buttons_frame.setLayout(map_switcher)
-        self.widgets.map_menu_buttons = map_buttons
-        favorite_button = self.create_icon_button(self.icons['star'], tr('Add to Favorites'))
-        favorite_button.clicked.connect(self.favorite_button_callback)
-        map_switch_layout.addWidget(favorite_button, 0, 2, ARIGHT)
-        left_layout.addLayout(map_switch_layout)
+        variant_list = self.create_combo_box()
+        variant_list.currentTextChanged.connect(lambda text: self.update_seasonal_records(text))
+        left_layout.addWidget(variant_list)
+        self.widgets.variant_combo = variant_list
 
-        all_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
-        favorites_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
-        maps_tabber = QTabWidget(frame)
-        maps_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
-        maps_tabber.tabBar().setStyleSheet(self.get_style_class('QTabBar', 'tabber_tab'))
-        maps_tabber.setSizePolicy(SMINMIN)
-        maps_tabber.addTab(all_frame, tr('All Maps'))
-        maps_tabber.addTab(favorites_frame, tr('Favorites'))
-        self.widgets.map_tabber = maps_tabber
-        self.widgets.map_tab_frames.append(all_frame)
-        self.widgets.map_tab_frames.append(favorites_frame)
-        left_layout.addWidget(maps_tabber, stretch=1)
-
-        all_layout = QVBoxLayout()
-        all_layout.setContentsMargins(0, 0, 0, 0)
-        all_layout.setSpacing(0)
-        background_frame = self.create_frame(all_frame, 'light_frame', style_override={
-                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
+        background_frame = self.create_frame(frame, style_override={
+                'border-radius': self.theme['listbox']['border-radius']},
                 size_policy=SMINMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
-        self.map_selector = QListWidget(background_frame)
-        self.map_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
-        self.map_selector.setFont(self.theme_font('listbox'))
-        self.map_selector.setSizePolicy(SMIXMIN)
-        self.widgets.ladder_selector = self.map_selector
-        self.map_selector.itemClicked.connect(
-                lambda clicked_item: self.slot_ladder_default(clicked_item.text()))
-        background_layout.addWidget(self.map_selector)
-        all_layout.addWidget(background_frame, stretch=1)
-        all_frame.setLayout(all_layout)
+        ladder_selector = QListWidget(background_frame)
+        ladder_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
+        ladder_selector.setFont(self.theme_font('listbox'))
+        ladder_selector.setSizePolicy(SMIXMIN)
+        ladder_selector.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.widgets.ladder_selector = ladder_selector
+        ladder_selector.itemClicked.connect(
+                lambda clicked_item: self.slot_ladder(clicked_item))
+        background_layout.addWidget(ladder_selector)
+        left_layout.addWidget(background_frame, stretch=3)
 
-        favorites_layout = QVBoxLayout()
-        favorites_layout.setContentsMargins(0, 0, 0, 0)
-        favorites_layout.setSpacing(0)
-        background_frame = self.create_frame(favorites_frame, 'light_frame', style_override={
-                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
+        fav_layout = QHBoxLayout()
+        favorites_label = self.create_label(tr('Favorites:'), 'label_heading')
+        fav_layout.addWidget(favorites_label, alignment=ALEFT | ABOTTOM)
+        fav_add_button = self.create_icon_button(
+                self.icons['star-minus'], tr('Add to Favorites'))
+        fav_add_button.clicked.connect(self.remove_favorite_ladder)
+        fav_layout.addWidget(fav_add_button, alignment=ARIGHT)
+        left_layout.addLayout(fav_layout)
+
+        background_frame = self.create_frame(frame, style_override={
+                'border-radius': self.theme['listbox']['border-radius']},
                 size_policy=SMINMIN)
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
-        self.favorite_selector = QListWidget(background_frame)
-        self.favorite_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
-        self.favorite_selector.setFont(self.theme_font('listbox'))
-        self.favorite_selector.setSizePolicy(SMIXMIN)
-        self.widgets.favorite_ladder_selector = self.favorite_selector
-        self.favorite_selector.addItems(self.settings.value('favorite_ladders', type=list))
-        self.favorite_selector.itemClicked.connect(
-                lambda clicked_item: self.slot_ladder_default(clicked_item.text()))
-        background_layout.addWidget(self.favorite_selector)
-        favorites_layout.addWidget(background_frame, stretch=1)
-        favorites_frame.setLayout(favorites_layout)
+        favorite_selector = QListWidget(background_frame)
+        favorite_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
+        favorite_selector.setFont(self.theme_font('listbox'))
+        favorite_selector.setSizePolicy(SMIXMIN)
+        favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.widgets.favorite_ladder_selector = favorite_selector
+        for favorite_ladder in self.settings.value('favorite_ladders', type=list):
+            ladder_text, difficulty = favorite_ladder.split('|')
+            if difficulty == 'None':
+                difficulty = None
+            item = QListWidgetItem(ladder_text)
+            item.difficulty = difficulty
+            if difficulty != 'Any' and difficulty is not None:
+                icon = self.icons[f'TFO-{difficulty.lower()}']
+                icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
+                item.setIcon(icon)
+            favorite_selector.addItem(item)
+        favorite_selector.itemClicked.connect(
+                lambda clicked_item: self.slot_ladder(clicked_item))
+        background_layout.addWidget(favorite_selector)
+        left_layout.addWidget(background_frame, stretch=2)
 
-        map_label = self.create_label(
-                tr('Seasonal Records:'), 'label_heading', {'margin-top': '@isp'})
-        left_layout.addWidget(map_label)
-
-        self.variant_list = self.create_combo_box(frame)
-        self.variant_list.currentTextChanged.connect(lambda _: self.update_seasonal_records())
-        left_layout.addWidget(self.variant_list)
-
-        background_frame = self.create_frame(all_frame, 'light_frame', style_override={
-                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp'},
-                size_policy=SMINMIN)
-        background_layout = QVBoxLayout()
-        background_layout.setContentsMargins(0, 0, 0, 0)
-        background_frame.setLayout(background_layout)
-        self.season_selector = QListWidget(background_frame)
-        self.season_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
-        self.season_selector.setFont(self.theme_font('listbox'))
-        self.season_selector.setSizePolicy(SMIXMIN)
-        self.widgets.season_ladder_selector = self.season_selector
-        self.season_selector.currentTextChanged.connect(
-                lambda new_text: self.slot_ladder_season(new_text))
-        background_layout.addWidget(self.season_selector)
-        left_layout.addWidget(background_frame, stretch=1)
+        ladder_selector.itemClicked.connect(favorite_selector.clearSelection)
+        favorite_selector.itemClicked.connect(ladder_selector.clearSelection)
 
         frame.setLayout(left_layout)
 
@@ -690,6 +656,7 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
+        self.widgets.main_menu_buttons[2].clicked.connect(self.establish_league_connection)
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
@@ -850,7 +817,7 @@ class OSCRUI():
         copy_layout = QHBoxLayout()
         copy_layout.setContentsMargins(0, 0, 0, 0)
         copy_layout.setSpacing(self.theme['defaults']['csp'])
-        copy_combobox = self.create_combo_box(switch_frame)
+        copy_combobox = self.create_combo_box()
         copy_combobox.addItems((
                 tr('Selection'), tr('Global Max One Hit'), tr('Max One Hit'), tr('Magnitude'),
                 tr('Magnitude / s')))
@@ -945,18 +912,21 @@ class OSCRUI():
         Sets up the frame housing the detailed analysis table and graph
         """
         l_frame = self.widgets.main_tab_frames[2]
+        m = self.theme['defaults']['csp']
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(0, m, 0, m)
+        layout.setSpacing(m)
 
         ladder_table = QTableView(l_frame)
-        self.style_table(ladder_table, {'margin-top': '@isp'}, single_row_selection=True)
+        table_style = {
+                'border-style': 'solid', 'border-width': '@bw',
+                'border-color': '@bc'}
+        self.style_table(ladder_table, table_style, single_row_selection=True)
         self.widgets.ladder_table = ladder_table
         layout.addWidget(ladder_table, stretch=1)
 
         control_layout = QGridLayout()
-        m = self.theme['defaults']['margin']
-        control_layout.setContentsMargins(m, 0, m, m)
+        control_layout.setContentsMargins(0, 0, 0, 0)
         control_layout.setSpacing(0)
         control_layout.setColumnStretch(2, 1)
         search_label = self.create_label(
@@ -1106,8 +1076,7 @@ class OSCRUI():
         overview_sort_label = self.create_label(
                 tr('Sort overview table by column:'), 'label_subhead')
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
-        overview_sort_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
+        overview_sort_combo = self.create_combo_box(style_override={'font': '@small_text'})
         overview_sort_combo.addItems(TABLE_HEADER)
         overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
         overview_sort_combo.currentIndexChanged.connect(
@@ -1116,8 +1085,7 @@ class OSCRUI():
         overview_sort_order_label = self.create_label(
                 tr('Overview table sort order:'), 'label_subhead')
         sec_1.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
-        overview_sort_order_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
+        overview_sort_order_combo = self.create_combo_box(style_override={'font': '@small_text'})
         overview_sort_order_combo.addItems((tr('Descending'), tr('Ascending')))
         overview_sort_order_combo.setCurrentText(self.settings.value('overview_sort_order'))
         overview_sort_order_combo.currentTextChanged.connect(
@@ -1169,8 +1137,7 @@ class OSCRUI():
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
         live_graph_field_label = self.create_label(tr('LiveParser Graph Field:'), 'label_subhead')
         sec_1.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
-        live_graph_field_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
+        live_graph_field_combo = self.create_combo_box(style_override={'font': '@small_text'})
         live_graph_field_combo.addItems(self.config['live_graph_fields'])
         live_graph_field_combo.setCurrentIndex(self.settings.value('live_graph_field', type=int))
         live_graph_field_combo.currentIndexChanged.connect(
@@ -1178,8 +1145,7 @@ class OSCRUI():
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
         live_name_label = self.create_label(tr('LiveParser Player:'), 'label_subhead')
         sec_1.addWidget(live_name_label, 11, 0, alignment=ARIGHT)
-        live_player_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
+        live_player_combo = self.create_combo_box(style_override={'font': '@small_text'})
         live_player_combo.addItems(('Name', 'Handle'))
         live_player_combo.setCurrentText(self.settings.value('live_player', type=str))
         live_player_combo.currentTextChanged.connect(
@@ -1187,8 +1153,7 @@ class OSCRUI():
         sec_1.addWidget(live_player_combo, 11, 1, alignment=ALEFT)
         overview_tab_label = self.create_label(tr('Default Overview Tab:'), 'label_subhead')
         sec_1.addWidget(overview_tab_label, 12, 0, alignment=ARIGHT)
-        overview_tab_combo = self.create_combo_box(
-                col_2_frame, style_override={'font': '@small_text'})
+        overview_tab_combo = self.create_combo_box(style_override={'font': '@small_text'})
         overview_tab_combo.addItems((tr('DPS Bar'), tr('DPS Graph'), tr('Damage Graph')))
         overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
         overview_tab_combo.currentIndexChanged.connect(
@@ -1225,7 +1190,7 @@ class OSCRUI():
         language_codes = ('en', 'zh', 'de')
         language_label = self.create_label(tr('Language:'), 'label_subhead')
         sec_1.addWidget(language_label, 16, 0, alignment=ARIGHT)
-        language_combo = self.create_combo_box(col_2_frame, style_override={'font': '@small_text'})
+        language_combo = self.create_combo_box(style_override={'font': '@small_text'})
         language_combo.addItems(languages)
         current_language_code = self.settings.value('language')
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])

@@ -5,17 +5,19 @@ import json
 import os
 import tempfile
 
-import OSCR_django_client
-from OSCR.utilities import logline_to_str
 from OSCR_django_client.api import (
         CombatlogApi, LadderApi, LadderEntriesApi, VariantApi)
-from PySide6.QtWidgets import QMessageBox
+from OSCR_django_client.api_client import ApiClient
+from OSCR_django_client.exceptions import ServiceException
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QListWidgetItem, QMessageBox
 from PySide6.QtCore import QTemporaryDir
+
+from OSCR.utilities import logline_to_str
 
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
 from .dialogs import show_message
-from .iofunctions import open_link
 from .style import theme_font
 from .subwindows import uploadresult_dialog
 from .textedit import format_datetime_str
@@ -48,36 +50,39 @@ def fetch_and_insert_maps(self):
     """
     Retrieves maps from API and inserts them into the list.
     """
+    populate_variants(self)
+    # update_seasonal_records(self)
 
-    update_default_records(self)
-    update_seasonal_records(self)
 
-
-def update_default_records(self):
+def update_seasonal_records(self, new_season):
     """Update the default records widget"""
-
-    ladders = self.league_api.ladders(variant="Default")
+    ladders = self.league_api.ladders(variant=new_season)
     if ladders is not None:
         self.widgets.ladder_selector.clear()
         for ladder in ladders.results:
             solo = "[Solo]" if ladder.is_solo else ""
-            key = f"{ladder.name} ({ladder.difficulty}) {solo}"
+            key = f"{ladder.name} {solo}|{ladder.difficulty}"
+            text = f"{ladder.name} {solo}"
             self.league_api.ladder_dict[key] = ladder
-            self.widgets.ladder_selector.addItem(key)
+            item = QListWidgetItem(text)
+            item.difficulty = ladder.difficulty
+            if ladder.difficulty != 'Any' and ladder.difficulty is not None:
+                icon = self.icons[f'TFO-{ladder.difficulty.lower()}']
+                icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
+                item.setIcon(icon)
+            self.widgets.ladder_selector.addItem(item)
 
 
-def update_seasonal_records(self):
-    """Update the seasonal records widget"""
-
-    populate_variants(self)
-    ladders = self.league_api.ladders(variant=self.variant_list.currentText())
-    if ladders is not None:
-        self.widgets.season_ladder_selector.clear()
-        for ladder in ladders.results:
-            solo = "[Solo]" if ladder.is_solo else ""
-            key = f"{ladder.name} ({ladder.difficulty}) {solo}"
-            self.league_api.ladder_dict_season[key] = ladder
-            self.widgets.season_ladder_selector.addItem(key)
+# def update_seasonal_records(self, new_season):
+#     """Update the seasonal records widget"""
+#     ladders = self.league_api.ladders(variant=self.variant_list.currentText())
+#     if ladders is not None:
+#         self.widgets.season_ladder_selector.clear()
+#         for ladder in ladders.results:
+#             solo = "[Solo]" if ladder.is_solo else ""
+#             key = f"{ladder.name} ({ladder.difficulty}) {solo}"
+#             self.league_api.ladder_dict_season[key] = ladder
+#             self.widgets.season_ladder_selector.addItem(key)
 
 
 def apply_league_table_filter(self, filter_text: str):
@@ -90,34 +95,21 @@ def apply_league_table_filter(self, filter_text: str):
         pass
 
 
-def slot_ladder_default(self, selected_map):
-    self.season_selector.clearSelection()
-    slot_ladder(self, self.league_api.ladder_dict, selected_map)
-
-
-def slot_ladder_season(self, selected_map):
-    self.map_selector.clearSelection()
-    self.favorite_selector.clearSelection()
-    slot_ladder(self, self.league_api.ladder_dict_season, selected_map)
-
-
-def slot_ladder(self, ladder_dict, selected_map):
+def slot_ladder(self, selected_map_item: QListWidgetItem):
     """
     Fetches current ladder and puts it into the table.
     """
-
-    if selected_map not in ladder_dict:
+    map_key = f'{selected_map_item.text()}|{selected_map_item.difficulty}'
+    if map_key not in self.league_api.ladder_dict:
         return
-    if self.widgets.map_tabber.currentIndex() == 0:
-        self.widgets.favorite_ladder_selector.selectionModel().clear()
-    else:
-        self.widgets.ladder_selector.selectionModel().clear()
 
-    selected_ladder = ladder_dict[selected_map]
+    selected_ladder = self.league_api.ladder_dict[map_key]
     self.league_api.current_ladder_id = selected_ladder.id
     ladder_data = self.league_api.ladder_entries(selected_ladder.id)
-    if len(ladder_data.results) >= 50:
+    if ladder_data.count > 50:
         self.league_api.entire_ladder_loaded = False
+    else:
+        self.league_api.entire_ladder_loaded = True
     self.league_api.pages_loaded = 1
     table_index = list()
     table_data = list()
@@ -155,9 +147,7 @@ def slot_ladder(self, ladder_dict, selected_map):
     table = self.widgets.ladder_table
     table.setModel(sorting_proxy)
     table.resizeColumnsToContents()
-    # table_header = table.horizontalHeader()
-    # for col in range(len(model._header)):
-    #     table_header.resizeSection(col, table_header.sectionSize(col) + 5)
+    table.scrollToTop()
 
 
 def extend_ladder(self):
@@ -165,6 +155,7 @@ def extend_ladder(self):
     Extends the ladder table by 50 newly fetched rows.
     """
     if self.league_api.entire_ladder_loaded:
+        print('returning')
         return
     if self.league_api.current_ladder_id is None:
         return
@@ -261,15 +252,14 @@ def populate_variants(self):
     """Populate the list of variants"""
 
     # Only populate the table once.
-    if self.variant_list.count():
+    if self.widgets.variant_combo.count() > 0:
         return
 
     variants = self.league_api.variants(ordering="-start_date")
     for variant in variants.results:
-        if variant.name != "Default":
-            self.variant_list.addItem(variant.name)
-
-    self.variant_list.setCurrentIndex(0)
+        self.widgets.variant_combo.addItem(variant.name)
+        if variant.name == 'Default':
+            self.widgets.variant_combo.setCurrentText('Default')
 
 
 class OSCRClient:
@@ -277,7 +267,7 @@ class OSCRClient:
         """Initialize an instance of the OSCR backlend client"""
 
         self.address = OSCR_SERVER_BACKEND
-        self.api_client = OSCR_django_client.api_client.ApiClient()
+        self.api_client = ApiClient()
         self.api_client.configuration.host = self.address
         self.api_combatlog = CombatlogApi(api_client=self.api_client)
         self.api_ladder = LadderApi(api_client=self.api_client)
@@ -294,7 +284,7 @@ class OSCRClient:
 
         try:
             return self.api_combatlog.combatlog_uploadv2(file=filename)
-        except OSCR_django_client.exceptions.ServiceException as e:
+        except ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
@@ -310,7 +300,7 @@ class OSCRClient:
         """Download a combat log"""
         try:
             return self.api_combatlog.combatlog_download(id=id)
-        except OSCR_django_client.exceptions.ServiceException as e:
+        except ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
@@ -328,7 +318,7 @@ class OSCRClient:
         """Fetch the list of ladders"""
         try:
             return self.api_ladder.ladder_list(**kwargs)
-        except OSCR_django_client.exceptions.ServiceException as e:
+        except ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
@@ -351,7 +341,7 @@ class OSCRClient:
                 ordering="-data__DPS",
                 page_size=50,
             )
-        except OSCR_django_client.exceptions.ServiceException as e:
+        except ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:
@@ -370,7 +360,7 @@ class OSCRClient:
 
         try:
             return self.api_variant.variant_list(**kwargs)
-        except OSCR_django_client.exceptions.ServiceException as e:
+        except ServiceException as e:
             reply = QMessageBox()
             reply.setWindowTitle("Open Source Combatlog Reader")
             try:

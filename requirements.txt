@@ -1,0 +1,6 @@
+cx_Freeze==7.1.0.post0
+PySide6==6.7.2
+pyqtgraph==0.13.7
+numpy==1.26.4
+OSCR-django-client>=2024.9.2.1
+pydantic==2.7.3

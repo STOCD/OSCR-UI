@@ -209,7 +209,7 @@ def create_button_series(
         return layout
 
 
-def create_combo_box(self, parent, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
+def create_combo_box(self, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
     """
     Creates a combobox with given style and returns it.
 
@@ -220,7 +220,7 @@ def create_combo_box(self, parent, style: str = 'combobox', style_override: dict
 
     :return: styled QCombobox
     """
-    combo_box = QComboBox(parent)
+    combo_box = QComboBox()
     combo_box.setStyleSheet(get_style_class(self, 'QComboBox', style, style_override))
     if 'font' in style_override:
         combo_box.setFont(theme_font(self, style, style_override['font']))

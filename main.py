@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.14.1'
+    version = '2024.12.15.1'
     __version__ = '0.5'
 
     # holds the style of the app
@@ -305,10 +305,12 @@ class Launcher():
             'font': '@small_text',
             'outline': '0',  # removes dotted line around clicked item
             '::item': {
+                'show-decoration-selected': '0',
                 'border-width': 1,  # hardcoded into the delegate!
                 'border-style': 'solid',
                 'border-color': '@bg',
-                'padding': 4  # hardcoded into the delegate!
+                'padding': 2  # for league listboxes
+                # 'padding': 4  # hardcoded into the delegate!
             },
             '::item:alternate': {
                 'background-color': '@mbg',

@@ -21,8 +21,9 @@ from .textedit import format_path
 from .translation import tr
 from .widgetbuilder import (
         create_button, create_button_series, create_frame, create_icon_button, create_label)
-from .widgetbuilder import ABOTTOM, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, RFIXED
-from .widgetbuilder import SMAXMAX, SMINMAX, SMINMIN, SMIXMIN
+from .widgetbuilder import (
+        ABOTTOM, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, RFIXED,
+        SMAXMAX, SMINMAX, SMINMIN, SMIXMIN)
 from .widgets import CombatDelegate, FlipButton, LiveParserWindow, SizeGrip
 
 

@@ -1,7 +1,8 @@
 import os
 import traceback
 
-from PySide6.QtWidgets import QLineEdit
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QLineEdit, QListWidgetItem
 
 from OSCR import (
     LIVE_TABLE_HEADER, compose_logfile, repair_logfile as oscr_repair_logfile, extract_bytes)
@@ -145,28 +146,66 @@ def switch_main_tab(self, tab_index: int):
         self.widgets.analysis_graph_button.hide()
 
 
-def favorite_button_callback(self):
-    """
-    Adds ladder to / removes ladder from favorites list. Updates settings.
-    """
-    # Add current ladder to favorites
-    current_item = self.widgets.ladder_selector.currentItem()
-    if current_item and self.widgets.map_tabber.currentIndex() == 0:
-        current_ladder = current_item.text()
-        favorite_ladders = self.settings.value('favorite_ladders', type=list)
-        if current_ladder not in favorite_ladders:
-            favorite_ladders.append(current_ladder)
-            self.settings.setValue('favorite_ladders', favorite_ladders)
-            self.widgets.favorite_ladder_selector.addItem(current_ladder)
-            return
+# def favorite_button_callback(self):
+#     """
+#     Adds ladder to / removes ladder from favorites list. Updates settings.
+#     """
+#     # Add current ladder to favorites
+#     current_item = self.widgets.ladder_selector.currentItem()
+#     if current_item and self.widgets.map_tabber.currentIndex() == 0:
+#         current_ladder = current_item.text()
+#         favorite_ladders = self.settings.value('favorite_ladders', type=list)
+#         if current_ladder not in favorite_ladders:
+#             favorite_ladders.append(current_ladder)
+#             self.settings.setValue('favorite_ladders', favorite_ladders)
+#             self.widgets.favorite_ladder_selector.addItem(current_ladder)
+#             return
 
-    # Remove current ladder from favorites
-    current_item = self.widgets.favorite_ladder_selector.currentItem()
-    if current_item:
-        current_ladder = current_item.text()
+#     # Remove current ladder from favorites
+#     current_item = self.widgets.favorite_ladder_selector.currentItem()
+#     if current_item:
+#         current_ladder = current_item.text()
+#         favorite_ladders = self.settings.value('favorite_ladders', type=list)
+#         if current_ladder in favorite_ladders:
+#             favorite_ladders.remove(current_ladder)
+#             self.settings.setValue('favorite_ladders', favorite_ladders)
+#             row = self.widgets.favorite_ladder_selector.row(current_item)
+#             self.widgets.favorite_ladder_selector.takeItem(row)
+
+
+def add_favorite_ladder(self):
+    """
+    Adds a latter to favorites list. Updates settings
+    """
+    current_item = self.widgets.ladder_selector.currentItem()
+    if current_item is not None:
+        current_ladder_key = f'{current_item.text()}|{current_item.difficulty}'
         favorite_ladders = self.settings.value('favorite_ladders', type=list)
-        if current_ladder in favorite_ladders:
-            favorite_ladders.remove(current_ladder)
+        if current_ladder_key not in favorite_ladders:
+            favorite_ladders.append(current_ladder_key)
+            self.settings.setValue('favorite_ladders', favorite_ladders)
+            ladder_text, difficulty = current_ladder_key.split('|')
+            if difficulty == 'None':
+                difficulty = None
+            item = QListWidgetItem(ladder_text)
+            item.difficulty = difficulty
+            if difficulty != 'Any' and difficulty is not None:
+                icon = self.icons[f'TFO-{difficulty.lower()}']
+                icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
+                item.setIcon(icon)
+            self.widgets.favorite_ladder_selector.addItem(item)
+
+
+def remove_favorite_ladder(self):
+    """
+    Adds a latter to favorites list. Updates settings
+    """
+    current_item = self.widgets.favorite_ladder_selector.currentItem()
+    if current_item is not None:
+        current_ladder_key = f'{current_item.text()}|{current_item.difficulty}'
+        favorite_ladders = self.settings.value('favorite_ladders', type=list)
+        if current_ladder_key in favorite_ladders:
+            favorite_ladders.remove(current_ladder_key)
             self.settings.setValue('favorite_ladders', favorite_ladders)
             row = self.widgets.favorite_ladder_selector.row(current_item)
             self.widgets.favorite_ladder_selector.takeItem(row)

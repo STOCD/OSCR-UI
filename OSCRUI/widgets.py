@@ -60,7 +60,7 @@ class WidgetStorage():
 
         self.ladder_selector: QListWidget
         self.favorite_ladder_selector: QListWidget
-        self.season_ladder_selector: QListWidget
+        self.variant_combo: QComboBox
         self.ladder_table: QTableView
 
         self.live_parser_table: QTableView
