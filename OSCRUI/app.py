@@ -172,7 +172,6 @@ class OSCRUI():
         Prepares config.
         """
         self.current_combat_id = -1
-        self.current_combat_path = ''
         self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
         self.config['live_scale'] = self.settings.value('live_scale', type=float)
         self.config['icon_size'] = round(

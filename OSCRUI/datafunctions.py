@@ -77,21 +77,21 @@ def copy_summary_callback(self):
     Parameters:
     - :param parser_num: which parser to take the data from
     """
-
-    if not self.parser.active_combat:
+    if self.current_combat_id < 0:
         return
+    current_combat: Combat = self.parser.combats[self.current_combat_id]
 
-    duration = self.parser.active_combat.duration.total_seconds()
+    duration = current_combat.duration.total_seconds()
     combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
 
-    summary = f'{{ OSCR }} {self.parser.active_combat.map}'
-    difficulty = self.parser.active_combat.difficulty
+    summary = f'{{ OSCR }} {current_combat.map}'
+    difficulty = current_combat.difficulty
     if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
         summary += f' ({difficulty}) - DPS / DMG [{combat_time}]: '
     else:
         summary += f' - DPS / DMG [{combat_time}]: '
     players = sorted(
-        self.parser.active_combat.player_dict.values(),
+        current_combat.players.values(),
         reverse=True,
         key=lambda player: player.DPS,
     )
@@ -119,6 +119,7 @@ def insert_combat(self, combat: Combat):
         self.current_combats.setCurrentIndex(self.current_combats.model().createIndex(0, 0, 0))
         create_overview(self, combat)
         populate_analysis(self, combat)
+        self.current_combat_id = 0
         analyze_log_background(self, self.settings.value('combats_to_parse', type=int) - 1)
 
 
@@ -132,6 +133,7 @@ def analysis_data_slot(self, index: int):
     combat = self.parser.combats[index]
     create_overview(self, combat)
     populate_analysis(self, combat)
+    self.current_combat_id = combat.id
 
 
 def populate_analysis(self, combat: Combat):
@@ -236,7 +238,7 @@ def copy_analysis_table_callback(self):
     """
     if self.widgets.main_tabber.currentIndex() != 1:
         return
-    current_tab = self.widgets.analysis_tabber.currentIndex()
+    current_tab = self.widgets.analysis_tree_tabber.currentIndex()
     current_table = self.widgets.analysis_table[current_tab]
     selection: list = current_table.selectedIndexes()
     if selection:
@@ -257,7 +259,7 @@ def copy_analysis_callback(self):
     """
     Callback for copy button on analysis tab
     """
-    current_tab = self.widgets.analysis_tabber.currentIndex()
+    current_tab = self.widgets.analysis_tree_tabber.currentIndex()
     current_table = self.widgets.analysis_table[current_tab]
     copy_mode = self.widgets.analysis_copy_combobox.currentText()
     if copy_mode == tr('Selection'):
@@ -339,7 +341,7 @@ def copy_analysis_callback(self):
             prefix = tr('Total Heal In')
         magnitudes = list()
         for player_item in current_table.model()._player._children:
-            magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0))))
+            magnitudes.append((player_item.get_data(2), ''.join(player_item.get_data(0)[:2])))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"`[{player}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')
@@ -355,7 +357,7 @@ def copy_analysis_callback(self):
             prefix = tr('Total HPS In')
         magnitudes = list()
         for player_item in current_table.model()._player._children:
-            magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0))))
+            magnitudes.append((player_item.get_data(1), ''.join(player_item.get_data(0)[:2])))
         magnitudes.sort(key=lambda x: x[0], reverse=True)
         magnitudes = [f"`[{player}]` {magnitude:,.2f}" for magnitude, player in magnitudes]
         output_string = (f'{{ OSCR }} {prefix}: {" | ".join(magnitudes)}')

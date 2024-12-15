@@ -13,8 +13,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QListWidgetItem, QMessageBox
 from PySide6.QtCore import QTemporaryDir
 
-from OSCR.utilities import logline_to_str
-
+from .callbacks import switch_main_tab, switch_overview_tab
 from .datafunctions import CustomThread, analyze_log_callback
 from .datamodels import LeagueTableModel, SortingProxy
 from .dialogs import show_message
@@ -206,46 +205,40 @@ def download_and_view_combat(self):
     result = self.league_api.download(log_id)
     result = gzip.decompress(result)
 
-    dir = QTemporaryDir()
-    if not dir.isValid():
-        raise Exception("Invalid temporary directory")
-
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=dir.path(), delete=False
+        mode="w", encoding="utf-8", dir=self.config['templog_folder_path'], delete=False
     ) as file:
         file.write(result.decode())
     analyze_log_callback(
         self, path=file.name, hidden_path=True
     )
-    self.switch_overview_tab(0)
-    self.switch_main_tab(0)
+    switch_overview_tab(self, self.settings.value('first_overview_tab', type=int))
+    switch_main_tab(self, 1)
 
 
 def upload_callback(self):
     """
     Helper function to grab the current combat and upload it to the backend.
     """
-    if (
-        self.parser.active_combat is None
-        or self.parser.active_combat.log_data is None
-    ):
+    try:
+        current_combat = self.parser.combats[self.current_combats.currentIndex().data()[0]]
+    except IndexError:
         show_message(self, tr("Logfile Upload"), tr("No data to upload."), 'info')
         return
 
     establish_league_connection(self)
 
-    with tempfile.NamedTemporaryFile(delete=False) as file:
-        data = gzip.compress(
-            "".join(
-                [logline_to_str(line) for line in self.parser.active_combat.log_data]
-            ).encode()
-        )
-        file.write(data)
-        file.flush()
-    res = self.league_api.upload(file.name)
+    with tempfile.NamedTemporaryFile(delete=False, dir=self.config['templog_folder_path']) as temp:
+        with open(current_combat.log_file, 'rb') as log_file:
+            log_file.seek(current_combat.file_pos[0])
+            data = gzip.compress(
+                    log_file.read(current_combat.file_pos[1] - current_combat.file_pos[0]))
+            temp.write(data)
+            temp.flush()
+    res = self.league_api.upload(temp.name)
     if res:
         uploadresult_dialog(self, res)
-    os.remove(file.name)
+    os.remove(temp.name)
 
 
 def populate_variants(self):
