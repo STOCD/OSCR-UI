@@ -154,7 +154,7 @@ class LiveParserTableModel(TableModel):
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             column = index.column()
-            data = self._data[index.row()][column]
+            data = self._data[index.row()][1 + column]
             if column in (0, 4):
                 return f'{data:,.2f}'
             elif column == 1:
@@ -188,7 +188,7 @@ class LiveParserTableModel(TableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 try:
-                    return self._index[section][self._name_index]
+                    return self._data[section][0][self._name_index]
                 except IndexError:
                     sys.stdout.write(f'Section:{section}|Data{self._data}|Index{self._index}\n')
 
@@ -202,16 +202,21 @@ class LiveParserTableModel(TableModel):
             if orientation == Qt.Orientation.Vertical:
                 return AVCENTER + ARIGHT
 
-    def replace_data(self, index: list, rows: list):
+    def replace_data(self, rows: list):
         self.beginResetModel()
-        self._index = index
         self._data = rows
         self.endResetModel()
 
     def sort(self, column, order=None):
         self.layoutAboutToBeChanged.emit()
-        self._data.sort(key=lambda el: el[column], reverse=True)
+        self._data.sort(key=lambda el: el[1 + column], reverse=True)
         self.layoutChanged.emit()
+
+    def columnCount(self, index):
+        try:
+            return len(self._data[0]) - 1  # all columns must have the same length
+        except IndexError:
+            return 0
 
 
 class SortingProxy(QSortFilterProxyModel):

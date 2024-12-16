@@ -345,38 +345,36 @@ def update_live_display(
     - :param graph_active: Set to True to update the graph as well
     - :param graph_data_buffer: contains the past graph data
     """
-    index = list()
     cells = list()
     curves = list()
     for player, player_data in player_data.items():
-        index.append(player)
-        cells.append(list(player_data.values()))
+        cells.append([player, *player_data.values()])
     if graph_active:
         if len(graph_data_buffer) == 0:
             graph_data_buffer.extend(([0] * 15, [0] * 15, [0] * 15, [0] * 15, [0] * 15))
         zipper = zip(graph_data_buffer, cells, self.widgets.live_parser_curves)
         for buffer_item, player_data, curve in zipper:
             buffer_item.pop(0)
-            buffer_item.append(player_data[graph_data_field])
+            buffer_item.append(player_data[1 + graph_data_field])
             curves.append((curve, buffer_item))
         if len(curves) > 0:
             self.live_parser_window.update_graph.emit(curves)
 
-    if len(index) > 0 and len(cells) > 0:
-        self.live_parser_window.update_table.emit((index, cells))
+    if len(cells) > 0:
+        self.live_parser_window.update_table.emit(cells)
     self.widgets.live_parser_duration_label.setText(f'Duration: {combat_time:.1f}s')
 
 
 @Slot()
-def update_live_table(self, data: tuple):
+def update_live_table(self, data: list):
     """
     Updates the table of the live parser with the supplied data
 
     Parameters:
-    - :param data: tuple containing two lists, that contain the index and cell values respectively
+    - :param data: list containing the index and cell values
     """
     table = self.widgets.live_parser_table
-    table.model().replace_data(*data)
+    table.model().replace_data(data)
     table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()

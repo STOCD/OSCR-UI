@@ -349,8 +349,9 @@ def create_live_parser_window(self):
         name_index = 1
     else:
         name_index = 0
+    placeholder = [0] * len(LIVE_TABLE_HEADER)
     model = LiveParserTableModel(
-            [[0] * len(LIVE_TABLE_HEADER)], tr(LIVE_TABLE_HEADER), [('Name', '@handle')],
+            [[('Name', '@handle'), *placeholder]], tr(LIVE_TABLE_HEADER), [],
             theme_font(self, 'live_table_header'), theme_font(self, 'live_table'),
             legend_col=graph_column, colors=graph_colors, name_index=name_index)
     table.setModel(model)
