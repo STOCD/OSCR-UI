@@ -320,14 +320,10 @@ def copy_live_data_callback(self):
     Copies the data from the live parser table.
     """
     data_model = self.widgets.live_parser_table.model()
-    index_data = data_model._index
     cell_data = data_model._data
-    visible_columns = list()
-    for i in range(len(LIVE_TABLE_HEADER)):
-        visible_columns.append(self.settings.value(f'live_columns|{i}', type=bool))
     output = list()
-    for player_name, row in zip(index_data, cell_data):
-        output.append(f"`{player_name[0]}{player_name[1]}`: {row[0]:,.2f} ({row[1]:.1f}s)")
+    for row in cell_data:
+        output.append(f"`{row[0][0]}{row[0][1]}`: {row[1]:,.2f} ({row[2]:.1f}s)")
     output = '{ OSCR } DPS (Combat time): ' + ' | '.join(output)
     self.app.clipboard().setText(output)
 

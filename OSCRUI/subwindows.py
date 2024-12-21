@@ -254,7 +254,7 @@ def live_parser_toggle(self, activate):
             return
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
         graph_active = self.settings.value('live_graph_active', type=bool)
-        data_buffer = []
+        data_buffer = list()
         data_field = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
         self.live_parser = LiveParser(log_path, update_callback=lambda p, t: update_live_display(
                 self, p, t, graph_active, data_buffer, data_field),
@@ -322,7 +322,7 @@ def create_live_parser_window(self):
         self.widgets.live_parser_curves = curves
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
         graph_column = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
-        graph_colors = self.theme['plot']['color_cycler'][:5]
+        graph_colors = (*self.theme['plot']['color_cycler'][:5], '#eeeeee')
         layout.addWidget(splitter, stretch=1)
 
     table = QTableView()
@@ -351,7 +351,7 @@ def create_live_parser_window(self):
         name_index = 0
     placeholder = [0] * len(LIVE_TABLE_HEADER)
     model = LiveParserTableModel(
-            [[('Name', '@handle'), *placeholder]], tr(LIVE_TABLE_HEADER), [],
+            [[('Name', '@handle'), *placeholder, 0]], tr(LIVE_TABLE_HEADER), [],
             theme_font(self, 'live_table_header'), theme_font(self, 'live_table'),
             legend_col=graph_column, colors=graph_colors, name_index=name_index)
     table.setModel(model)

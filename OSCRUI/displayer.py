@@ -1,5 +1,5 @@
 from typing import Callable, Iterable
-
+import traceback
 import numpy as np
 from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
@@ -348,14 +348,15 @@ def update_live_display(
     cells = list()
     curves = list()
     for player, player_data in player_data.items():
-        cells.append([player, *player_data.values()])
+        cells.append([player, *player_data.values(), 5])
     if graph_active:
         if len(graph_data_buffer) == 0:
             graph_data_buffer.extend(([0] * 15, [0] * 15, [0] * 15, [0] * 15, [0] * 15))
         zipper = zip(graph_data_buffer, cells, self.widgets.live_parser_curves)
-        for buffer_item, player_data, curve in zipper:
+        for id, (buffer_item, player_data, curve) in enumerate(zipper):
             buffer_item.pop(0)
             buffer_item.append(player_data[1 + graph_data_field])
+            player_data[8] = id
             curves.append((curve, buffer_item))
         if len(curves) > 0:
             self.live_parser_window.update_graph.emit(curves)

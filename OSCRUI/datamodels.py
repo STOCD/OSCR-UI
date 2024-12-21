@@ -155,17 +155,17 @@ class LiveParserTableModel(TableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             column = index.column()
             data = self._data[index.row()][1 + column]
-            if column in (0, 4):
+            if column in (0, 4):  # DPS, HPS
                 return f'{data:,.2f}'
-            elif column == 1:
+            elif column == 1:  # Combat Time
                 return f'{data:.1f}s'
-            elif column == 2:
+            elif column == 2:  # Debuff
                 if data == 0:
                     return '---.--%'
                 return f'{data:,.2f}%'
-            elif column == 3:
+            elif column == 3:  # Attacks-in
                 return f'{data:,.2f}%'
-            return str(data)
+            return str(data)  # Kills, Deaths
 
         if role == Qt.ItemDataRole.FontRole:
             return self._cell_font
@@ -177,7 +177,7 @@ class LiveParserTableModel(TableModel):
             if self._legend_column is not None and index.column() == self._legend_column:
                 row = index.row()
                 if row < len(self._colors):
-                    return self._colors[row]
+                    return self._colors[self._data[row][8]]
             return None
 
     def headerData(self, section, orientation, role):
@@ -214,7 +214,7 @@ class LiveParserTableModel(TableModel):
 
     def columnCount(self, index):
         try:
-            return len(self._data[0]) - 1  # all columns must have the same length
+            return 7  # all columns must have the same length
         except IndexError:
             return 0
 
