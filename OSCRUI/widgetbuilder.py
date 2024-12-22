@@ -40,14 +40,13 @@ SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 
 
-def create_button(self, text, style: str = 'button', style_override={}, toggle=None):
+def create_button(self, text: str, style: str = 'button', style_override={}, toggle=None):
     """
     Creates a button according to style with parent.
 
     Parameters:
     - :param text: text to be shown on the button
     - :param style: name of the style as in self.theme or style dict
-    - :param parent: parent of the button (optional)
     - :param style_override: style dict to override default style (optional)
     - :param toggle: True or False when button should be a toggle button, None when it should be a
     normal button; the bool value indicates the default state of the button
@@ -97,18 +96,17 @@ def create_icon_button(
     return button
 
 
-def create_frame(self, parent=None, style='frame', style_override={}, size_policy=None) -> QFrame:
+def create_frame(self, style: str = 'frame', style_override: dict = {}, size_policy=None) -> QFrame:
     """
-    Creates a frame with default styling and parent
+    Creates a frame with default styling
 
     Parameters:
-    - :param parent: parent of the frame (optional)
     - :param style: style dict to override default style (optional)
     - :param size_policy: size policy of the frame (optional)
 
     :return: configured QFrame
     """
-    frame = QFrame(parent)
+    frame = QFrame()
     frame.setStyleSheet(get_style(self, style, style_override))
     frame.setSizePolicy(size_policy if isinstance(size_policy, QSizePolicy) else SMAXMAX)
     return frame
@@ -121,7 +119,6 @@ def create_label(self, text: str, style: str = 'label', style_override={}) -> QL
     Parameters:
     - :param text: text to be shown on the label
     - :param style: name of the style as in self.theme
-    - :param parent: parent of the label (optional)
     - :param style_override: style dict to override default style (optional)
 
     :return: configured QLabel
@@ -143,7 +140,6 @@ def create_button_series(
     Creates a row / column of buttons.
 
     Parameters:
-    - :param parent: widget that will contain the buttons
     - :param buttons: dictionary containing button details
         - key "default" contains style override for all buttons (optional)
         - all other keys represent one button, key will be the text on the button; value for the
@@ -214,7 +210,6 @@ def create_combo_box(self, style: str = 'combobox', style_override: dict = {}) -
     Creates a combobox with given style and returns it.
 
     Parameters:
-    - :param parent: parent of the combo box
     - :param style: key for self.theme -> default style
     - :param style_override: style dict to override default style
 
@@ -317,9 +312,9 @@ def resize_tree_table(tree: QTreeView):
         tree.header().resizeSection(col, width)
 
 
-def create_analysis_table(self, parent, widget) -> QTreeView:
+def create_analysis_table(self, widget) -> QTreeView:
     """
-    Creates and returns a QTreeView with parent, styled according to widget.
+    Creates and returns a QTreeView, styled according to widget.
 
     Parameters:
     - :param parent: parent of the table
@@ -327,7 +322,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
 
     :return: configured QTreeView
     """
-    table = QTreeView(parent)
+    table = QTreeView()
     table.setStyleSheet(get_style_class(self, 'QTreeView', widget))
     table.setSizePolicy(SMINMIN)
     table.setAlternatingRowColors(True)

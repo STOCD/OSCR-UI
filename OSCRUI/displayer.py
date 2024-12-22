@@ -50,7 +50,7 @@ def setup_plot(plot_function: Callable) -> Callable:
         if legend_data is not None:
             legend_frame = create_legend(self, legend_data)
             inner_layout.addWidget(legend_frame, alignment=ACENTER)
-        frame = create_frame(self, None, 'plot_widget', size_policy=SMINMIN)
+        frame = create_frame(self, 'plot_widget', size_policy=SMINMIN)
         frame.setLayout(inner_layout)
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(0, 0, 0, 0)
@@ -322,7 +322,7 @@ def create_live_graph(self) -> tuple[QFrame, list]:
         color = self.theme['plot']['color_cycler'][color_index]
         curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
 
-    frame = create_frame(self, None, 'plot_widget', size_policy=SMIXMAX, style_override={
+    frame = create_frame(self, 'plot_widget', size_policy=SMIXMAX, style_override={
             'margin': 4, 'padding': 2, 'border': 'none'})
     frame.setMinimumWidth(self.sidebar_item_width * 0.25)
     frame.setMinimumHeight(self.sidebar_item_width * 0.25)

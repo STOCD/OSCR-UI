@@ -374,7 +374,7 @@ def create_live_parser_window(self):
     bottom_layout.setSpacing(margin)
     bottom_layout.setColumnStretch(4, 1)
 
-    activate_button = FlipButton(tr('Activate'), tr('Deactivate'), live_window, checkable=True)
+    activate_button = FlipButton(tr('Activate'), tr('Deactivate'), checkable=True)
     activate_button.setStyleSheet(self.get_style_class(
             'QPushButton', 'toggle_button', {'margin': 0}))
     activate_button.setFont(self.theme_font('app', '@subhead'))

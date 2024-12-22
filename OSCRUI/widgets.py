@@ -79,7 +79,7 @@ class FlipButton(QPushButton):
     """
     QPushButton with two sets of commands, texts and icons that alter on click.
     """
-    def __init__(self, r_text, l_text, parent=None, checkable=False, *ar, **kw):
+    def __init__(self, r_text, l_text, checkable=False, *ar, **kw):
         super().__init__(r_text, *ar, **kw)
         self._r = True
         self._checkable = checkable

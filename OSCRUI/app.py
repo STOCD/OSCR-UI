@@ -284,7 +284,7 @@ class OSCRUI():
         main_layout.setContentsMargins(0, 0, margin, 0)
         main_layout.setSpacing(0)
 
-        left = self.create_frame(main_frame)
+        left = self.create_frame()
         left.setSizePolicy(SMAXMIN)
         main_layout.addWidget(left, 0, 0)
 
@@ -299,7 +299,7 @@ class OSCRUI():
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
             'tooltip_r': tr('Collapse Sidebar'), 'tooltip_l': tr('Expand Sidebar')
         }
-        sidebar_flip_button = FlipButton('', '', main_frame)
+        sidebar_flip_button = FlipButton('', '')
         sidebar_flip_button.configure(left_flip_config)
         sidebar_flip_button.setIconSize(QSize(icon_size, icon_size))
         sidebar_flip_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
@@ -327,7 +327,7 @@ class OSCRUI():
             'icon_l': self.icons['expand-bottom'], 'tooltip_l': tr('Expand Table'),
             'func_l': self.expand_overview_table
         }
-        table_button = FlipButton('', '', main_frame)
+        table_button = FlipButton('', '')
         table_button.configure(table_flip_config)
         table_button.setIconSize(QSize(icon_size, icon_size))
         table_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
@@ -335,7 +335,7 @@ class OSCRUI():
         button_column.addWidget(table_button, 3, 0)
         self.widgets.overview_table_button = table_button
 
-        center = self.create_frame(main_frame, 'frame')
+        center = self.create_frame()
         center.setSizePolicy(SMINMIN)
         main_layout.addWidget(center, 0, 2)
 
@@ -372,9 +372,8 @@ class OSCRUI():
         left_layout.addWidget(variant_list)
         self.widgets.variant_combo = variant_list
 
-        background_frame = self.create_frame(frame, style_override={
-                'border-radius': self.theme['listbox']['border-radius']},
-                size_policy=SMINMIN)
+        background_frame = self.create_frame(size_policy=SMINMIN, style_override={
+                'border-radius': self.theme['listbox']['border-radius']})
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -398,9 +397,8 @@ class OSCRUI():
         fav_layout.addWidget(fav_add_button, alignment=ARIGHT)
         left_layout.addLayout(fav_layout)
 
-        background_frame = self.create_frame(frame, style_override={
-                'border-radius': self.theme['listbox']['border-radius']},
-                size_policy=SMINMIN)
+        background_frame = self.create_frame(size_policy=SMINMIN, style_override={
+                'border-radius': self.theme['listbox']['border-radius']})
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -475,9 +473,9 @@ class OSCRUI():
         entry_buttons.setContentsMargins(0, 0, 0, self.theme['defaults']['margin'])
         left_layout.addLayout(entry_buttons)
 
-        background_frame = self.create_frame(frame, 'frame', style_override={
+        background_frame = self.create_frame(size_policy=SMINMIN, style_override={
                 'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp',
-                'margin-bottom': '@csp'}, size_policy=SMINMIN)
+                'margin-bottom': '@csp'})
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
@@ -705,7 +703,7 @@ class OSCRUI():
         splitter.setStretchFactor(0, self.theme['s.c']['overview_graph_stretch'])
 
         switch_layout.setColumnStretch(0, 1)
-        switch_frame = self.create_frame(o_frame, 'frame')
+        switch_frame = self.create_frame()
         switch_layout.addWidget(switch_frame, 0, 1, alignment=ACENTER)
         switch_layout.setColumnStretch(1, 2)
 
@@ -751,16 +749,16 @@ class OSCRUI():
         Sets up the frame housing the detailed analysis table and graph
         """
         a_frame = self.widgets.main_tab_frames[1]
-        dout_graph_frame = self.create_frame(None, 'frame')
-        dtaken_graph_frame = self.create_frame(None, 'frame')
-        hout_graph_frame = self.create_frame(None, 'frame')
-        hin_graph_frame = self.create_frame(None, 'frame')
+        dout_graph_frame = self.create_frame()
+        dtaken_graph_frame = self.create_frame()
+        hout_graph_frame = self.create_frame()
+        hin_graph_frame = self.create_frame()
         self.widgets.analysis_graph_frames.extend(
                 (dout_graph_frame, dtaken_graph_frame, hout_graph_frame, hin_graph_frame))
-        dout_tree_frame = self.create_frame(None, 'frame')
-        dtaken_tree_frame = self.create_frame(None, 'frame')
-        hout_tree_frame = self.create_frame(None, 'frame')
-        hin_tree_frame = self.create_frame(None, 'frame')
+        dout_tree_frame = self.create_frame()
+        dtaken_tree_frame = self.create_frame()
+        hout_tree_frame = self.create_frame()
+        hin_tree_frame = self.create_frame()
         self.widgets.analysis_tree_frames.extend(
                 (dout_tree_frame, dtaken_tree_frame, hout_tree_frame, hin_tree_frame))
         layout = QVBoxLayout()
@@ -797,7 +795,7 @@ class OSCRUI():
         splitter.addWidget(a_tree_tabber)
 
         switch_layout.setColumnStretch(0, 1)
-        switch_frame = self.create_frame(a_frame, 'frame')
+        switch_frame = self.create_frame()
         switch_layout.addWidget(switch_frame, 0, 1, alignment=ACENTER)
         switch_layout.setColumnStretch(1, 1)
 
@@ -849,12 +847,12 @@ class OSCRUI():
             graph_layout.setContentsMargins(csp, csp, csp, 0)
             graph_layout.setSpacing(csp)
 
-            plot_bundle_frame = self.create_frame(None, size_policy=SMINMAX)
+            plot_bundle_frame = self.create_frame(size_policy=SMINMAX)
             plot_bundle_layout = QVBoxLayout()
             plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
             plot_bundle_layout.setSpacing(0)
             plot_bundle_layout.setSizeConstraint(QLayout.SizeConstraint.SetMaximumSize)
-            plot_legend_frame = self.create_frame(plot_bundle_frame)
+            plot_legend_frame = self.create_frame()
             plot_legend_layout = QHBoxLayout()
             plot_legend_layout.setContentsMargins(0, 0, 0, 0)
             plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
@@ -870,7 +868,7 @@ class OSCRUI():
             plot_bundle_frame.setLayout(plot_bundle_layout)
             graph_layout.addWidget(plot_bundle_frame, stretch=1)
 
-            plot_button_frame = self.create_frame(None, size_policy=SMAXMIN)
+            plot_button_frame = self.create_frame(size_policy=SMAXMIN)
             plot_button_layout = QVBoxLayout()
             plot_button_layout.setContentsMargins(0, 0, 0, 0)
             plot_button_layout.setSpacing(0)
@@ -890,7 +888,7 @@ class OSCRUI():
             tree_layout = QVBoxLayout()
             tree_layout.setContentsMargins(0, 0, 0, 0)
             tree_layout.setSpacing(0)
-            tree = self.create_analysis_table(None, 'tree_table')
+            tree = self.create_analysis_table('tree_table')
             setattr(self.widgets, table_name, tree)
             tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
             tree_layout.addWidget(tree)
@@ -966,7 +964,7 @@ class OSCRUI():
         """
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        bg_frame = self.create_frame(parent, 'frame', {'background': '@oscr'})
+        bg_frame = self.create_frame(style_override={'background-color': '@oscr'})
         bg_frame.setSizePolicy(SMINMIN)
         layout.addWidget(bg_frame)
 
@@ -976,7 +974,7 @@ class OSCRUI():
         lbl = BannerLabel(get_asset_path('oscrbanner-slim-dark-label.png', self.app_dir), bg_frame)
         main_layout.addWidget(lbl)
 
-        menu_frame = self.create_frame(bg_frame, 'frame', {'background': '@oscr'})
+        menu_frame = self.create_frame(style_override={'background-color': '@oscr'})
         menu_frame.setSizePolicy(SMINMAX)
         menu_frame.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(menu_frame)
@@ -1005,7 +1003,7 @@ class OSCRUI():
         menu_frame.setLayout(menu_layout)
 
         w = self.theme['app']['frame_thickness']
-        main_frame = self.create_frame(bg_frame, 'frame', {'margin': (0, w, w, w)})
+        main_frame = self.create_frame(style_override={'margin': (0, w, w, w)})
         main_frame.setSizePolicy(SMINMIN)
         main_layout.addWidget(main_frame)
         bg_frame.setLayout(main_layout)
@@ -1032,8 +1030,6 @@ class OSCRUI():
         scroll_area.setAlignment(AHCENTER)
         settings_layout.addWidget(scroll_area)
         settings_frame.setLayout(settings_layout)
-        col_1_frame = None  # TODO remove parent parameter from self.create_... functions
-        col_2_frame = None
 
         # first section
         sec_1 = QGridLayout()
@@ -1089,7 +1085,7 @@ class OSCRUI():
         sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
         auto_scan_label = self.create_label(tr('Scan log automatically:'), 'label_subhead')
         sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
-        auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
+        auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         auto_scan_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         auto_scan_button.setFont(self.theme_font('app', '@font'))
@@ -1119,8 +1115,7 @@ class OSCRUI():
         sec_1.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
         live_graph_active_label = self.create_label(tr('LiveParser Graph:'), 'label_subhead')
         sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
-        live_graph_active_button = FlipButton(
-                tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
+        live_graph_active_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_graph_active_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_graph_active_button.setFont(self.theme_font('app', '@font'))
@@ -1170,7 +1165,7 @@ class OSCRUI():
         sec_1.setAlignment(AHCENTER)
         live_enabled_label = self.create_label(tr('LiveParser default state:'), 'label_subhead')
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
-        live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), col_2_frame, checkable=True)
+        live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_enabled_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_enabled_button.setFont(self.theme_font('app', '@font'))
@@ -1197,8 +1192,7 @@ class OSCRUI():
 
         # seperator
         section_seperator = self.create_frame(
-            scroll_frame, 'hr', style_override={'background-color': '@lbg'},
-            size_policy=SMINMIN)
+            'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         section_seperator.setFixedHeight(self.theme['defaults']['bw'])
         scroll_layout.addWidget(section_seperator)
 
@@ -1216,7 +1210,7 @@ class OSCRUI():
         sec_2.addWidget(dmg_hider_label)
         dmg_hider_layout = QVBoxLayout()
         dmg_hider_frame = self.create_frame(
-                col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
+                size_policy=SMINMAX, style_override=hider_frame_style_override)
         dmg_hider_frame.setMinimumWidth(self.sidebar_item_width)
         self.set_buttons = list()
         for i, head in enumerate(tr(TREE_HEADER)[1:]):
@@ -1228,8 +1222,7 @@ class OSCRUI():
                     lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
             dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_seperator = self.create_frame(
-                dmg_hider_frame, 'hr', style_override={'background-color': '@lbg'},
-                size_policy=SMINMIN)
+                'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)
         apply_button = self.create_button(tr('Apply'), 'button')
@@ -1243,7 +1236,7 @@ class OSCRUI():
         sec_2.addWidget(heal_hider_label)
         heal_hider_layout = QVBoxLayout()
         heal_hider_frame = self.create_frame(
-                col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
+                size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(tr(HEAL_TREE_HEADER)[1:]):
             bt = self.create_button(
                     head, 'toggle_button',
@@ -1253,8 +1246,7 @@ class OSCRUI():
                     lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
             heal_hider_layout.addWidget(bt, stretch=1)
         heal_seperator = self.create_frame(
-            heal_hider_frame, 'hr', style_override={'background-color': '@lbg'},
-            size_policy=SMINMIN)
+            'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
         apply_button_2 = self.create_button(tr('Apply'), 'button')
@@ -1268,7 +1260,7 @@ class OSCRUI():
         sec_2.addWidget(live_hider_label)
         live_hider_layout = QVBoxLayout()
         live_hider_frame = self.create_frame(
-                col_1_frame, size_policy=SMINMAX, style_override=hider_frame_style_override)
+                size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(tr(LIVE_TABLE_HEADER)):
             bt = self.create_button(
                     head, 'toggle_button',
