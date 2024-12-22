@@ -2,10 +2,9 @@ from types import FunctionType, BuiltinFunctionType, MethodType
 from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import QAbstractItemView, QComboBox, QFrame
-from PySide6.QtWidgets import QHBoxLayout, QHeaderView, QLabel, QLineEdit
-from PySide6.QtWidgets import QPushButton, QSizePolicy, QSlider, QTableView
-from PySide6.QtWidgets import QTreeView, QVBoxLayout
+from PySide6.QtWidgets import (
+    QAbstractItemView, QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QSlider, QTableView, QTreeView, QVBoxLayout)
 
 from .style import get_style, get_style_class, merge_style, theme_font
 
@@ -48,7 +47,7 @@ def create_button(self, text: str, style: str = 'button', style_override={}, tog
     - :param text: text to be shown on the button
     - :param style: name of the style as in self.theme or style dict
     - :param style_override: style dict to override default style (optional)
-    - :param toggle: True or False when button should be a toggle button, None when it should be a
+    - :param toggle: True or False when button should be a toggle button, None when it should be a \
     normal button; the bool value indicates the default state of the button
 
     :return: configured QPushButton
@@ -146,8 +145,8 @@ def create_button_series(
         key contains dict with details for the specific button (all optional)
             - "callback": callable that will be called on button click
             - "style": individual style override dict
-            - "toggle": True or False when button should be a toggle button, None when it should be
-            a normal button; the bool value indicates the default state of the button
+            - "toggle": True or False when button should be a toggle button, None when it should
+                be a normal button; the bool value indicates the default state of the button
             - "stretch": stretch value for the button
             - "align": alignment flag for button
     - :param style: key for self.theme -> default style
@@ -269,7 +268,7 @@ def create_annotated_slider(
     - :param style: key for self.theme -> default style
     - :param style_override_slider: style dict to override default style
     - :param style_override_label: style dict to override default style
-    - :param callback: callable to be attached to the valueChanged signal of the slider; will be
+    - :param callback: callable to be attached to the valueChanged signal of the slider; will be \
     passed value the slider was moved to; must return value that the label should be set to
 
     :return: layout with slider

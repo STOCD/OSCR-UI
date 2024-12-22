@@ -1,7 +1,4 @@
-import json
 import os
-import re
-import sys
 import webbrowser
 
 from PySide6.QtWidgets import QFileDialog
@@ -18,10 +15,10 @@ def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', s
 
     Parameters:
     - :param default_path: path that the file dialog opens at
-    - :param types: string containing all file extensions and their respective names that are
-    allowed.
-    Format: "<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]"
-    Example: "Logfile (*.log);;Any File (*.*)"
+    - :param types: string containing all file extensions and their respective names that are \
+    allowed. \
+    Format: `<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]` \
+    Example: `Logfile (*.log);;Any File (*.*)`
     - :param save: False => open file with dialog; True => save file with dialog
     """
     if default_path is None or default_path == '':
@@ -93,37 +90,6 @@ def open_link(link: str = ''):
         webbrowser.open(link, new=2, autoraise=True)
 
 
-def fetch_json(path: str) -> dict | list:
-    """
-    Fetches json from path and returns dictionary.
-
-    Parameters:
-    - :param path: path to json file
-    """
-    if not (os.path.exists(path) and os.path.isfile(path) and os.path.isabs(path)):
-        raise FileNotFoundError('Invalid Path')
-    with open(path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
-    return data
-
-
-def store_json(data: dict | list, path: str):
-    """
-    Stores data to json file at path. Overwrites file at target location.
-
-    Paramters:
-    - :param data: dictionary or list that should be stored
-    - :param path: target location; must be absolute path
-    """
-    if not os.path.isabs(path):
-        return
-    try:
-        with open(path, 'w') as file:
-            json.dump(data, file)
-    except OSError as e:
-        sys.stdout.write(f'[Error] Data could not be saved: {e}')
-
-
 def sanitize_file_name(txt, chr_set='extended') -> str:
     """Converts txt to a valid filename.
 
@@ -166,7 +132,8 @@ def sanitize_file_name(txt, chr_set='extended') -> str:
         result = result[:MAX_LEN - len(ext)] + ext
 
     # Step 4: Windows does not allow filenames to end with '.' or ' ' or begin with ' '.
-    result = re.sub(r"[. ]$", FILLER, result)
-    result = re.sub(r"^ ", FILLER, result)
+    result = result.strip()
+    while len(result) > 0 and result[-1] == '.':
+        result = result[:-1]
 
     return result

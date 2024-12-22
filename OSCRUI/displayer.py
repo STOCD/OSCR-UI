@@ -1,9 +1,9 @@
-from typing import Callable, Iterable
-import traceback
+from typing import Callable, Iterable, Sequence
+
 import numpy as np
 from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
 
 from OSCR import TABLE_HEADER
 from OSCR.combat import Combat
@@ -18,9 +18,9 @@ setConfigOptions(antialias=True)
 
 
 def setup_plot(plot_function: Callable) -> Callable:
-    '''
-    sets up Plot item and puts it into layout
-    '''
+    """
+    Sets up Plot item and puts it into layout. (Decorator)
+    """
     def plot_wrapper(self, data, time_reference=None):
         plot_widget = PlotWidget()
         plot_widget.setAxisItems({'left': CustomPlotAxis('left')})
@@ -60,9 +60,12 @@ def setup_plot(plot_function: Callable) -> Callable:
 
 
 def extract_overview_data(combat: Combat) -> tuple:
-    '''
-    converts dictionary containing player data to table data for the front page
-    '''
+    """
+    Retrieves Overview data from combat object.
+
+    Parameters:
+    - :param combat: combat object to retrieve the data from
+    """
     table = list()
 
     DPS_graph_data = dict()
@@ -81,7 +84,10 @@ def extract_overview_data(combat: Combat) -> tuple:
 
 def create_overview(self, combat: Combat):
     """
-    creates the main Parse Overview including graphs and table
+    Creates the main parse overview including graphs and table.
+
+    Parameters:
+    - :param combat: combat object to retrieve the data from
     """
     # clear graph frames
     for frame in self.widgets.overview_tab_frames:
@@ -125,7 +131,7 @@ def create_grouped_bar_plot(
     - :param time_reference: contains the time values for the data points
     - :param bar_widget: bar widget that will be plotted to (supplied by decorator)
 
-    :return: layout containing the graph
+    :return: layout containing the graph (returned by decorator)
     """
     bottom_axis = bar_widget.getAxis('bottom')
     bottom_axis.unit = 's'
@@ -208,7 +214,7 @@ def create_legend(self, colors_and_names: Iterable[tuple]) -> QFrame:
     Creates Legend from color / name pairs and returns frame containing it.
 
     Parameters:
-    - :param colors_and_names: Iterable containing color / name pairs : [('#9f9f00', 'Line 1'),
+    - :param colors_and_names: Iterable containing color / name pairs : [('#9f9f00', 'Line 1'), \
     ('#0000ff', 'Line 2'), (...), ...]
 
     :return: frame containing the legend
@@ -269,9 +275,12 @@ def create_legend_item(self, color: str, name: str) -> QFrame:
     return frame
 
 
-def create_overview_table(self, table_data) -> QTableView:
+def create_overview_table(self, table_data: Iterable[Sequence]) -> QTableView:
     """
     Creates the overview table and returns it.
+
+    Parameters:
+    - :param table_data: table containing the overview data
 
     :return: Overview Table
     """
@@ -387,7 +396,7 @@ def update_live_graph(curve_data: list):
     Updates the graph of the live parser with the supplied data
 
     Parameters:
-    - :param curve_data: list containing pairs of curve items and data lists; curve items will be
+    - :param curve_data: list containing pairs of curve items and data lists; curve items will be \
     updated with the data
     """
     time_data = list(range(-14, 1))

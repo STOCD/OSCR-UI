@@ -79,7 +79,15 @@ class FlipButton(QPushButton):
     """
     QPushButton with two sets of commands, texts and icons that alter on click.
     """
-    def __init__(self, r_text, l_text, checkable=False, *ar, **kw):
+    def __init__(self, r_text, l_text, checkable: bool = False, *ar, **kw):
+        """
+        QPushButton with two sets of commands, texts and icons that alter on click.
+
+        Parameters:
+        - :param r_text: right-side text
+        - :param l_text: left-side text
+        - :param checkable: set to True to make button checkable
+        """
         super().__init__(r_text, *ar, **kw)
         self._r = True
         self._checkable = checkable
@@ -477,15 +485,15 @@ def exec_in_thread(
     Parameters:
     - :param func: function to execute
     - :param *args: positional parameters passed to the function [optional]
-    - :param result: callable that is executed when signal result is emitted (takes object)
+    - :param result: callable that is executed when signal result is emitted (takes object) \
     [optional]
-    - :param update_splash: callable that is executed when signal update_splash is emitted
+    - :param update_splash: callable that is executed when signal update_splash is emitted \
     (takes str) [optional]
-    - :param finished: callable that is executed after `func` returns (takes no parameters)
+    - :param finished: callable that is executed after `func` returns (takes no parameters) \
     [optional]
-    - :param start_later: set to True to defer execution of the function; makes this function
-    return signal that can be emitted to start execution. That signal takes a tuple with additional
-    positional parameters passed to `func` [optional]
+    - :param start_later: set to True to defer execution of the function; makes this function \
+    return signal that can be emitted to start execution. That signal takes a tuple with \
+        additional positional parameters passed to `func` [optional]
     - :param **kwargs: keyword parameters passed to the function [optional]
     """
     worker = ThreadObject(func, *args, **kwargs)

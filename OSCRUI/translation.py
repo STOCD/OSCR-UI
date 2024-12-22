@@ -5,7 +5,10 @@ from typing import Iterable
 def init_translation(lang_code='en'):
     """
     Initialize translation.
-    :param lang_code: Language codes, Example: 'en', 'zh', 'fr'
+
+    Parameters:
+    - :param lang_code: Language codes, Example: 'en', 'zh', 'fr'
+
     :return: gettext translation function
     """
     if lang_code == 'en':

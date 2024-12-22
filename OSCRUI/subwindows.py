@@ -4,7 +4,7 @@ from traceback import format_exception
 from PySide6.QtCore import QPoint, QSize, Qt
 from PySide6.QtGui import QMouseEvent, QTextOption
 from PySide6.QtWidgets import (
-        QDialog, QGridLayout, QHBoxLayout, QListView, QMessageBox, QSpacerItem,
+        QDialog, QGridLayout, QHBoxLayout, QListView, QMessageBox,
         QSplitter, QTableView, QTextEdit, QVBoxLayout)
 
 from OSCR import LiveParser, LIVE_TABLE_HEADER
@@ -20,45 +20,10 @@ from .style import get_style, get_style_class, theme_font
 from .textedit import format_path
 from .translation import tr
 from .widgetbuilder import (
-        create_button, create_button_series, create_frame, create_icon_button, create_label)
-from .widgetbuilder import (
+        create_button, create_button_series, create_frame, create_icon_button, create_label,
         ABOTTOM, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, RFIXED,
         SMAXMAX, SMINMAX, SMINMIN, SMIXMIN)
 from .widgets import CombatDelegate, FlipButton, LiveParserWindow, SizeGrip
-
-
-def log_size_warning(self):
-    """
-    Warns user about oversized logfile.
-    Note: The default button counts as a two buttons
-
-    :return: "cancel", "split dialog", "continue"
-    """
-    dialog = QMessageBox()
-    dialog.setIcon(QMessageBox.Icon.Warning)
-    message = 'No Message'
-    dialog.setText(message)
-    dialog.setWindowTitle('Open Source Combalog Reader')
-    dialog.setWindowIcon(self.icons['oscr'])
-
-    dialog.addButton(tr('Continue'), QMessageBox.ButtonRole.AcceptRole)
-    default_button = dialog.addButton(tr('Split Dialog'), QMessageBox.ButtonRole.ActionRole)
-    dialog.addButton(tr('Trim'), QMessageBox.ButtonRole.ActionRole)
-    dialog.addButton(tr('Cancel'), QMessageBox.ButtonRole.RejectRole)
-
-    dialog.setDefaultButton(default_button)
-    clicked = dialog.exec()
-
-    if clicked == 1:
-        return 'split dialog'
-    elif clicked == 2:
-        return 'continue'
-    elif clicked == 3:
-        return 'split dialog'
-    elif clicked == 4:
-        return 'trim'
-
-    return 'cancel'
 
 
 def split_dialog(self):
@@ -172,7 +137,7 @@ def split_dialog(self):
     dialog.exec()
 
 
-def uploadresult_dialog(self, result):
+def uploadresult_dialog(self, result: dict):
     """
     Shows a dialog that informs about the result of the triggered upload.
 
@@ -237,7 +202,7 @@ def uploadresult_dialog(self, result):
     dialog.exec()
 
 
-def live_parser_toggle(self, activate):
+def live_parser_toggle(self, activate: bool):
     """
     Activates / Deactivates LiveParser.
 
@@ -426,11 +391,17 @@ def live_parser_close_callback(self, event):
 
 
 def live_parser_press_event(self, event: QMouseEvent):
+    """
+    Used to start moving the parser window.
+    """
     self.live_parser_window.start_pos = event.globalPosition().toPoint()
     event.accept()
 
 
 def live_parser_move_event(self, event: QMouseEvent):
+    """
+    Used to move the parser window to new location.
+    """
     parser_window = self.live_parser_window
     pos_delta = QPoint(event.globalPosition().toPoint() - parser_window.start_pos)
     parser_window.move(parser_window.x() + pos_delta.x(), parser_window.y() + pos_delta.y())
@@ -448,6 +419,10 @@ def view_upload_result(self, log_id: str):
 def show_detection_info(self, combat_index: int):
     """
     Shows a subwindow containing information on the detection process
+
+    Parameters:
+    - :param combat_index: combat index in `self.parser.combats` identifying the combat to show \
+    detection data on
     """
     if combat_index < 0:
         return

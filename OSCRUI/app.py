@@ -14,7 +14,7 @@ from .textedit import format_path
 from .translation import init_translation, tr
 from .widgetbuilder import (
         ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL,
-        SEXPAND, SMAXMAX, SMAXMIN, SMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN,
+        SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN,
         SCROLLOFF, SCROLLON)
 from .widgets import (
         AnalysisPlot, BannerLabel, CombatDelegate, FlipButton, ParserSignals, WidgetStorage)
@@ -28,10 +28,10 @@ class OSCRUI():
 
     from .callbacks import (
             add_favorite_ladder, browse_log, browse_sto_logpath, collapse_analysis_graph,
-            collapse_overview_table, expand_analysis_graph, expand_overview_table, navigate_log,
+            collapse_overview_table, expand_analysis_graph, expand_overview_table,
             remove_favorite_ladder, save_combat, set_live_scale_setting, set_parser_opacity_setting,
             set_graph_resolution_setting, set_sto_logpath_setting, set_ui_scale_setting,
-            switch_analysis_tab, switch_main_tab, switch_map_tab, switch_overview_tab)
+            switch_analysis_tab, switch_main_tab, switch_overview_tab)
     from .datafunctions import (
             analysis_data_slot, analyze_log_background, analyze_log_callback,
             copy_analysis_callback, copy_analysis_table_callback, copy_summary_callback,

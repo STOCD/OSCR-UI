@@ -1,11 +1,12 @@
 from typing import Iterable
 import sys
 
-from OSCR import TreeItem
 from PySide6.QtCore import (
         QAbstractItemModel, QAbstractTableModel, QItemSelectionModel, QItemSelection, QModelIndex,
         QSortFilterProxyModel, QStringListModel, Qt)
 from PySide6.QtGui import QColor, QFont
+
+from OSCR import TreeItem
 
 ARIGHT = Qt.AlignmentFlag.AlignRight
 ALEFT = Qt.AlignmentFlag.AlignLeft
@@ -20,7 +21,7 @@ class TableModel(QAbstractTableModel):
         Creates table model from supplied data.
 
         Parameters:
-        - :param data: data to be displayed without index or header; two-dimensional iterable;
+        - :param data: data to be displayed without index or header; two-dimensional iterable; \
         must support .extend() function
         - :param header: column headings
         - :param index: row index

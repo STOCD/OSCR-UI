@@ -1,9 +1,10 @@
 import os
 from threading import Thread
 
+from PySide6.QtCore import Qt, QThread, Signal, Slot
+
 from OSCR import HEAL_TREE_HEADER, TREE_HEADER
 from OSCR.combat import Combat
-from PySide6.QtCore import Qt, QThread, Signal, Slot
 
 from .callbacks import switch_main_tab, switch_overview_tab
 from .datamodels import DamageTreeModel, HealTreeModel, TreeSelectionModel
@@ -62,17 +63,19 @@ def analyze_log_callback(self, path=None, hidden_path=False):
 
 def analyze_log_background(self, amount: int):
     """
+    Analyzes older combats from current combatlog in the background.
+
+    Parameters:
+    - :param amount: amount of combats to analyze
     """
     if self.parser.bytes_consumed > 0 and self.thread is not None and not self.thread.is_alive():
         self.thread = Thread(target=self.parser.analyze_log_file_mp, kwargs={'max_combats': amount})
         self.thread.start()
-    else:
-        print('log consumed')
 
 
 def copy_summary_callback(self):
     """
-    Callback to set the combat summary of the active combat to the user's clippboard
+    Callback to set the combat summary of the active combat to the user's clipboard
 
     Parameters:
     - :param parser_num: which parser to take the data from
@@ -108,8 +111,10 @@ def copy_summary_callback(self):
 def insert_combat(self, combat: Combat):
     """
     Called by parser as soon as combat has been analyzed. Inserts combat into UI.
+
+    Parameters:
+    - :param combat: analyzed combat
     """
-    print(combat.id, self.current_combats.model().rowCount(), combat.description)
     difficulty = combat.difficulty if combat.difficulty is not None else ''
     dt = combat.start_time
     date = f'{dt.year}-{dt.month:02d}-{dt.day:02d}'
@@ -139,6 +144,9 @@ def analysis_data_slot(self, index: int):
 def populate_analysis(self, combat: Combat):
     """
     Populates the Analysis' treeview table.
+
+    Parameters:
+    - :param combat: combat containing the data to show
     """
     damage_out_item, damage_in_item, heal_out_item, heal_in_item = combat.root_items
 

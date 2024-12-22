@@ -1,11 +1,10 @@
 import os
-import traceback
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QLineEdit, QListWidgetItem
 
 from OSCR import (
-    LIVE_TABLE_HEADER, compose_logfile, repair_logfile as oscr_repair_logfile, extract_bytes)
+    compose_logfile, repair_logfile as oscr_repair_logfile, extract_bytes)
 
 from .dialogs import confirmation_dialog, show_message
 from .iofunctions import browse_path
@@ -45,34 +44,9 @@ def save_combat(self, combat_num: int):
         filename += ' ' + combat.difficulty
     filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.log'
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
-    if not base_dir:
-        base_dir = self.app_dir
     path = browse_path(self, base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
     if path:
         self.parser.export_combat(combat_num, path)
-
-
-def navigate_log(self, direction: str):
-    """
-    Load older or newer combats.
-
-    Parameters:
-    - :param direction: "up" -> load newer combats; "down" -> load older combats
-    """
-    print('navigate_log')
-    return
-    logfile_changed = self.parser.navigate_log(direction)
-    selected_row = self.current_combats.currentRow()
-    self.current_combats.clear()
-    self.current_combats.addItems(self.parser.analyzed_combats)
-    if logfile_changed:
-        self.current_combats.setCurrentRow(0)
-        self.current_combat_id = None
-        self.analyze_log_callback(0, parser_num=1)
-    else:
-        self.current_combats.setCurrentRow(selected_row)
-    self.widgets.navigate_up_button.setEnabled(self.parser.navigation_up)
-    self.widgets.navigate_down_button.setEnabled(self.parser.navigation_down)
 
 
 def switch_analysis_tab(self, tab_index: int):
@@ -106,21 +80,6 @@ def switch_overview_tab(self, tab_index: int):
             button.setChecked(True)
 
 
-def switch_map_tab(self, tab_index: int):
-    """
-    Callback for tab switch buttons; switches tab and sets active button.
-
-    Parameters:
-    - :param tab_index: index of the tab to switch to
-    """
-    self.widgets.map_tabber.setCurrentIndex(tab_index)
-    for index, button in enumerate(self.widgets.map_menu_buttons):
-        if not index == tab_index:
-            button.setChecked(False)
-        else:
-            button.setChecked(True)
-
-
 def switch_main_tab(self, tab_index: int):
     """
     Callback for main tab switch buttons. Switches main and sidebar tabs.
@@ -144,33 +103,6 @@ def switch_main_tab(self, tab_index: int):
         self.widgets.analysis_graph_button.show()
     else:
         self.widgets.analysis_graph_button.hide()
-
-
-# def favorite_button_callback(self):
-#     """
-#     Adds ladder to / removes ladder from favorites list. Updates settings.
-#     """
-#     # Add current ladder to favorites
-#     current_item = self.widgets.ladder_selector.currentItem()
-#     if current_item and self.widgets.map_tabber.currentIndex() == 0:
-#         current_ladder = current_item.text()
-#         favorite_ladders = self.settings.value('favorite_ladders', type=list)
-#         if current_ladder not in favorite_ladders:
-#             favorite_ladders.append(current_ladder)
-#             self.settings.setValue('favorite_ladders', favorite_ladders)
-#             self.widgets.favorite_ladder_selector.addItem(current_ladder)
-#             return
-
-#     # Remove current ladder from favorites
-#     current_item = self.widgets.favorite_ladder_selector.currentItem()
-#     if current_item:
-#         current_ladder = current_item.text()
-#         favorite_ladders = self.settings.value('favorite_ladders', type=list)
-#         if current_ladder in favorite_ladders:
-#             favorite_ladders.remove(current_ladder)
-#             self.settings.setValue('favorite_ladders', favorite_ladders)
-#             row = self.widgets.favorite_ladder_selector.row(current_item)
-#             self.widgets.favorite_ladder_selector.takeItem(row)
 
 
 def add_favorite_ladder(self):
@@ -289,30 +221,6 @@ def browse_sto_logpath(self, entry: QLineEdit):
         formatted_path = format_path(new_path)
         self.settings.setValue('sto_log_path', formatted_path)
         entry.setText(formatted_path)
-
-
-def auto_split_callback(self, path: str):
-    """
-    Callback for auto split button
-    """
-    # folder_path = QFileDialog.getExistingDirectory(
-    #         self.window, 'Select Folder', os.path.dirname(path))
-    # if folder_path:
-    #     split_log_by_lines(
-    #             path, folder_path, self.settings.value('split_log_after', type=int),
-    #             self.settings.value('combat_distance', type=int))
-
-
-def combat_split_callback(self, path: str, first_num: str, last_num: str):
-    """
-    Callback for combat split button
-    """
-    # target_path = browse_path(self, path, 'Logfile (*.log);;Any File (*.*)', True)
-    # if target_path:
-    #     split_log_by_combat(
-    #             path, target_path, int(first_num), int(last_num),
-    #             self.settings.value('seconds_between_combats', type=int),
-    #             self.settings.value('excluded_event_ids', type=list))
 
 
 def copy_live_data_callback(self):
@@ -437,10 +345,3 @@ def populate_split_combats_list(self, combat_list):
     """
     combats = self.parser.isolate_combats(self.entry.text())
     combat_list.model().set_items(combats)
-
-
-def show_parser_error(self, error: BaseException):
-    """
-    """
-    print(''.join(traceback.format_exception(error)), flush=True)
-    print(error, error.args, flush=True)

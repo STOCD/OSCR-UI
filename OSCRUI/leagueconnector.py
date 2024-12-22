@@ -11,7 +11,6 @@ from OSCR_django_client.api_client import ApiClient
 from OSCR_django_client.exceptions import ServiceException
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QListWidgetItem, QMessageBox
-from PySide6.QtCore import QTemporaryDir
 
 from .callbacks import switch_main_tab, switch_overview_tab
 from .datafunctions import CustomThread, analyze_log_callback
@@ -49,12 +48,24 @@ def fetch_and_insert_maps(self):
     """
     Retrieves maps from API and inserts them into the list.
     """
-    populate_variants(self)
-    # update_seasonal_records(self)
+    # Only populate the table once.
+    if self.widgets.variant_combo.count() > 0:
+        return
+
+    variants = self.league_api.variants(ordering="-start_date")
+    for variant in variants.results:
+        self.widgets.variant_combo.addItem(variant.name)
+        if variant.name == 'Default':
+            self.widgets.variant_combo.setCurrentText('Default')
 
 
-def update_seasonal_records(self, new_season):
-    """Update the default records widget"""
+def update_seasonal_records(self, new_season: str):
+    """
+    Update the default records widget
+
+    Parameters:
+    - :param new_season: Name of the season to be shown
+    """
     ladders = self.league_api.ladders(variant=new_season)
     if ladders is not None:
         self.widgets.ladder_selector.clear()
@@ -72,21 +83,12 @@ def update_seasonal_records(self, new_season):
             self.widgets.ladder_selector.addItem(item)
 
 
-# def update_seasonal_records(self, new_season):
-#     """Update the seasonal records widget"""
-#     ladders = self.league_api.ladders(variant=self.variant_list.currentText())
-#     if ladders is not None:
-#         self.widgets.season_ladder_selector.clear()
-#         for ladder in ladders.results:
-#             solo = "[Solo]" if ladder.is_solo else ""
-#             key = f"{ladder.name} ({ladder.difficulty}) {solo}"
-#             self.league_api.ladder_dict_season[key] = ladder
-#             self.widgets.season_ladder_selector.addItem(key)
-
-
 def apply_league_table_filter(self, filter_text: str):
     """
     Sets filter to proxy model of league table
+
+    Parameters:
+    - :param filter_text: text to filter the table for
     """
     try:
         self.widgets.ladder_table.model().name_filter = filter_text
@@ -97,6 +99,9 @@ def apply_league_table_filter(self, filter_text: str):
 def slot_ladder(self, selected_map_item: QListWidgetItem):
     """
     Fetches current ladder and puts it into the table.
+
+    Parameters:
+    - :param selected_map_item: item containing name and difficulty of clicked map
     """
     map_key = f'{selected_map_item.text()}|{selected_map_item.difficulty}'
     if map_key not in self.league_api.ladder_dict:
@@ -154,7 +159,6 @@ def extend_ladder(self):
     Extends the ladder table by 50 newly fetched rows.
     """
     if self.league_api.entire_ladder_loaded:
-        print('returning')
         return
     if self.league_api.current_ladder_id is None:
         return
@@ -239,20 +243,6 @@ def upload_callback(self):
     if res:
         uploadresult_dialog(self, res)
     os.remove(temp.name)
-
-
-def populate_variants(self):
-    """Populate the list of variants"""
-
-    # Only populate the table once.
-    if self.widgets.variant_combo.count() > 0:
-        return
-
-    variants = self.league_api.variants(ordering="-start_date")
-    for variant in variants.results:
-        self.widgets.variant_combo.addItem(variant.name)
-        if variant.name == 'Default':
-            self.widgets.variant_combo.setCurrentText('Default')
 
 
 class OSCRClient:

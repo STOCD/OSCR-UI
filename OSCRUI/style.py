@@ -15,8 +15,8 @@ def get_style(self, widget, override: dict = {}) -> str:
     Returns style sheet according to default style of widget with override style.
 
     Parameters:
-    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if
-    only the style in override should be applied)
+    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None \
+        if only the style in override should be applied)
     - :param override: dict -> contains additional style (optional)
 
     :return: str containing css style sheet
@@ -39,8 +39,8 @@ def get_style_class(self, class_name: str, widget, override={}) -> str:
 
     Parameters:
     - :param class_name: str -> name of the widget to be styled
-    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if
-    only the style in override should be applied)
+    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None \
+        if only the style in override should be applied)
     - :param override: dict -> contains additional style (optional)
 
     :return: str containing css style sheet
