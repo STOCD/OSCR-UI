@@ -201,7 +201,7 @@ def create_button_series(
         if seperator != '' and i < (len(buttons) - 1):
             sep_label = create_label(self, seperator, 'label', sep_style)
             sep_label.setSizePolicy(SMAXMIN)
-            layout.addWidget(sep_label, alignment=AVCENTER)
+            layout.addWidget(sep_label, alignment=ACENTER)
 
     if ret:
         return layout, button_list

@@ -2,8 +2,7 @@ import os
 
 from PySide6.QtWidgets import (
         QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QListWidgetItem,
-        QScrollArea, QSpacerItem, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout,
-        QGridLayout)
+        QScrollArea, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout)
 from PySide6.QtCore import QSize, QSettings, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
@@ -550,34 +549,41 @@ class OSCRUI():
         m = self.theme['defaults']['margin']
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(m, m, m, m)
-        left_layout.setSpacing(0)
+        left_layout.setSpacing(m)
         left_layout.setAlignment(ATOP)
 
         head_label = self.create_label(tr('About OSCR:'), 'label_heading')
         left_layout.addWidget(head_label)
-        about_label = self.create_label(
-                tr('Open Source Combatlog Reader (OSCR), developed by the STO Community ')
-                + tr('Developers in cooperation with the STO Builds Discord.'))
+        about_label = self.create_label(tr(
+                'Open Source Combatlog Reader (OSCR), developed by the STO Community '
+                'Developers in cooperation with the STO Builds Discord.'))
         about_label.setWordWrap(True)
+        about_label.setMinimumWidth(50)  # to fix the word wrap
+        about_label.setSizePolicy(SMINMAX)
         left_layout.addWidget(about_label)
-        version_label = self.create_label(
-                f'{tr("Current Version")}: {self.versions[0]} ({self.versions[1]})',
-                'label_subhead', style_override={'margin-bottom': '@isp'})
-        left_layout.addWidget(version_label)
         link_button_style = {
             'default': {},
-            tr('Website'): {'callback': lambda: open_link(self.config['link_website'])},
-            tr('Github'): {'callback': lambda: open_link(self.config['link_github'])},
+            tr('Website'): {
+                'callback': lambda: open_link(self.config['link_website']), 'align': AHCENTER},
+            tr('Github'): {
+                'callback': lambda: open_link(self.config['link_github']), 'align': AHCENTER},
             tr('Downloads'): {
-                'callback': lambda: open_link(self.config['link_downloads'])}
+                'callback': lambda: open_link(self.config['link_downloads']), 'align': AHCENTER}
         }
         button_layout, buttons = self.create_button_series(
-                link_button_style, 'button', seperator='•', ret=True)
+                link_button_style, 'button', shape='column', ret=True)
         buttons[0].setToolTip(self.config['link_website'])
         buttons[1].setToolTip(self.config['link_github'])
         buttons[2].setToolTip(self.config['link_downloads'])
-        left_layout.addLayout(button_layout)
-        left_layout.addSpacerItem(QSpacerItem(1, 1, hData=SMIN, vData=SEXPAND))
+        link_button_frame = self.create_frame(style='medium_frame')
+        link_button_frame.setLayout(button_layout)
+        left_layout.addWidget(link_button_frame, alignment=AHCENTER)
+        seperator = self.create_frame(style='light_frame', size_policy=SMINMAX)
+        seperator.setFixedHeight(1)
+        left_layout.addWidget(seperator)
+        version_label = self.create_label(
+                f'{tr("Version")}: {self.versions[0]} ({self.versions[1]})', 'label_subhead')
+        left_layout.addWidget(version_label)
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setColumnStretch(1, 1)
@@ -587,12 +593,14 @@ class OSCRUI():
                 style_override={'border-style': 'none'}, icon_size=logo_size)
         stocd_logo.clicked.connect(lambda: open_link(self.config['link_stocd']))
         logo_layout.addWidget(stocd_logo, 0, 0)
-        left_layout.addLayout(logo_layout)
         stobuilds_logo = self.create_icon_button(
                 self.icons['stobuilds'], self.config['link_stobuilds'],
                 style_override={'border-style': 'none'}, icon_size=logo_size)
         stobuilds_logo.clicked.connect(lambda: open_link(self.config['link_stobuilds']))
         logo_layout.addWidget(stobuilds_logo, 0, 2)
+        logo_frame = self.create_frame(style='medium_frame', size_policy=SMINMAX)
+        logo_frame.setLayout(logo_layout)
+        left_layout.addWidget(logo_frame, stretch=1, alignment=ABOTTOM)
         frame.setLayout(left_layout)
 
     def setup_left_sidebar_tabber(self, frame: QFrame):
@@ -1061,17 +1069,6 @@ class OSCRUI():
                 self.settings.value('graph_resolution', type=float) * 10, 1, 20,
                 callback=self.set_graph_resolution_setting)
         sec_1.addLayout(graph_resolution_layout, 2, 1, alignment=ALEFT)
-        split_length_label = self.create_label(tr('Auto Split After Lines:'), 'label_subhead')
-        sec_1.addWidget(split_length_label, 3, 0, alignment=ARIGHT)
-        split_length_validator = QIntValidator()
-        split_length_validator.setBottom(1)
-        split_length_entry = self.create_entry(
-                self.settings.value('split_log_after', type=str), split_length_validator,
-                style_override={'margin-top': 0})
-        split_length_entry.setSizePolicy(SMIXMAX)
-        split_length_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'split_log_after', split_length_entry.text()))
-        sec_1.addWidget(split_length_entry, 3, 1, alignment=AVCENTER)
         overview_sort_label = self.create_label(
                 tr('Sort overview table by column:'), 'label_subhead')
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
@@ -1102,8 +1099,8 @@ class OSCRUI():
             auto_scan_button.flip()
         sec_1.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
         sto_log_path_button = self.create_button(tr('STO Logfile:'), style_override={
-                'margin': 0, 'font': '@subhead', 'border-color': '@bc', 'border-style': 'solid',
-                'border-width': '@bw'})
+                'margin': 0, 'font': ('Overpass', 11, 'medium'), 'border-color': '@bc',
+                'border-style': 'solid', 'border-width': '@bw', 'padding-bottom': 1})
         sec_1.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
         sto_log_path_entry = self.create_entry(
                 self.settings.value('sto_log_path'), style_override={'margin-top': 0})
@@ -1185,8 +1182,8 @@ class OSCRUI():
             live_enabled_button.flip()
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
 
-        languages = ('English', 'Chinese', 'German')
-        language_codes = ('en', 'zh', 'de')
+        languages = ('English',)  # 'Chinese', 'German')
+        language_codes = ('en',)  # 'zh', 'de')
         language_label = self.create_label(tr('Language:'), 'label_subhead')
         sec_1.addWidget(language_label, 16, 0, alignment=ARIGHT)
         language_combo = self.create_combo_box(style_override={'font': '@small_text'})
