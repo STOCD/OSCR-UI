@@ -1,16 +1,39 @@
 import gettext
-import os
+from typing import Iterable
+
 
 def init_translation(lang_code='en'):
     """
     Initialize translation.
-    :param lang_code: Language codes, Example: 'en', 'zh', 'fr'
+
+    Parameters:
+    - :param lang_code: Language codes, Example: 'en', 'zh', 'fr'
+
     :return: gettext translation function
     """
-    try:
-        lang = gettext.translation('messages', localedir='locales', languages=[lang_code], fallback=True)
-        lang.install()
-    except Exception as e:
-        print(e)
+    if lang_code == 'en':
+        return
+    global translation_func
+    translation_func = gettext.translation(
+            'messages', localedir='locales', languages=[lang_code], fallback=True).gettext
 
-    return lang.gettext
+
+def tr(message: str | Iterable[str]) -> str | tuple[str]:
+    """
+    Translates message into currently installed language. Accepts str or iterable of str. Iterables
+    are returned as tuple object.
+    """
+    if isinstance(message, str):
+        return translation_func(message)
+    else:
+        return tuple(translation_func(m) for m in message)
+        # return map(translation_func, message)  # more memory efficient, but can't be indexed
+
+
+def _identity(msg):
+    return msg
+
+
+if 'translation_func' not in globals():
+    global translation_func
+    translation_func = _identity

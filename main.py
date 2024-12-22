@@ -1,3 +1,4 @@
+from multiprocessing import freeze_support, set_start_method
 import os
 import sys
 
@@ -6,8 +7,8 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.12.5.1'
-    __version__ = '0.5'
+    version = '2024.12.22.3'
+    __version__ = '1.0'
 
     # holds the style of the app
     theme = {
@@ -68,11 +69,12 @@ class Launcher():
             'subhead': ('Overpass', 12, 'medium'),
             'small_text': ('Overpass', 10, 'normal'),
             'fg': '#eeeeee',  # foreground (usually text)
-            'mfg': '#bbbbbb',  # medium foreground
+            'mfg': '#cccccc',  # medium foreground
             'bc': '#888888',  # border color
             'bw': 1,  # border width
             'br': 2,  # border radius
             'sep': 2,  # seperator -> width of major seperating lines
+            'm': 3,  # outside margin
             'margin': 10,  # default margin between widgets
             'csp': 5,  # child spacing -> content margin
             'isp': 15,  # item spacing
@@ -118,6 +120,14 @@ class Launcher():
             'border-style': 'none',
             'margin-bottom': 3,
             'font': '@subhead'
+        },
+        # label for less intrusive text
+        'label_light': {
+            'color': '@mfg',
+            'qproperty-indent': '0',
+            'border-style': 'none',
+            'margin': (3, 0, 3, 0),
+            'font': ('Overpass', 12, 'normal')
         },
         # default button
         'button': {
@@ -176,10 +186,6 @@ class Launcher():
             'text-decoration': 'none',  # removes underline
             'border': 'none',
             'margin': (6, 10, 4, 10),
-            # 'margin-left': 10,
-            # 'margin-top': 6,
-            # 'margin-bottom': 4,
-            # 'margin-right': 10,
             'padding': 0,
             'font': ('Overpass', 20, 'bold'),
             ':hover': {
@@ -224,6 +230,9 @@ class Launcher():
             ':hover': {
                 'border-color': '@oscr'
             },
+            ':checked': {
+                'border-color': '@oscr'
+            },
             # Tooltip
             '~QToolTip': {
                 'background-color': '@mbg',
@@ -237,7 +246,7 @@ class Launcher():
         },
         # line of user-editable text
         'entry': {
-            'background-color': '@lbg',
+            'background-color': '@bg',
             'color': '@fg',
             'border-width': '@bw',
             'border-style': 'solid',
@@ -245,6 +254,8 @@ class Launcher():
             'border-radius': '@br',
             'margin-top': '@csp',
             'font': '@small_text',
+            'padding': 2,
+            'selection-background-color': '#80c82934',
             # cursor is inside the line
             ':focus': {
                 'border-color': '@oscr'
@@ -252,14 +263,39 @@ class Launcher():
         },
         # horizontal seperator
         'hr': {
-            'background-color': '@oscr',
+            'background-color': '@lbg',
             'border-style': 'none',
-            'margin': (0, 10, 0, 10),
-            'height': 2
+            'height': 1
+        },
+        # button that holds LiveParser icon
+        'live_icon_button': {
+            'background': 'none',
+            'border-width': 1,
+            'border-style': 'none',
+            'border-color': '@fg',
+            'border-radius': 3,
+            'margin': (6, 10, 4, 10),
+            'padding': (2, 1, 2, 0),
+            ':hover': {
+                'border-style': 'solid'
+            },
+            ':checked': {
+                'border-style': 'solid',
+            },
+            # Tooltip
+            '~QToolTip': {
+                'background-color': '@mbg',
+                'border-style': 'solid',
+                'border-color': '@lbg',
+                'border-width': '@bw',
+                'padding': (0, 0, 0, 0),
+                'color': '@fg',
+                'font': 'Overpass'
+            }
         },
         # scrollable list of items; ::item refers to the rows
         'listbox': {
-            'background-color': '@lbg',
+            'background-color': '@bg',
             'color': '@fg',
             'border-width': '@bw',
             'border-style': 'solid',
@@ -269,23 +305,26 @@ class Launcher():
             'font': '@small_text',
             'outline': '0',  # removes dotted line around clicked item
             '::item': {
-                'border-width': '@bw',
+                'show-decoration-selected': '0',
+                'border-width': 1,  # hardcoded into the delegate!
                 'border-style': 'solid',
-                'border-color': '@lbg',
+                'border-color': '@bg',
+                'padding': 2  # for league listboxes
+                # 'padding': 4  # hardcoded into the delegate!
+            },
+            '::item:alternate': {
+                'background-color': '@mbg',
+                'border-color': '@mbg'
             },
             '::item:selected': {
-                'background': 'none',
-                'border-width': '@bw',
-                'border-style': 'solid',
                 'border-color': '@oscr',
-                'border-radius': '@br',
             },
             # selected but not the last click of the user
             '::item:selected:!active': {
                 'color': '@fg'
             },
             '::item:hover': {
-                'background-color': '@loscr',
+                'border-color': '@oscr',
             },
         },
         # horizontal sliding selector
@@ -324,6 +363,8 @@ class Launcher():
             'padding': 0,
             '::pane': {
                 'border': 'none',
+                'padding': 0,
+                'margin': 0
             }
         },
         # default tabber buttons (hidden)
@@ -360,12 +401,9 @@ class Launcher():
         'table': {
             'color': '@fg',
             'background-color': '@bg',
-            'border-width': '@bw',
-            'border-style': 'solid',
-            'border-color': '@bc',
             'gridline-color': 'rgba(0,0,0,0)',  # -> s.c: table_gridline
             'outline': '0',  # removes dotted line around clicked item
-            'margin': (0, 0, 10, 0),
+            'margin': (5, 0, 0, 0),
             'font': ('Roboto Mono', 12, 'Medium'),
             '::item': {
                 'padding': (0, 5, 0, 5),
@@ -451,11 +489,10 @@ class Launcher():
         # analysis table; ::item refers to the cells;
         #                 ::branch refers to the space on the left of the rows
         'tree_table': {
-            'border': '1px solid #888888',
             'background-color': '@bg',
             'alternate-background-color': '@mbg',
             'color': '@fg',
-            'margin': (5, 0, 15, 0),
+            'margin': (5, 0, 0, 0),
             'outline': '0',  # removes dotted line around clicked item
             'font': ('Overpass', 12, 'Normal'),
             '::item': {
@@ -552,10 +589,8 @@ class Launcher():
         },
         # frame of the plot widgets
         'plot_widget': {
-            'border-style': 'solid',
-            'border-width': '@bw',
-            'border-color': '@bc',
-            'margin': (10, 0, 10, 0),
+            'border-bottom-color': '@bg',
+            'margin': (0, 0, 5, 0),
             'padding': 10,
             'font': ('Overpass', 10, 'bold')
         },
@@ -601,6 +636,7 @@ class Launcher():
             'font': ('Roboto Mono', 10, 'Medium'),
             '::item': {
                 'padding': (0, 2, 0, 2),
+                'margin': 0,
                 'border-width': '@bw',
                 'border-style': 'solid',
                 'border-color': '@bg',
@@ -609,14 +645,7 @@ class Launcher():
                 'border-right-color': '@bc',
             },
             '::item:alternate': {
-                'padding': (0, 2, 0, 2),
                 'background-color': '@mbg',
-                'border-width': '@bw',
-                'border-style': 'solid',
-                'border-color': '@mbg',
-                'border-right-width': '@bw',
-                'border-right-style': 'solid',
-                'border-right-color': '@bc',
             }
         },
         # heading of the table; ::section refers to the individual buttons
@@ -660,19 +689,31 @@ class Launcher():
             'image': 'url(assets/resize.svg)',
         },
         'splitter': {
-            'border': 'none',
-            'margin': 0,
+            'margin': (10, 0, 10, 0),
             'padding': 0,
+            'border-style': 'solid',
+            'border-width': '@bw',
+            'border-color': '@bc',
             '::handle': {
-                'background-color': '@oscr'
+                'background-color': '@bc'
             },
             '::handle:pressed': {
-                'background-color': '@bc'
+                'background-color': '@oscr'
             },
             '::handle:vertical': {
                 'height': '@bw',
-                'margin': (0, 13, 0, 13)
+                'margin': (0, 13, 0, 13),
             }
+        },
+        # multiline text edit widget
+        'textedit': {
+            'border-style': 'solid',
+            'border-width': '@bw',
+            'border-color': '@bc',
+            'border-radius': '@br',
+            'background-color': '@bg',
+            'color': '@fg',
+            'font': ('Roboto Mono', 11, 'normal')
         },
         # other style decisions
         's.c': {
@@ -680,8 +721,9 @@ class Launcher():
             'button_icon_size': 24,
             'table_alternate': True,
             'table_gridline': False,
-            'overview_graph_stretch': 10,
-            'overview_table_stretch': 3
+            'overview_graph_stretch': 1,
+            'overview_table_stretch': 1,
+            'big_icon_size': 70
         }
     }
 
@@ -757,7 +799,6 @@ class Launcher():
                 'heal_columns|11': True,
                 'heal_columns|12': True,
                 'heal_columns_length': 13,
-                'split_log_after': 480000,
                 'seconds_between_combats': 45,
                 'excluded_event_ids': ['Autodesc.Combatevent.Falling', ''],
                 'graph_resolution': 0.2,
@@ -777,10 +818,13 @@ class Launcher():
                 'live_graph_active': False,
                 'live_graph_field': 0,
                 'first_overview_tab': 0,
-                'log_size_warning': True,
                 'ui_scale': 1,
                 'live_scale': 1,
                 'live_enabled': False,
+                'overview_splitter': None,
+                'analysis_splitter': None,
+                'analysis_graph': True,
+                'live_player': 'Handle'
             }
         }
         return config
@@ -796,4 +840,6 @@ class Launcher():
 
 
 if __name__ == '__main__':
+    freeze_support()
+    set_start_method('spawn')
     Launcher.launch()

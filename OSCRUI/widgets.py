@@ -1,13 +1,20 @@
-from math import sqrt, floor, frexp
+from math import sqrt, frexp
 
 import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
-from PySide6.QtCore import QRect, Qt, Signal, Slot
-from PySide6.QtGui import QIcon, QMouseEvent, QPixmap, QPainter, QFont
-from PySide6.QtWidgets import QComboBox, QFrame, QListWidget, QPushButton, QSizeGrip, QSplitter
-from PySide6.QtWidgets import QTableView, QTabWidget, QTreeView, QWidget
+from PySide6.QtCore import QObject, QRect, QSize, Qt, QThread, Signal, Slot
+from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPixmap
+from PySide6.QtWidgets import (
+    QComboBox, QFrame, QLabel, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle,
+    QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QWidget)
 
 from .widgetbuilder import SMINMIN
+
+
+ATOPLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+ATOPRIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
+ABOTTOMLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom
+ABOTTOMRIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom
 
 
 class WidgetStorage():
@@ -24,19 +31,23 @@ class WidgetStorage():
         self.map_tab_frames: list[QFrame] = list()
         self.map_menu_buttons: list[QPushButton] = list()
 
-        self.navigate_up_button: QPushButton
-        self.navigate_down_button: QPushButton
+        self.log_duration_value: QLabel
+        self.player_duration_value: QLabel
 
         self.overview_menu_buttons: list[QPushButton] = list()
         self.overview_tabber: QTabWidget
         self.overview_tab_frames: list[QFrame] = list()
         self.overview_table_frame: QFrame
         self.overview_table_button: FlipButton
+        self.overview_splitter: QSplitter
 
+        self.analysis_splitter: QSplitter
         self.analysis_menu_buttons: list[QPushButton] = list()
         self.analysis_copy_combobox: QComboBox
-        self.analysis_tabber: QTabWidget
-        self.analysis_tab_frames: list[QFrame] = list()
+        self.analysis_graph_tabber: QTabWidget
+        self.analysis_tree_tabber: QTabWidget
+        self.analysis_graph_frames: list[QFrame] = list()
+        self.analysis_tree_frames: list[QFrame] = list()
         self.analysis_table_dout: QTreeView
         self.analysis_table_dtaken: QTreeView
         self.analysis_table_hout: QTreeView
@@ -45,16 +56,18 @@ class WidgetStorage():
         self.analysis_plot_dtaken: AnalysisPlot
         self.analysis_plot_hout: AnalysisPlot
         self.analysis_plot_hin: AnalysisPlot
+        self.analysis_graph_button: FlipButton
 
         self.ladder_selector: QListWidget
         self.favorite_ladder_selector: QListWidget
-        self.season_ladder_selector: QListWidget
+        self.variant_combo: QComboBox
         self.ladder_table: QTableView
 
         self.live_parser_table: QTableView
         self.live_parser_button: QPushButton
         self.live_parser_curves: list
         self.live_parser_splitter: QSplitter
+        self.live_parser_duration_label: QLabel
 
     @property
     def analysis_table(self):
@@ -66,8 +79,16 @@ class FlipButton(QPushButton):
     """
     QPushButton with two sets of commands, texts and icons that alter on click.
     """
-    def __init__(self, r_text, l_text, parent, checkable=False, *ar, **kw):
-        super().__init__(r_text, parent, *ar, **kw)
+    def __init__(self, r_text, l_text, checkable: bool = False, *ar, **kw):
+        """
+        QPushButton with two sets of commands, texts and icons that alter on click.
+
+        Parameters:
+        - :param r_text: right-side text
+        - :param l_text: left-side text
+        - :param checkable: set to True to make button checkable
+        """
+        super().__init__(r_text, *ar, **kw)
         self._r = True
         self._checkable = checkable
         if checkable:
@@ -238,7 +259,7 @@ class CustomPlotAxis(AxisItem):
         majorMaxSpacing = dif / minNumberOfIntervals
 
         mantissa, exp2 = frexp(majorMaxSpacing)
-        p10unit = 10. ** (floor((exp2 - 1) / 3.32192809488736) - 1)
+        p10unit = 10. ** (int((exp2 - 1) / 3.32192809488736) - 1)
         if 100. * p10unit <= majorMaxSpacing:
             majorScaleFactor = 10
             p10unit *= 10.
@@ -395,3 +416,103 @@ class LiveParserWindow(QFrame):
     """
     update_table = Signal(tuple)
     update_graph = Signal(list)
+
+
+class CombatDelegate(QStyledItemDelegate):
+
+    def __init__(self, border_width: int = 0, padding: int = 0):
+        super().__init__()
+        self.border_width = border_width
+        self.padding = padding
+
+    def paint(self, painter: QPainter, option, index) -> None:
+        painter.save()
+        self.initStyleOption(option, index)
+        w = option.widget
+        data = index.data()
+        style: QStyle = option.widget.style().proxy()
+        if painter.hasClipping():
+            painter.setClipRegion(painter.clipRegion() & option.rect)
+        else:
+            painter.setClipRegion(option.rect)
+        style.drawPrimitive(QStyle.PrimitiveElement.PE_PanelItemViewItem, option, painter, w)
+        text_rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemFocusRect, option, w)
+        pal = option.palette
+        style.drawItemText(painter, text_rect, ATOPLEFT, pal, True, data[1])
+        style.drawItemText(painter, text_rect, ABOTTOMRIGHT, pal, True, data[2])
+        style.drawItemText(painter, text_rect, ABOTTOMLEFT, pal, True, data[3])
+        style.drawItemText(painter, text_rect, ATOPRIGHT, pal, True, data[4])
+        painter.restore()
+
+    def sizeHint(self, option, index) -> QSize:
+        data = index.data()
+        line_height = option.fontMetrics.height()
+        line_width = max(
+                option.fontMetrics.horizontalAdvance(data[1] + data[4]),
+                option.fontMetrics.horizontalAdvance(data[2] + data[3]))
+        return QSize(
+            line_width + 2 * self.border_width + 2 * self.padding + line_height,
+            line_height * 2 + 2 * self.border_width + 2.5 * self.padding)
+
+
+class ThreadObject(QObject):
+
+    result = Signal(object)
+    data = Signal(object)
+    finished = Signal()
+
+    def __init__(self, func, *args, **kwargs) -> None:
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+        super().__init__()
+
+    @Slot()
+    def run(self):
+        res = self._func(*self._args, **self._kwargs)
+        self.result.emit(res)
+        self.finished.emit()
+
+
+def exec_in_thread(
+        self, func, *args, result=None, data=None, finished=None, **kwargs):
+    """
+    Executes function `func` in separate thread. All positional and keyword parameters not listed
+    are passed to the function. The function must take a parameter `threaded_worker` which will
+    contain the worker object holding the signals: `start` (tuple), `result` (object),
+    `update_splash` (str), `finished` (no data)
+
+    Parameters:
+    - :param func: function to execute
+    - :param *args: positional parameters passed to the function [optional]
+    - :param result: callable that is executed when signal result is emitted (takes object) \
+    [optional]
+    - :param update_splash: callable that is executed when signal update_splash is emitted \
+    (takes str) [optional]
+    - :param finished: callable that is executed after `func` returns (takes no parameters) \
+    [optional]
+    - :param start_later: set to True to defer execution of the function; makes this function \
+    return signal that can be emitted to start execution. That signal takes a tuple with \
+        additional positional parameters passed to `func` [optional]
+    - :param **kwargs: keyword parameters passed to the function [optional]
+    """
+    worker = ThreadObject(func, *args, **kwargs)
+    if result is not None:
+        worker.result.connect(result)
+    if finished is not None:
+        worker.finished.connect(finished)
+    if data is not None:
+        worker.data.connect(data)
+    thread = QThread(self.app)
+    worker.moveToThread(thread)
+    thread.started.connect(worker.run)
+    worker.finished.connect(thread.quit)
+    thread.finished.connect(worker.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+    thread.worker = worker
+    thread.start(QThread.Priority.IdlePriority)
+
+
+class ParserSignals(QObject):
+    analyzed_combat = Signal(object)
+    parser_error = Signal(object)

@@ -1,11 +1,11 @@
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Sequence
 
 import numpy as np
 from pyqtgraph import BarGraphItem, mkPen, PlotWidget, setConfigOptions
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTableView, QVBoxLayout, QWidget
 
-from .headers import get_table_headers
+from OSCR import TABLE_HEADER
 from OSCR.combat import Combat
 
 from .datamodels import OverviewTableModel, SortingProxy
@@ -18,9 +18,9 @@ setConfigOptions(antialias=True)
 
 
 def setup_plot(plot_function: Callable) -> Callable:
-    '''
-    sets up Plot item and puts it into layout
-    '''
+    """
+    Sets up Plot item and puts it into layout. (Decorator)
+    """
     def plot_wrapper(self, data, time_reference=None):
         plot_widget = PlotWidget()
         plot_widget.setAxisItems({'left': CustomPlotAxis('left')})
@@ -50,7 +50,7 @@ def setup_plot(plot_function: Callable) -> Callable:
         if legend_data is not None:
             legend_frame = create_legend(self, legend_data)
             inner_layout.addWidget(legend_frame, alignment=ACENTER)
-        frame = create_frame(self, None, 'plot_widget', size_policy=SMINMIN)
+        frame = create_frame(self, 'plot_widget', size_policy=SMINMIN)
         frame.setLayout(inner_layout)
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(0, 0, 0, 0)
@@ -60,16 +60,19 @@ def setup_plot(plot_function: Callable) -> Callable:
 
 
 def extract_overview_data(combat: Combat) -> tuple:
-    '''
-    converts dictionary containing player data to table data for the front page
-    '''
+    """
+    Retrieves Overview data from combat object.
+
+    Parameters:
+    - :param combat: combat object to retrieve the data from
+    """
     table = list()
 
     DPS_graph_data = dict()
     DMG_graph_data = dict()
     graph_time = dict()
 
-    for player in combat.player_dict.values():
+    for player in combat.players.values():
         table.append((*player,))
 
         DPS_graph_data[player.handle] = player.DPS_graph_data
@@ -79,9 +82,12 @@ def extract_overview_data(combat: Combat) -> tuple:
     return (graph_time, DPS_graph_data, DMG_graph_data, table)
 
 
-def create_overview(self):
+def create_overview(self, combat: Combat):
     """
-    creates the main Parse Overview including graphs and table
+    Creates the main parse overview including graphs and table.
+
+    Parameters:
+    - :param combat: combat object to retrieve the data from
     """
     # clear graph frames
     for frame in self.widgets.overview_tab_frames:
@@ -90,24 +96,27 @@ def create_overview(self):
     if self.widgets.overview_table_frame.layout():
         QWidget().setLayout(self.widgets.overview_table_frame.layout())
 
-    time_data, DPS_graph_data, DMG_graph_data, current_table = extract_overview_data(
-            self.parser1.active_combat)
+    time_data, DPS_graph_data, DMG_graph_data, current_table = extract_overview_data(combat)
 
-    line_layout = create_line_graph(self, DPS_graph_data, time_data)
-    self.widgets.overview_tab_frames[1].setLayout(line_layout)
+    if len(current_table) > 0:
+        line_layout = create_line_graph(self, DPS_graph_data, time_data)
+        self.widgets.overview_tab_frames[1].setLayout(line_layout)
 
-    group_bar_layout = create_grouped_bar_plot(self, DMG_graph_data, time_data)
-    self.widgets.overview_tab_frames[2].setLayout(group_bar_layout)
+        group_bar_layout = create_grouped_bar_plot(self, DMG_graph_data, time_data)
+        self.widgets.overview_tab_frames[2].setLayout(group_bar_layout)
 
-    bar_layout = create_horizontal_bar_graph(self, current_table)
-    self.widgets.overview_tab_frames[0].setLayout(bar_layout)
+        bar_layout = create_horizontal_bar_graph(self, current_table)
+        self.widgets.overview_tab_frames[0].setLayout(bar_layout)
 
-    table_layout = QVBoxLayout()
-    table_layout.setContentsMargins(0, 0, 0, 0)
-    table = create_overview_table(self, current_table)
-    table_layout.addWidget(table)
-    self.widgets.overview_table_frame.setLayout(table_layout)
-    table.resizeColumnsToContents()
+        table_layout = QVBoxLayout()
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table = create_overview_table(self, current_table)
+        table_layout.addWidget(table)
+        self.widgets.overview_table_frame.setLayout(table_layout)
+        table.resizeColumnsToContents()
+
+    self.widgets.log_duration_value.setText(f'{combat.meta['log_duration']:.1f}s')
+    self.widgets.player_duration_value.setText(f'{combat.meta['player_duration']:.1f}s')
 
 
 @setup_plot
@@ -122,13 +131,13 @@ def create_grouped_bar_plot(
     - :param time_reference: contains the time values for the data points
     - :param bar_widget: bar widget that will be plotted to (supplied by decorator)
 
-    :return: layout containing the graph
+    :return: layout containing the graph (returned by decorator)
     """
     bottom_axis = bar_widget.getAxis('bottom')
     bottom_axis.unit = 's'
     legend_data = list()
 
-    group_width = 0.18
+    group_width = self.settings.value('graph_resolution', type=float) * 0.9
     player_num = len(data)
     if player_num == 0:
         return
@@ -163,10 +172,10 @@ def create_horizontal_bar_graph(self, table: list[list], bar_widget: PlotWidget)
     left_axis.setTickFont(theme_font(self, 'app'))
     bar_widget.setDefaultPadding(padding=0.01)
 
-    table.sort(key=lambda line: line[3], reverse=True)
+    table.sort(key=lambda line: line[2], reverse=True)
     y_annotations = (tuple((index + 1, line[0] + line[1]) for index, line in enumerate(table)),)
     bar_widget.getAxis('left').setTicks(y_annotations)
-    x = tuple(line[3] for line in table)
+    x = tuple(line[2] for line in table)
     y = tuple(range(1, len(x) + 1))
     bar_widget.setXRange(0, max(x) * 1.05, padding=0)
     bars = BarGraphItem(
@@ -205,7 +214,7 @@ def create_legend(self, colors_and_names: Iterable[tuple]) -> QFrame:
     Creates Legend from color / name pairs and returns frame containing it.
 
     Parameters:
-    - :param colors_and_names: Iterable containing color / name pairs : [('#9f9f00', 'Line 1'),
+    - :param colors_and_names: Iterable containing color / name pairs : [('#9f9f00', 'Line 1'), \
     ('#0000ff', 'Line 2'), (...), ...]
 
     :return: frame containing the legend
@@ -266,16 +275,19 @@ def create_legend_item(self, color: str, name: str) -> QFrame:
     return frame
 
 
-def create_overview_table(self, table_data) -> QTableView:
+def create_overview_table(self, table_data: Iterable[Sequence]) -> QTableView:
     """
     Creates the overview table and returns it.
+
+    Parameters:
+    - :param table_data: table containing the overview data
 
     :return: Overview Table
     """
     table_cell_data = tuple(tuple(line[2:]) for line in table_data)
     table_index = tuple(line[0] + line[1] for line in table_data)
     model = OverviewTableModel(
-            table_cell_data, get_table_headers(), table_index, self.theme_font('table_header'),
+            table_cell_data, TABLE_HEADER, table_index, self.theme_font('table_header'),
             self.theme_font('table'))
     sort = SortingProxy()
     sort.setSourceModel(model)
@@ -319,8 +331,8 @@ def create_live_graph(self) -> tuple[QFrame, list]:
         color = self.theme['plot']['color_cycler'][color_index]
         curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
 
-    frame = create_frame(self, None, 'plot_widget', size_policy=SMIXMAX, style_override={
-            'margin': 4, 'padding': 2})
+    frame = create_frame(self, 'plot_widget', size_policy=SMIXMAX, style_override={
+            'margin': 4, 'padding': 2, 'border': 'none'})
     frame.setMinimumWidth(self.sidebar_item_width * 0.25)
     frame.setMinimumHeight(self.sidebar_item_width * 0.25)
     layout = QHBoxLayout()
@@ -331,47 +343,49 @@ def create_live_graph(self) -> tuple[QFrame, list]:
 
 
 def update_live_display(
-        self, data: dict, graph_active: bool = False, graph_data_buffer: list = [],
-        graph_data_field: int = 0):
+        self, player_data: dict, combat_time: float, graph_active: bool = False,
+        graph_data_buffer: list = [], graph_data_field: int = 0):
     """
     Updates display of live parser to show the new data.
 
     Parameters:
-    - :param data: dictionary containing the new data
+    - :param player_data: dictionary containing the new data
+    - :param combat_time: duration of the entire combat
     - :param graph_active: Set to True to update the graph as well
     - :param graph_data_buffer: contains the past graph data
     """
-    index = list()
     cells = list()
     curves = list()
-    for player, player_data in data.items():
-        index.append(player)
-        cells.append(list(player_data.values()))
+    for player, player_data in player_data.items():
+        cells.append([player, *player_data.values(), 5])
     if graph_active:
         if len(graph_data_buffer) == 0:
             graph_data_buffer.extend(([0] * 15, [0] * 15, [0] * 15, [0] * 15, [0] * 15))
         zipper = zip(graph_data_buffer, cells, self.widgets.live_parser_curves)
-        for buffer_item, player_data, curve in zipper:
+        for id, (buffer_item, player_data, curve) in enumerate(zipper):
             buffer_item.pop(0)
-            buffer_item.append(player_data[graph_data_field])
+            buffer_item.append(player_data[1 + graph_data_field])
+            player_data[8] = id
             curves.append((curve, buffer_item))
         if len(curves) > 0:
             self.live_parser_window.update_graph.emit(curves)
 
-    if len(index) > 0 and len(cells) > 0:
-        self.live_parser_window.update_table.emit((index, cells))
+    if len(cells) > 0:
+        self.live_parser_window.update_table.emit(cells)
+    self.widgets.live_parser_duration_label.setText(f'Duration: {combat_time:.1f}s')
 
 
 @Slot()
-def update_live_table(self, data: tuple):
+def update_live_table(self, data: list):
     """
     Updates the table of the live parser with the supplied data
 
     Parameters:
-    - :param data: tuple containing two lists, that contain the index and cell values respectively
+    - :param data: list containing the index and cell values
     """
     table = self.widgets.live_parser_table
-    table.model().replace_data(*data)
+    table.model().replace_data(data)
+    table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
 
@@ -382,7 +396,7 @@ def update_live_graph(curve_data: list):
     Updates the graph of the live parser with the supplied data
 
     Parameters:
-    - :param curve_data: list containing pairs of curve items and data lists; curve items will be
+    - :param curve_data: list containing pairs of curve items and data lists; curve items will be \
     updated with the data
     """
     time_data = list(range(-14, 1))

@@ -2,10 +2,9 @@ from types import FunctionType, BuiltinFunctionType, MethodType
 from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import QAbstractItemView, QComboBox, QFrame
-from PySide6.QtWidgets import QHBoxLayout, QHeaderView, QLabel, QLineEdit
-from PySide6.QtWidgets import QPushButton, QSizePolicy, QSlider, QTableView
-from PySide6.QtWidgets import QTreeView, QVBoxLayout
+from PySide6.QtWidgets import (
+    QAbstractItemView, QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QSlider, QTableView, QTreeView, QVBoxLayout)
 
 from .style import get_style, get_style_class, merge_style, theme_font
 
@@ -32,27 +31,28 @@ AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
 RFIXED = QHeaderView.ResizeMode.Fixed
 
+OVERTICAL = Qt.Orientation.Vertical
+
 SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
 SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 
 
-def create_button(self, text, style: str = 'button', parent=None, style_override={}, toggle=None):
+def create_button(self, text: str, style: str = 'button', style_override={}, toggle=None):
     """
     Creates a button according to style with parent.
 
     Parameters:
     - :param text: text to be shown on the button
     - :param style: name of the style as in self.theme or style dict
-    - :param parent: parent of the button (optional)
     - :param style_override: style dict to override default style (optional)
-    - :param toggle: True or False when button should be a toggle button, None when it should be a
+    - :param toggle: True or False when button should be a toggle button, None when it should be a \
     normal button; the bool value indicates the default state of the button
 
     :return: configured QPushButton
     """
-    button = QPushButton(text, parent)
+    button = QPushButton(text)
     button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
     if 'font' in style_override:
         button.setFont(theme_font(self, style, style_override['font']))
@@ -95,36 +95,34 @@ def create_icon_button(
     return button
 
 
-def create_frame(self, parent=None, style='frame', style_override={}, size_policy=None) -> QFrame:
+def create_frame(self, style: str = 'frame', style_override: dict = {}, size_policy=None) -> QFrame:
     """
-    Creates a frame with default styling and parent
+    Creates a frame with default styling
 
     Parameters:
-    - :param parent: parent of the frame (optional)
     - :param style: style dict to override default style (optional)
     - :param size_policy: size policy of the frame (optional)
 
     :return: configured QFrame
     """
-    frame = QFrame(parent)
+    frame = QFrame()
     frame.setStyleSheet(get_style(self, style, style_override))
     frame.setSizePolicy(size_policy if isinstance(size_policy, QSizePolicy) else SMAXMAX)
     return frame
 
 
-def create_label(self, text, style: str = 'label', parent=None, style_override={}):
+def create_label(self, text: str, style: str = 'label', style_override={}) -> QLabel:
     """
     Creates a label according to style with parent.
 
     Parameters:
     - :param text: text to be shown on the label
     - :param style: name of the style as in self.theme
-    - :param parent: parent of the label (optional)
     - :param style_override: style dict to override default style (optional)
 
     :return: configured QLabel
     """
-    label = QLabel(parent)
+    label = QLabel()
     label.setText(text)
     label.setStyleSheet(get_style(self, style, style_override))
     label.setSizePolicy(SMAXMAX)
@@ -136,20 +134,19 @@ def create_label(self, text, style: str = 'label', parent=None, style_override={
 
 
 def create_button_series(
-        self, parent, buttons: dict, style, shape: str = 'row', seperator: str = '', ret=False):
+        self, buttons: dict, style, shape: str = 'row', seperator: str = '', ret=False):
     """
     Creates a row / column of buttons.
 
     Parameters:
-    - :param parent: widget that will contain the buttons
     - :param buttons: dictionary containing button details
         - key "default" contains style override for all buttons (optional)
         - all other keys represent one button, key will be the text on the button; value for the
         key contains dict with details for the specific button (all optional)
             - "callback": callable that will be called on button click
             - "style": individual style override dict
-            - "toggle": True or False when button should be a toggle button, None when it should be
-            a normal button; the bool value indicates the default state of the button
+            - "toggle": True or False when button should be a toggle button, None when it should
+                be a normal button; the bool value indicates the default state of the button
             - "stretch": stretch value for the button
             - "align": alignment flag for button
     - :param style: key for self.theme -> default style
@@ -184,7 +181,7 @@ def create_button_series(
         else:
             button_style = defaults
         toggle_button = detail['toggle'] if 'toggle' in detail else None
-        bt = self.create_button(name, style, parent, button_style, toggle_button)
+        bt = create_button(self, name, style, button_style, toggle_button)
         if 'callback' in detail and isinstance(detail['callback'], CALLABLE):
             if toggle_button:
                 bt.clicked[bool].connect(detail['callback'])
@@ -197,9 +194,9 @@ def create_button_series(
             layout.addWidget(bt, stretch)
         button_list.append(bt)
         if seperator != '' and i < (len(buttons) - 1):
-            sep_label = self.create_label(seperator, 'label', parent, sep_style)
+            sep_label = create_label(self, seperator, 'label', sep_style)
             sep_label.setSizePolicy(SMAXMIN)
-            layout.addWidget(sep_label)
+            layout.addWidget(sep_label, alignment=ACENTER)
 
     if ret:
         return layout, button_list
@@ -207,18 +204,17 @@ def create_button_series(
         return layout
 
 
-def create_combo_box(self, parent, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
+def create_combo_box(self, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
     """
     Creates a combobox with given style and returns it.
 
     Parameters:
-    - :param parent: parent of the combo box
     - :param style: key for self.theme -> default style
     - :param style_override: style dict to override default style
 
     :return: styled QCombobox
     """
-    combo_box = QComboBox(parent)
+    combo_box = QComboBox()
     combo_box.setStyleSheet(get_style_class(self, 'QComboBox', style, style_override))
     if 'font' in style_override:
         combo_box.setFont(theme_font(self, style, style_override['font']))
@@ -272,7 +268,7 @@ def create_annotated_slider(
     - :param style: key for self.theme -> default style
     - :param style_override_slider: style dict to override default style
     - :param style_override_label: style dict to override default style
-    - :param callback: callable to be attached to the valueChanged signal of the slider; will be
+    - :param callback: callable to be attached to the valueChanged signal of the slider; will be \
     passed value the slider was moved to; must return value that the label should be set to
 
     :return: layout with slider
@@ -315,9 +311,9 @@ def resize_tree_table(tree: QTreeView):
         tree.header().resizeSection(col, width)
 
 
-def create_analysis_table(self, parent, widget) -> QTreeView:
+def create_analysis_table(self, widget) -> QTreeView:
     """
-    Creates and returns a QTreeView with parent, styled according to widget.
+    Creates and returns a QTreeView, styled according to widget.
 
     Parameters:
     - :param parent: parent of the table
@@ -325,7 +321,7 @@ def create_analysis_table(self, parent, widget) -> QTreeView:
 
     :return: configured QTreeView
     """
-    table = QTreeView(parent)
+    table = QTreeView()
     table.setStyleSheet(get_style_class(self, 'QTreeView', widget))
     table.setSizePolicy(SMINMIN)
     table.setAlternatingRowColors(True)

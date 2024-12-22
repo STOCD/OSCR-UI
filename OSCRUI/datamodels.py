@@ -1,10 +1,12 @@
 from typing import Iterable
 import sys
 
-from OSCR import TreeItem
-from PySide6.QtCore import QAbstractItemModel, QAbstractTableModel, QItemSelectionModel
-from PySide6.QtCore import QItemSelection, QModelIndex, QSortFilterProxyModel, Qt
+from PySide6.QtCore import (
+        QAbstractItemModel, QAbstractTableModel, QItemSelectionModel, QItemSelection, QModelIndex,
+        QSortFilterProxyModel, QStringListModel, Qt)
 from PySide6.QtGui import QColor, QFont
+
+from OSCR import TreeItem
 
 ARIGHT = Qt.AlignmentFlag.AlignRight
 ALEFT = Qt.AlignmentFlag.AlignLeft
@@ -19,7 +21,7 @@ class TableModel(QAbstractTableModel):
         Creates table model from supplied data.
 
         Parameters:
-        - :param data: data to be displayed without index or header; two-dimensional iterable;
+        - :param data: data to be displayed without index or header; two-dimensional iterable; \
         must support .extend() function
         - :param header: column headings
         - :param index: row index
@@ -66,18 +68,22 @@ class OverviewTableModel(TableModel):
     """
     Model for overview table
     """
+    MAGNITUDE_COLUMNS = {0, 3, 8, 11, 14, 15, 16}
+    SHARE_COLUMNS = {2, 4, 5, 6, 7, 9, 12, 13}
+    WHOLE_NUMBER_COLUMNS = {10, 17, 18, 19, 20, 21, 22, 23}
+
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
             cell = self._data[index.row()][current_col]
             column = index.column()
-            if column == 0:
+            if column == 1:
                 return f'{cell:.1f}s'
-            elif column in (1, 2, 7, 10, 13, 14, 15):
+            elif column in self.MAGNITUDE_COLUMNS:
                 return f'{cell:,.2f}'
-            elif column in (3, 4, 5, 6, 8, 11, 12):
-                return f'{cell:,.2f}%'
-            elif column in (9, 16, 17, 18, 19, 20, 21, 22):
+            elif column in self.SHARE_COLUMNS:
+                return f'{cell * 100:,.2f}%'
+            elif column in self.WHOLE_NUMBER_COLUMNS:
                 return str(cell)
             return cell
 
@@ -137,9 +143,10 @@ class LiveParserTableModel(TableModel):
     """
     Model for LiveParser Table
     """
-    def __init__(self, *args, legend_col=None, colors=None, **kwargs):
+    def __init__(self, *args, legend_col=None, colors=None, name_index=1, **kwargs):
         super().__init__(*args, **kwargs)
         self._legend_column = legend_col
+        self._name_index = name_index
         if colors is not None:
             self._colors = [QColor.fromString(color) for color in colors]
         else:
@@ -148,18 +155,18 @@ class LiveParserTableModel(TableModel):
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             column = index.column()
-            data = self._data[index.row()][column]
-            if column in (0, 4):
+            data = self._data[index.row()][1 + column]
+            if column in (0, 4):  # DPS, HPS
                 return f'{data:,.2f}'
-            elif column == 1:
+            elif column == 1:  # Combat Time
                 return f'{data:.1f}s'
-            elif column == 2:
+            elif column == 2:  # Debuff
                 if data == 0:
                     return '---.--%'
                 return f'{data:,.2f}%'
-            elif column == 3:
+            elif column == 3:  # Attacks-in
                 return f'{data:,.2f}%'
-            return str(data)
+            return str(data)  # Kills, Deaths
 
         if role == Qt.ItemDataRole.FontRole:
             return self._cell_font
@@ -167,11 +174,11 @@ class LiveParserTableModel(TableModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return AVCENTER + ARIGHT
 
-        if role == Qt.ItemDataRole.DecorationRole:
+        if role == Qt.ItemDataRole.ForegroundRole:
             if self._legend_column is not None and index.column() == self._legend_column:
                 row = index.row()
                 if row < len(self._colors):
-                    return self._colors[row]
+                    return self._colors[self._data[row][8]]
             return None
 
     def headerData(self, section, orientation, role):
@@ -182,7 +189,7 @@ class LiveParserTableModel(TableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 try:
-                    return self._index[section]
+                    return self._data[section][0][self._name_index]
                 except IndexError:
                     sys.stdout.write(f'Section:{section}|Data{self._data}|Index{self._index}\n')
 
@@ -196,11 +203,21 @@ class LiveParserTableModel(TableModel):
             if orientation == Qt.Orientation.Vertical:
                 return AVCENTER + ARIGHT
 
-    def replace_data(self, index: list, rows: list):
+    def replace_data(self, rows: list):
         self.beginResetModel()
-        self._index = index
         self._data = rows
         self.endResetModel()
+
+    def sort(self, column, order=None):
+        self.layoutAboutToBeChanged.emit()
+        self._data.sort(key=lambda el: el[1 + column], reverse=True)
+        self.layoutChanged.emit()
+
+    def columnCount(self, index):
+        try:
+            return 7  # all columns must have the same length
+        except IndexError:
+            return 0
 
 
 class SortingProxy(QSortFilterProxyModel):
@@ -355,7 +372,7 @@ class DamageTreeModel(TreeModel):
                 return ''
             if column == 0:
                 if isinstance(data, tuple):
-                    return ''.join(data)
+                    return data[0] + data[1]
                 return data
             elif column in (3, 5, 6, 7):
                 return f'{data * 100:,.2f}%'
@@ -393,7 +410,7 @@ class HealTreeModel(TreeModel):
                 return ''
             if column == 0:
                 if isinstance(data, tuple):
-                    return ''.join(data)
+                    return data[0] + data[1]
                 return data
             elif column == 8:
                 return f'{data * 100:,.2f}%'
@@ -442,3 +459,40 @@ class TreeSelectionModel(QItemSelectionModel):
                 super().select(index_or_selection, flag)
             else:
                 self.clear()
+
+
+class CombatModel(QStringListModel):
+    def __init__(self):
+        super().__init__()
+        self._data = list()
+
+    def insert_item(self, item: tuple):
+        try:
+            index = 0
+            while self._data[index][0] < item[0]:
+                index += 1
+                self.beginInsertRows(QModelIndex(), index, index)
+            self._data.insert(index, item)
+        except IndexError:
+            self.beginInsertRows(QModelIndex(), len(self._data), len(self._data))
+            self._data.append(item)
+        self.endInsertRows()
+
+    def clear(self):
+        self.beginResetModel()
+        self._data.clear()
+        self.endResetModel()
+
+    def set_items(self, items: list[tuple]):
+        self.beginResetModel()
+        self._data.clear()
+        self._data = items
+        self.endResetModel()
+
+    def data(self, index, role):
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self._data[index.row()]
+        return super().data(index, role)
+
+    def rowCount(self, parent=None) -> int:
+        return len(self._data)

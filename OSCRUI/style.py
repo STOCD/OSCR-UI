@@ -15,8 +15,8 @@ def get_style(self, widget, override: dict = {}) -> str:
     Returns style sheet according to default style of widget with override style.
 
     Parameters:
-    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if
-    only the style in override should be applied)
+    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None \
+        if only the style in override should be applied)
     - :param override: dict -> contains additional style (optional)
 
     :return: str containing css style sheet
@@ -39,8 +39,8 @@ def get_style_class(self, class_name: str, widget, override={}) -> str:
 
     Parameters:
     - :param class_name: str -> name of the widget to be styled
-    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None if
-    only the style in override should be applied)
+    - :param widget: None or str -> name of the widget style in self.theme (may be empty or None \
+        if only the style in override should be applied)
     - :param override: dict -> contains additional style (optional)
 
     :return: str containing css style sheet
@@ -134,7 +134,10 @@ def theme_font(self, key, font_spec=()) -> QFont:
         font_weight = WEIGHT_CONVERSION[font[2]]
     except KeyError:
         font_weight = QFont.Weight.Normal
-    return QFont(font_family, font_size, font_weight)
+    font = QFont(font_family, font_size, font_weight)
+    font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)
+    font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
+    return font
 
 
 def create_style_sheet(self, d: dict) -> str:
