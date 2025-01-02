@@ -210,9 +210,9 @@ def download_and_view_combat(self):
     result = gzip.decompress(result)
 
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=self.config['templog_folder_path'], delete=False
+        mode="wb", dir=self.config['templog_folder_path'], delete=False
     ) as file:
-        file.write(result.decode())
+        file.write(result)
     analyze_log_callback(
         self, path=file.name, hidden_path=True
     )
