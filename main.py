@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2024.2.6.1'
+    version = '2024.2.14.0'
     __version__ = '1.0'
 
     # holds the style of the app
@@ -365,13 +365,6 @@ class Launcher():
                 'border': 'none',
                 'padding': 0,
                 'margin': 0
-            }
-        },
-        # default tabber buttons (hidden)
-        'tabber_tab': {
-            '::tab': {
-                'height': 0,
-                'width': 0
             }
         },
         # used in settings
