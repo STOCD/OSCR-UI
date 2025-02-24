@@ -341,20 +341,20 @@ def create_live_parser_window(self):
 
     activate_button = FlipButton(tr('Activate'), tr('Deactivate'), checkable=True)
     activate_button.setStyleSheet(self.get_style_class(
-            'QPushButton', 'toggle_button', {'margin': 0}))
+            'QPushButton', 'toggle_button', {'margin': (0, 0, 3, 0)}))
     activate_button.setFont(self.theme_font('app', '@subhead'))
     activate_button.r_function = lambda: self.live_parser.start()
     activate_button.l_function = lambda: self.live_parser.stop()
     bottom_layout.addWidget(activate_button, 0, 0, alignment=ALEFT | AVCENTER)
     icon_size = [self.theme['s.c']['button_icon_size'] * self.config['live_scale'] * 0.8] * 2
     copy_button = create_icon_button(
-            self, self.icons['copy'], tr('Copy Result'), style_override={'margin': 0},
+            self, self.icons['copy'], tr('Copy Result'), style_override={'margin': (0, 0, 3, 0)},
             icon_size=icon_size)
     copy_button.clicked.connect(lambda: copy_live_data_callback(self))
     bottom_layout.addWidget(copy_button, 0, 1, alignment=ALEFT | AVCENTER)
     close_button = create_icon_button(
-            self, self.icons['close'], tr('Close Live Parser'), style_override={'margin': 0},
-            icon_size=icon_size)
+            self, self.icons['close'], tr('Close Live Parser'),
+            style_override={'margin': (0, 0, 3, 0)}, icon_size=icon_size)
     close_button.clicked.connect(lambda: live_parser_toggle(self, False))
     bottom_layout.addWidget(close_button, 0, 2, alignment=ALEFT | AVCENTER)
     time_label = create_label(self, 'Duration: 0s')
