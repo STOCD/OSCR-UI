@@ -18,7 +18,6 @@ pkgs.mkShell rec {
     # Those are dependencies that we would like to use from nixpkgs, which will
     # add them to PYTHONPATH and thus make them accessible from within the venv.
     pythonPackages.pyside6
-    pythonPackages.pyfuse3
 
     # In this particular example, in order to compile any binary extensions they may
     # require, the Python modules listed in the hypothetical requirements.txt need
