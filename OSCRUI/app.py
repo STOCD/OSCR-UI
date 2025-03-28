@@ -1192,25 +1192,25 @@ class OSCRUI():
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
 
         result_format_label = self.create_label(tr('Result Clipboard Format:'), 'label_subhead')
-        sec_1.addWidget(result_format_label, 17, 0, alignment=ARIGHT)
+        sec_1.addWidget(result_format_label, 16, 0, alignment=ARIGHT)
         result_format_combo = self.create_combo_box(style_override={'font': '@small_text'})
         result_format_combo.addItems(('Compact', 'Verbose', 'CSV'))
         result_format_combo.setCurrentText(self.settings.value('result_format', type=str))
         result_format_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.setValue('result_format', new_text))
-        sec_1.addWidget(result_format_combo, 17, 1, alignment=ALEFT)
+        sec_1.addWidget(result_format_combo, 16, 1, alignment=ALEFT)
 
         languages = ('English',)  # 'Chinese', 'German')
         language_codes = ('en',)  # 'zh', 'de')
         language_label = self.create_label(tr('Language:'), 'label_subhead')
-        sec_1.addWidget(language_label, 16, 0, alignment=ARIGHT)
+        sec_1.addWidget(language_label, 17, 0, alignment=ARIGHT)
         language_combo = self.create_combo_box(style_override={'font': '@small_text'})
         language_combo.addItems(languages)
         current_language_code = self.settings.value('language')
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
         language_combo.currentIndexChanged.connect(
                 lambda index: self.settings.setValue('language', language_codes[index]))
-        sec_1.addWidget(language_combo, 16, 1, alignment=ALEFT | AVCENTER)
+        sec_1.addWidget(language_combo, 17, 1, alignment=ALEFT | AVCENTER)
         scroll_layout.addLayout(sec_1)
 
         # seperator
