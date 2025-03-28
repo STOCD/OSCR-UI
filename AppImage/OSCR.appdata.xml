@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>OSCR</id>
+    <metadata_license>GPL-3.0</metadata_license>
+    <project_license>Python-2.0</project_license>
+    <name>Tasmotizer</name>
+    <summary>Open Source Combatlog Reader for Star Trek Online</summary>
+    <description>
+        <p>Open Source Combatlog Reader for Star Trek Online</p>
+    </description>
+    <launchable type="desktop-id">OSCR.desktop</launchable>
+    <url type="homepage">https://oscr.stobuilds.com</url>
+    <provides>
+        <binary>python{{ python-version }}</binary>
+    </provides>
+</component>

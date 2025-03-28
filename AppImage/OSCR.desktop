@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=OSCR
+Exec=oscr
+Comment=Open Source Combatlog Reader for Star Trek Online
+Icon=python
+Categories=System;
+Terminal=true

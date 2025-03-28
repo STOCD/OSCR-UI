@@ -3,14 +3,13 @@ name: Build Python Distribution
 on: push
 
 jobs:
-  build_release:
+  build_msi:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest]
-
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -23,24 +22,52 @@ jobs:
     - run: cxfreeze bdist_msi
     - uses: actions/upload-artifact@v4
       with:
-        name: build_release
+        name: build_msi
         path: dist/OSCR-UI-win64.msi
+  build_appimage:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.12"
+    - run: python3 -m pip install python-appimage
+    - run: python-appimage build app --python-tag cp312-cp312 --python-version 3.12 --name OSCR AppImage
+    - uses: actions/upload-artifact@v4
+      with:
+        name: build_appimage
+        path: OSCR-x86_64.AppImage
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build_release ]
-    name: Create release
+    needs:
+      - build_msi
+      - build_appimage
+    name: Create Release MSI
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Download
+      - name: Download MSI
         uses: actions/download-artifact@v4
         with:
-          name: build_release
+          name: build_msi
           path: .
-      - name: Create release
+      - name: Create Release MSI
         uses: ncipollo/release-action@v1
         with:
           artifacts: OSCR-UI-win64.msi
+      - name: Download AppImage
+        uses: actions/download-artifact@v4
+        with:
+          name: build_appimage
+          path: .
+      - name: Create Release AppImage
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: OSCR-x86_64.AppImage
