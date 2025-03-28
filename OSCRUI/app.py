@@ -198,7 +198,8 @@ class OSCRUI():
         """
         relevant_settings = (
                 ('combats_to_parse', int), ('seconds_between_combats', int),
-                ('excluded_event_ids', list), ('graph_resolution', float))
+                ('excluded_event_ids', list), ('graph_resolution', float),
+                ('combat_min_lines', int))
         settings = dict()
         for setting_key, settings_type in relevant_settings:
             setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
@@ -1061,13 +1062,26 @@ class OSCRUI():
                 'combats_to_parse', combat_num_entry.text()))
         sec_1.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
 
+        combat_lines_label = self.create_label(
+                tr('Minimum number of lines per combat:'), 'label_subhead')
+        sec_1.addWidget(combat_lines_label, 2, 0, alignment=ARIGHT)
+        combat_lines_validator = QIntValidator()
+        combat_lines_validator.setBottom(1)
+        combat_lines_entry = self.create_entry(
+                self.settings.value('combat_min_lines', type=str), combat_lines_validator,
+                style_override={'margin-top': 0})
+        combat_lines_entry.setSizePolicy(SMIXMAX)
+        combat_lines_entry.editingFinished.connect(lambda: self.settings.setValue(
+                'combat_min_lines', combat_lines_entry.text()))
+        sec_1.addWidget(combat_lines_entry, 2, 1, alignment=AVCENTER)
+
         graph_resolution_label = self.create_label(
                 tr('Graph resolution (interval in seconds):'), 'label_subhead')
-        sec_1.addWidget(graph_resolution_label, 2, 0, alignment=ARIGHT)
+        sec_1.addWidget(graph_resolution_label, 3, 0, alignment=ARIGHT)
         graph_resolution_layout = self.create_annotated_slider(
                 self.settings.value('graph_resolution', type=float) * 10, 1, 20,
                 callback=self.set_graph_resolution_setting)
-        sec_1.addLayout(graph_resolution_layout, 2, 1, alignment=ALEFT)
+        sec_1.addLayout(graph_resolution_layout, 3, 1, alignment=ALEFT)
 
         overview_sort_label = self.create_label(
                 tr('Sort overview table by column:'), 'label_subhead')
