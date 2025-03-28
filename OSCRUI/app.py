@@ -1037,6 +1037,7 @@ class OSCRUI():
         sec_1.setContentsMargins(0, 0, 0, 0)
         sec_1.setVerticalSpacing(self.theme['defaults']['isp'])
         sec_1.setHorizontalSpacing(self.theme['defaults']['csp'])
+
         combat_delta_label = self.create_label(tr('Seconds Between Combats:'), 'label_subhead')
         sec_1.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
         combat_delta_validator = QIntValidator()
@@ -1048,6 +1049,7 @@ class OSCRUI():
         combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'seconds_between_combats', combat_delta_entry.text()))
         sec_1.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
+
         combat_num_label = self.create_label(tr('Number of combats to isolate:'), 'label_subhead')
         sec_1.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
         combat_num_validator = QIntValidator()
@@ -1059,6 +1061,7 @@ class OSCRUI():
         combat_num_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'combats_to_parse', combat_num_entry.text()))
         sec_1.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
+
         combat_lines_label = self.create_label(
                 tr('Minimum number of lines per combat:'), 'label_subhead')
         sec_1.addWidget(combat_lines_label, 2, 0, alignment=ARIGHT)
@@ -1071,6 +1074,7 @@ class OSCRUI():
         combat_lines_entry.editingFinished.connect(lambda: self.settings.setValue(
                 'combat_min_lines', combat_lines_entry.text()))
         sec_1.addWidget(combat_lines_entry, 2, 1, alignment=AVCENTER)
+
         graph_resolution_label = self.create_label(
                 tr('Graph resolution (interval in seconds):'), 'label_subhead')
         sec_1.addWidget(graph_resolution_label, 3, 0, alignment=ARIGHT)
@@ -1078,6 +1082,7 @@ class OSCRUI():
                 self.settings.value('graph_resolution', type=float) * 10, 1, 20,
                 callback=self.set_graph_resolution_setting)
         sec_1.addLayout(graph_resolution_layout, 3, 1, alignment=ALEFT)
+
         overview_sort_label = self.create_label(
                 tr('Sort overview table by column:'), 'label_subhead')
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
@@ -1087,6 +1092,7 @@ class OSCRUI():
         overview_sort_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('overview_sort_column', new_index))
         sec_1.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
+
         overview_sort_order_label = self.create_label(
                 tr('Overview table sort order:'), 'label_subhead')
         sec_1.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
@@ -1096,6 +1102,7 @@ class OSCRUI():
         overview_sort_order_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.setValue('overview_sort_order', new_text))
         sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
+
         auto_scan_label = self.create_label(tr('Scan log automatically:'), 'label_subhead')
         sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
         auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
@@ -1118,6 +1125,7 @@ class OSCRUI():
                 lambda: self.set_sto_logpath_setting(sto_log_path_entry))
         sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
         sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
+
         opacity_label = self.create_label(tr('Live Parser Opacity:'), 'label_subhead')
         sec_1.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
         opacity_slider_layout = self.create_annotated_slider(
@@ -1126,6 +1134,7 @@ class OSCRUI():
                 style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
                 callback=self.set_parser_opacity_setting)
         sec_1.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
+
         live_graph_active_label = self.create_label(tr('LiveParser Graph:'), 'label_subhead')
         sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
         live_graph_active_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
@@ -1139,6 +1148,7 @@ class OSCRUI():
         if self.settings.value('live_graph_active', type=bool):
             live_graph_active_button.flip()
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
+
         live_graph_field_label = self.create_label(tr('LiveParser Graph Field:'), 'label_subhead')
         sec_1.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
         live_graph_field_combo = self.create_combo_box(style_override={'font': '@small_text'})
@@ -1147,6 +1157,7 @@ class OSCRUI():
         live_graph_field_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.setValue('live_graph_field', new_index))
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
+
         live_name_label = self.create_label(tr('LiveParser Player:'), 'label_subhead')
         sec_1.addWidget(live_name_label, 11, 0, alignment=ARIGHT)
         live_player_combo = self.create_combo_box(style_override={'font': '@small_text'})
@@ -1155,6 +1166,7 @@ class OSCRUI():
         live_player_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.setValue('live_player', new_text))
         sec_1.addWidget(live_player_combo, 11, 1, alignment=ALEFT)
+
         overview_tab_label = self.create_label(tr('Default Overview Tab:'), 'label_subhead')
         sec_1.addWidget(overview_tab_label, 12, 0, alignment=ARIGHT)
         overview_tab_combo = self.create_combo_box(style_override={'font': '@small_text'})
@@ -1163,12 +1175,14 @@ class OSCRUI():
         overview_tab_combo.currentIndexChanged.connect(
             lambda new_index: self.settings.setValue('first_overview_tab', new_index))
         sec_1.addWidget(overview_tab_combo, 12, 1, alignment=ALEFT)
+
         ui_scale_label = self.create_label(tr('UI Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
         ui_scale_slider_layout = self.create_annotated_slider(
                 default_value=round(self.settings.value('ui_scale', type=float) * 50, 0),
                 min=25, max=75, callback=self.set_ui_scale_setting)
         sec_1.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
+
         ui_scale_label = self.create_label(tr('LiveParser Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 14, 0, alignment=ARIGHT)
         live_scale_slider_layout = self.create_annotated_slider(
@@ -1176,6 +1190,7 @@ class OSCRUI():
                 min=25, max=75, callback=self.set_live_scale_setting)
         sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
         sec_1.setAlignment(AHCENTER)
+
         live_enabled_label = self.create_label(tr('LiveParser default state:'), 'label_subhead')
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
         live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
@@ -1190,17 +1205,26 @@ class OSCRUI():
             live_enabled_button.flip()
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
 
+        result_format_label = self.create_label(tr('Result Clipboard Format:'), 'label_subhead')
+        sec_1.addWidget(result_format_label, 16, 0, alignment=ARIGHT)
+        result_format_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        result_format_combo.addItems(('Compact', 'Verbose', 'CSV'))
+        result_format_combo.setCurrentText(self.settings.value('result_format', type=str))
+        result_format_combo.currentTextChanged.connect(
+                lambda new_text: self.settings.setValue('result_format', new_text))
+        sec_1.addWidget(result_format_combo, 16, 1, alignment=ALEFT)
+
         languages = ('English',)  # 'Chinese', 'German')
         language_codes = ('en',)  # 'zh', 'de')
         language_label = self.create_label(tr('Language:'), 'label_subhead')
-        sec_1.addWidget(language_label, 16, 0, alignment=ARIGHT)
+        sec_1.addWidget(language_label, 17, 0, alignment=ARIGHT)
         language_combo = self.create_combo_box(style_override={'font': '@small_text'})
         language_combo.addItems(languages)
         current_language_code = self.settings.value('language')
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
         language_combo.currentIndexChanged.connect(
                 lambda index: self.settings.setValue('language', language_codes[index]))
-        sec_1.addWidget(language_combo, 16, 1, alignment=ALEFT | AVCENTER)
+        sec_1.addWidget(language_combo, 17, 1, alignment=ALEFT | AVCENTER)
         scroll_layout.addLayout(sec_1)
 
         # seperator

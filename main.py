@@ -818,7 +818,8 @@ class Launcher():
                 'overview_splitter': None,
                 'analysis_splitter': None,
                 'analysis_graph': True,
-                'live_player': 'Handle'
+                'live_player': 'Handle',
+                'result_format': 'Compact',
             }
         }
         return config

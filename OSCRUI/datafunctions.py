@@ -72,21 +72,22 @@ def analyze_log_background(self, amount: int):
         self.thread = Thread(target=self.parser.analyze_log_file_mp, kwargs={'max_combats': amount})
         self.thread.start()
 
+def copy_summary_compact(self, combat_time, current_combat):
+    parts = [ "OSCR (DPS)", current_combat.map ]
+    difficulty = current_combat.difficulty
+    if difficulty != 'Unknown':
+        parts.append(difficulty)
+    parts.append(combat_time)
+    players = sorted(
+        current_combat.players.values(),
+        reverse=True,
+        key=lambda player: player.DPS,
+    )
+    for player in players:
+        parts.append(f'{player.handle} - {player.DPS:,.0f}')
+    return " | ".join(parts)
 
-def copy_summary_callback(self):
-    """
-    Callback to set the combat summary of the active combat to the user's clipboard
-
-    Parameters:
-    - :param parser_num: which parser to take the data from
-    """
-    if self.current_combat_id < 0:
-        return
-    current_combat: Combat = self.parser.combats[self.current_combat_id]
-
-    duration = current_combat.duration.total_seconds()
-    combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
-
+def copy_summary_verbose(self, combat_time, current_combat):
     summary = f'{{ OSCR }} {current_combat.map}'
     difficulty = current_combat.difficulty
     if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
@@ -103,7 +104,43 @@ def copy_summary_callback(self):
         parts.append(
                 f"`{player.handle}` {player.DPS:,.0f} / "
                 + format_damage_number(player.total_damage))
-    summary += " | ".join(parts)
+    return summary + " | ".join(parts)
+
+def copy_summary_csv(self, combat_time, current_combat):
+    parts = [ "OSCR", "DPS", current_combat.map, current_combat.difficulty, combat_time ]
+    players = sorted(
+        current_combat.players.values(),
+        reverse=True,
+        key=lambda player: player.DPS,
+    )
+    for player in players:
+        parts.append(player.handle)
+        parts.append(f'{player.DPS:.0f}')
+    return ', '.join(parts)
+
+def copy_summary_callback(self):
+    """
+    Callback to set the combat summary of the active combat to the user's clipboard
+
+    Parameters:
+    - :param parser_num: which parser to take the data from
+    """
+    if self.current_combat_id < 0:
+        return
+    current_combat: Combat = self.parser.combats[self.current_combat_id]
+
+    duration = current_combat.duration.total_seconds()
+    combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
+
+    copy_dispatch = {
+        'Compact': copy_summary_compact,
+        'Verbose': copy_summary_verbose,
+        'CSV': copy_summary_csv,
+    }
+
+    summary = copy_dispatch.get(
+        self.settings.value("result_format", type=str), "Compact"
+    )(self, combat_time, current_combat)
 
     self.app.clipboard().setText(summary)
 
