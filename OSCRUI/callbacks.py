@@ -306,8 +306,14 @@ def repair_logfile(self):
     """
     log_path = os.path.abspath(self.entry.text())
     if os.path.isfile(log_path):
-        oscr_repair_logfile(log_path, self.config['templog_folder_path'])
-        show_message(self, tr('Repair Logfile'), tr('The Logfile has been repaired.'))
+        res = oscr_repair_logfile(log_path, self.config['templog_folder_path'])
+        if res == '':
+            show_message(self, tr('Repair Logfile'), tr('The Logfile has been repaired.'))
+        elif res == 'PermissionError':
+            error_message = ('The Logfile could not be repaired due to a permission error. '
+                             'Make sure the selected logfile can be overwritten without elevated '
+                             'permissions.')
+            show_message(self, tr('Permission Error'), tr(error_message), 'error')
     else:
         show_message(
                 self, tr('Repair Logfile'),
