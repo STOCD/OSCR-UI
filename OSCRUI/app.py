@@ -410,6 +410,9 @@ class OSCRUI():
         favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
         self.widgets.favorite_ladder_selector = favorite_selector
         for favorite_ladder in self.settings.value('favorite_ladders', type=list):
+            if '|' not in favorite_ladder:
+                self.settings.setValue('favorite_ladders', list())
+                break
             ladder_text, difficulty = favorite_ladder.split('|')
             if difficulty == 'None':
                 difficulty = None
