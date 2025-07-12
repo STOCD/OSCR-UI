@@ -1,0 +1,26 @@
+name: released
+
+permissions:
+  contents: read
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  virustotal:
+    runs-on: ubuntu-latest
+    permissions:
+      # required to write GitHub Release body
+      contents: write
+    steps:
+      -
+        name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          update_release_body: true
+          files: |
+            OSCR-UI-win64.msi
+            OSCR-x86_64.AppImage
