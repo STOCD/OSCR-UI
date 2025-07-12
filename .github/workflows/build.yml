@@ -1,6 +1,9 @@
 name: Build Python Distribution
 
-on: push
+on:
+  release:
+    types:
+      - published
 
 jobs:
   build_msi:
@@ -68,6 +71,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          generateReleaseNotes: true
           artifacts: "OSCR-UI-win64.msi,OSCR-x86_64.AppImage"
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
