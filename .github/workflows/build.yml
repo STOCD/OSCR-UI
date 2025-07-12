@@ -72,6 +72,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: true
+          allowUpdates: true
           artifacts: "OSCR-UI-win64.msi,OSCR-x86_64.AppImage"
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
