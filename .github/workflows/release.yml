@@ -24,5 +24,5 @@ jobs:
           vt_api_key: ${{ secrets.VT_API_KEY }}
           update_release_body: true
           files: |
-            *.msi$
-            *.AppImage$
+            .msi$
+            .AppImage$
