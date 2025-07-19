@@ -42,7 +42,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: python3 -m pip install python-appimage
-      - run: python-appimage build app --python-tag cp312-cp312 --python-version 3.13 --name OSCR AppImage
+      - run: python-appimage build app --python-tag cp313-cp313 --python-version 3.13 --name OSCR AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: build_appimage
