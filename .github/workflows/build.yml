@@ -48,7 +48,7 @@ jobs:
           name: build_appimage
           path: OSCR-x86_64.AppImage
   build_wheel:
-    name: Build AppImage
+    name: Build Wheel
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
