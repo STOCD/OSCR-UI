@@ -15,19 +15,19 @@ jobs:
       matrix:
         os: [windows-latest]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: "3.12"
-    - run: python3 -m pip install virtualenv cx_Freeze
-    - run: python3 -m virtualenv venv
-    - run: .\venv\Scripts\activate.bat
-    - run: pip install .
-    - run: cxfreeze bdist_msi
-    - uses: actions/upload-artifact@v4
-      with:
-        name: build_msi
-        path: dist/OSCR-UI-win64.msi
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.13"
+      - run: python3 -m pip install virtualenv cx_Freeze
+      - run: python3 -m virtualenv venv
+      - run: .\venv\Scripts\activate.bat
+      - run: pip install .
+      - run: cxfreeze bdist_msi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build_msi
+          path: dist/OSCR-UI-win64.msi
   build_appimage:
     name: Build AppImage
     if: startsWith(github.ref, 'refs/tags/v')
@@ -37,22 +37,42 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: "3.12"
-    - run: python3 -m pip install python-appimage
-    - run: python-appimage build app --python-tag cp312-cp312 --python-version 3.12 --name OSCR AppImage
-    - uses: actions/upload-artifact@v4
-      with:
-        name: build_appimage
-        path: OSCR-x86_64.AppImage
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.13"
+      - run: python3 -m pip install python-appimage
+      - run: python-appimage build app --python-tag cp312-cp312 --python-version 3.13 --name OSCR AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build_appimage
+          path: OSCR-x86_64.AppImage
+  build_wheel:
+    name: Build AppImage
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.13"
+      - run: python3 -m pip install build
+      - run: python3 -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build_wheel
+          path: dist
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - build_msi
       - build_appimage
+      - build_wheel
     name: Create Release
     runs-on: ubuntu-latest
     permissions:
@@ -68,12 +88,17 @@ jobs:
         with:
           name: build_appimage
           path: .
+      - name: Download AppImage
+        uses: actions/download-artifact@v4
+        with:
+          name: build_dist
+          path: dist
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: true
           allowUpdates: true
-          artifacts: "OSCR-UI-win64.msi,OSCR-x86_64.AppImage"
+          artifacts: "OSCR-UI-win64.msi,OSCR-x86_64.AppImage,dist/*"
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
         with:
@@ -82,4 +107,5 @@ jobs:
           files: |
             OSCR-UI-win64.msi
             OSCR-x86_64.AppImage
-
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
