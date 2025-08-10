@@ -72,10 +72,11 @@ def analyze_log_background(self, amount: int):
         self.thread = Thread(target=self.parser.analyze_log_file_mp, kwargs={'max_combats': amount})
         self.thread.start()
 
+
 def copy_summary_compact(self, combat_time, current_combat):
-    parts = [ "OSCR (DPS)", current_combat.map ]
+    parts = ["OSCR (DPS)", current_combat.map]
     difficulty = current_combat.difficulty
-    if difficulty != 'Unknown':
+    if difficulty != 'Any' and difficulty is not None:
         parts.append(difficulty)
     parts.append(combat_time)
     players = sorted(
@@ -87,10 +88,11 @@ def copy_summary_compact(self, combat_time, current_combat):
         parts.append(f'{player.handle} - {player.DPS:,.0f}')
     return " | ".join(parts)
 
+
 def copy_summary_verbose(self, combat_time, current_combat):
     summary = f'{{ OSCR }} {current_combat.map}'
     difficulty = current_combat.difficulty
-    if difficulty and isinstance(difficulty, str) and difficulty != 'Unknown':
+    if difficulty is not None and difficulty != 'Any':
         summary += f' ({difficulty}) - DPS / DMG [{combat_time}]: '
     else:
         summary += f' - DPS / DMG [{combat_time}]: '
@@ -106,8 +108,12 @@ def copy_summary_verbose(self, combat_time, current_combat):
                 + format_damage_number(player.total_damage))
     return summary + " | ".join(parts)
 
+
 def copy_summary_csv(self, combat_time, current_combat):
-    parts = [ "OSCR", "DPS", current_combat.map, current_combat.difficulty, combat_time ]
+    difficulty = current_combat.difficulty
+    if difficulty is None:
+        difficulty = 'Unknown'
+    parts = ["OSCR", "DPS", current_combat.map, difficulty, combat_time]
     players = sorted(
         current_combat.players.values(),
         reverse=True,
@@ -117,6 +123,7 @@ def copy_summary_csv(self, combat_time, current_combat):
         parts.append(player.handle)
         parts.append(f'{player.DPS:.0f}')
     return ', '.join(parts)
+
 
 def copy_summary_callback(self):
     """
@@ -137,10 +144,12 @@ def copy_summary_callback(self):
         'Verbose': copy_summary_verbose,
         'CSV': copy_summary_csv,
     }
-
-    summary = copy_dispatch.get(
-        self.settings.value("result_format", type=str), "Compact"
-    )(self, combat_time, current_combat)
+    try:
+        summary = copy_dispatch.get(
+            self.settings.value("result_format", type=str), "Compact"
+        )(self, combat_time, current_combat)
+    except Exception as e:
+        print(e)
 
     self.app.clipboard().setText(summary)
 
