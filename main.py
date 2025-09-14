@@ -7,7 +7,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    version = '2025.8.10.0'
+    version = '2025.9.14.0'
     __version__ = '1.0'
 
     # holds the style of the app
@@ -819,6 +819,7 @@ class Launcher():
                 'analysis_splitter': None,
                 'analysis_graph': True,
                 'live_player': 'Handle',
+                'live_copy_kills': False,
                 'result_format': 'Compact',
             }
         }

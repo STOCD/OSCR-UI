@@ -230,9 +230,15 @@ def copy_live_data_callback(self):
     data_model = self.widgets.live_parser_table.model()
     cell_data = data_model._data
     output = list()
-    for row in cell_data:
-        output.append(f"`{row[0][0]}{row[0][1]}`: {row[1]:,.2f} ({row[2]:.1f}s)")
-    output = '{ OSCR } DPS (Combat time): ' + ' | '.join(output)
+    name_index = 0 if self.settings.value('live_player') == 'Name' else 1
+    if self.settings.value('live_copy_kills', type=bool):
+        for row in cell_data:
+            output.append(f"{row[0][name_index]}: {row[1]:,.2f} ({row[6]:.0f})")
+        output = '{ OSCR } DPS (Kills): ' + ' | '.join(output)
+    else:
+        for row in cell_data:
+            output.append(f"{row[0][name_index]}: {row[1]:,.2f}")
+        output = '{ OSCR } DPS: ' + ' | '.join(output)
     self.app.clipboard().setText(output)
 
 

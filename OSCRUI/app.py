@@ -1217,17 +1217,31 @@ class OSCRUI():
                 lambda new_text: self.settings.setValue('result_format', new_text))
         sec_1.addWidget(result_format_combo, 16, 1, alignment=ALEFT)
 
+        live_copy_label = self.create_label(tr('Show kills in LiveParser Copy:'), 'label_subhead')
+        sec_1.addWidget(live_copy_label, 17, 0, alignment=ARIGHT)
+        live_copy_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
+        live_copy_button.setStyleSheet(self.get_style_class(
+                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+        live_copy_button.setFont(self.theme_font('app', '@font'))
+        live_copy_button.r_function = (
+                lambda: self.settings.setValue('live_copy_kills', True))
+        live_copy_button.l_function = (
+                lambda: self.settings.setValue('live_copy_kills', False))
+        if self.settings.value('live_copy_kills', type=bool):
+            live_copy_button.flip()
+        sec_1.addWidget(live_copy_button, 17, 1, alignment=ALEFT)
+
         languages = ('English',)  # 'Chinese', 'German')
         language_codes = ('en',)  # 'zh', 'de')
         language_label = self.create_label(tr('Language:'), 'label_subhead')
-        sec_1.addWidget(language_label, 17, 0, alignment=ARIGHT)
+        sec_1.addWidget(language_label, 18, 0, alignment=ARIGHT)
         language_combo = self.create_combo_box(style_override={'font': '@small_text'})
         language_combo.addItems(languages)
         current_language_code = self.settings.value('language')
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
         language_combo.currentIndexChanged.connect(
                 lambda index: self.settings.setValue('language', language_codes[index]))
-        sec_1.addWidget(language_combo, 17, 1, alignment=ALEFT | AVCENTER)
+        sec_1.addWidget(language_combo, 18, 1, alignment=ALEFT | AVCENTER)
         scroll_layout.addLayout(sec_1)
 
         # seperator
