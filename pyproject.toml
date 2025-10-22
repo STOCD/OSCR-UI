@@ -13,7 +13,7 @@ dependencies = [
   "OSCR-django-client>=2025.7.19.0",
   "pydantic>=2.7.3",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = []
 maintainers = []
 description = "Open Source Combatlog Reader"
