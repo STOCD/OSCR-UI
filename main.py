@@ -1,4 +1,4 @@
-from multiprocessing import freeze_support, set_start_method
+from multiprocessing import freeze_support, set_start_method, get_start_method
 import os
 import sys
 
@@ -837,5 +837,9 @@ class Launcher():
 
 if __name__ == '__main__':
     freeze_support()
-    set_start_method('spawn')
+    try:
+        set_start_method('spawn')
+    except RuntimeError:
+        if get_start_method() != 'spawn':
+            set_start_method('spawn', force=True)
     Launcher.launch()
