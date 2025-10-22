@@ -23,6 +23,13 @@ For Windows users we have an installer available on the [Releases](https://githu
 python3 -m pip install OSCR-UI
 ```
 
+#### Externally Managed Python Environments (Arch)
+The recommended way is using `pipx` to install from PyPi without `--break-system-packages`, if you don't already have it, you can install it through pacman.
+```bash
+pacman -Sy python-pipx
+pipx install OSCR-UI
+```
+
 ## Github
 
 ```bash
