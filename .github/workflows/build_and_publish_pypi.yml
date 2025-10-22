@@ -2,9 +2,6 @@ name: Build Wheel and Publish to PyPI
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
 
 jobs:
   build_and_publish:
