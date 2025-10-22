@@ -2,11 +2,15 @@ name: Build Python Distribution (Manually)
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag name for this release (e.g. v1.2.3)"
+        required: true
 
 jobs:
   build_msi:
     name: Build MSI
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(inputs.tag, 'v')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -28,7 +32,7 @@ jobs:
           path: dist/OSCR-UI-win64.msi
   build_appimage:
     name: Build AppImage
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(inputs.tag, 'v')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,7 +51,7 @@ jobs:
           path: OSCR-x86_64.AppImage
   build_wheel:
     name: Build Wheel
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(inputs.tag, 'v')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -66,7 +70,7 @@ jobs:
           path: dist
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(inputs.tag, 'v')
     needs:
       - build_msi
       - build_appimage
@@ -95,6 +99,8 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          tag: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
           generateReleaseNotes: true
           allowUpdates: true
           artifacts: "OSCR-UI-win64.msi,OSCR-x86_64.AppImage,dist/*"
