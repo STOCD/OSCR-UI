@@ -28,5 +28,5 @@ jobs:
         shell: pwsh
       - uses: actions/upload-artifact@v4
         with:
-          name: OSCR-UI_PyInst_ZipFile
+          name: OSCR-UI_PyInst_Windows
           path: dist/OSCR-UI.zip
