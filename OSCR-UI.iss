@@ -2,10 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "OSCR-UI"
-#define MyAppVersion "v2025.9.14.1"
+#define MyAppVersion "v2025.9.14.2"
 #define MyAppPublisher "STOCD"
 #define MyAppURL "https://github.com/STOCD/OSCR-UI"
-#define MyAppExeName "OSCR-UI_Installer.exe"
+#define MyAppExeName "OSCR-UI"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
