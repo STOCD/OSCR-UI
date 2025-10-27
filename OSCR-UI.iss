@@ -31,10 +31,9 @@ ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=no
-OutputDir=inno-out
+OutputDir=dist
 OutputBaseFilename=OSCR-UI
-SetupIconFile=dist\_internal\assets\oscr_icon_small.ico
+SetupIconFile=assets\oscr_icon_small.ico
 SolidCompression=yes
 
 [Languages]
