@@ -43,7 +43,7 @@ jobs:
       - name: Compile Inno Setup Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          filepath: OSCR-UI.iss
+          path: OSCR-UI.iss
           options: /Odist /Qp # Output to dist/ and /Qp should show errors.
 
       - name: Upload PyInstaller Artifact
