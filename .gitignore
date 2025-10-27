@@ -4,3 +4,4 @@ dist
 .venv
 *.AppImage
 .python-version
+*.spec
