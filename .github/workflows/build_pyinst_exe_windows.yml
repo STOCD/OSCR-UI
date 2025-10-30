@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
       - name: Install Python Dependencies
         run: |
           shell: pwsh
@@ -48,3 +49,4 @@ jobs:
         with:
           name: OSCR-UI_x86-64_Windows
           path: dist/OSCR-UI
+
