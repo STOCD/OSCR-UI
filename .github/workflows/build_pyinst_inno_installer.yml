@@ -46,10 +46,6 @@ jobs:
             --add-data "assets;assets" --add-data "locales;locales" `
             --windowed --icon "assets\oscr_icon_small.ico"
 
-      - name: Compress PyInstaller Output
-        shell: pwsh
-        run: |
-          Compress-Archive -Path dist/OSCR-UI -DestinationPath dist/OSCR-UI.zip -Force
 
       - name: Compile Inno Setup Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
