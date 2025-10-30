@@ -46,5 +46,5 @@ jobs:
       - name: Upload PyInstaller Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OSCR-UI_PyInst_Linux
-          path: dist/OSCR-UI.tgz
+          name: OSCR-UI_x86-64_Linux
+          path: dist/OSCR-UI
