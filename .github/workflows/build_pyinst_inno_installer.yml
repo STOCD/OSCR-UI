@@ -6,9 +6,11 @@ on:
 jobs:
   build_windows_binary:
     name: Build Windows Binary (PyInstaller + Inno)
-    runs-on: windows-latest
+    runs-on: {{ $matrix.os }}
     strategy:
       fail-fast: false
+      matrix:
+          os: [windows-latest]
     steps:
       - uses: actions/checkout@v4 # Updated
 

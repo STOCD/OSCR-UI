@@ -6,9 +6,11 @@ on:
 jobs:
   build_pyinst_linux:
     name: Build Linux Binary (PyInstaller)
-    runs-on: ubuntu-latest
+    runs-on: {{ $matrix.os }}
     strategy:
       fail-fast: false
+      matrix:
+          os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
