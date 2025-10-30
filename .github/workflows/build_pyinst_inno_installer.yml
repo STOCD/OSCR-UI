@@ -17,8 +17,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Attempting something new by caching pip dependencies because it's
-      # taking forever to get to the inno install.
       - name: Cache pip dependencies
         uses: actions/cache@v4
         with:
@@ -51,7 +49,7 @@ jobs:
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
           path: OSCR-UI.iss
-          options: /Odist /Qp # Output to dist/ and /Qp should show errors.
+          options: /Odist /Qp
 
       - name: Upload PyInstaller Artifact
         uses: actions/upload-artifact@v4
