@@ -30,12 +30,14 @@ jobs:
 
       - name: Build OSCR-UI Binary with PyInstaller
         run: |
-          pyinstaller --name OSCR-UI --onedir main.py --add-data "assets:assets" --add-data "locales:locales"
-      - name: Compress PyInstaller output
-        run: |
-          cd dist
-          tar -czf OSCR-UI.tgz OSCR-UI
-      - uses: actions/upload-artifact@v4
+          shell: bash
+          pyinstaller --name OSCR-UI" \
+                      --onedir main.py" \
+                      --add-data "assets:assets" \
+                      --add-data "locales:locales" \
+                      --icon "assets/oscr_icon_small.png" \
+                      --windowed
+
         with:
           name: OSCR-UI_PyInst_Linux
           path: dist/OSCR-UI.tgz
