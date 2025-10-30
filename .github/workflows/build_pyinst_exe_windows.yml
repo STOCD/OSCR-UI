@@ -6,9 +6,11 @@ on:
 jobs:
   build_pyinst_windows:
     name: Build Windows Executable (PyInstaller)
-    runs-on: windows-latest
+    runs-on: {{ $matrix.os }}
     strategy:
       fail-fast: false
+      matrix:
+          os: [windows-latest]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
