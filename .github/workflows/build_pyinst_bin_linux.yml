@@ -38,6 +38,13 @@ jobs:
                       --icon "assets/oscr_icon_small.png" \
                       --windowed
 
+      # - name: Compress PyInstaller output
+      #   run: |
+      #     cd dist
+      #     tar -czf OSCR-UI.tgz OSCR-UI
+
+      - name: Upload PyInstaller Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: OSCR-UI_PyInst_Linux
           path: dist/OSCR-UI.tgz

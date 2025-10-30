@@ -37,6 +37,14 @@ jobs:
                       --add-data "locales;locales" `
                       --icon "assets\oscr_icon_small.ico" `
                       --windowed
+
+      # - name: Compress PyInstaller output
+      #   run: |
+      #     Compress-Archive -Path dist/OSCR-UI -DestinationPath dist/OSCR-UI.zip
+      #   shell: pwsh
+
+      - name: Upload PyInstaller Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: OSCR-UI_PyInst_Windows
           path: dist/OSCR-UI.zip
