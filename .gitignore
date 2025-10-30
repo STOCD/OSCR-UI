@@ -5,3 +5,8 @@ dist
 *.AppImage
 .python-version
 *.spec
+rtifacts
+.idea
+*.zip
+*.desktop
+.artifacts
