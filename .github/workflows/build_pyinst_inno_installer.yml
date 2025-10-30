@@ -56,11 +56,11 @@ jobs:
       - name: Upload PyInstaller Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OSCR-UI_PyInst_ZipFile
-          path: dist/OSCR-UI.zip
+          name: OSCR-UI_x86-64_Windows
+          path: dist/OSCR-UI
 
       - name: Upload Inno Setup Installer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OSCR-UI_Installer_Exe
+          name: OSCR-UI_x86-64_Windows_Installer
           path: dist/*.exe # Robust: catches any .exe in dist/
