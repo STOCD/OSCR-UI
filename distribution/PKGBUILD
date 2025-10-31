@@ -1,23 +1,32 @@
 # Maintainer: PsychedelicShayna <Eternal0000FF@protonmail.com>
+# (^ For the AUR package, is a convention)
+
+# I started with an AUR version, need to make a separate one, or see if I
+# can make a PKGBUILD that can do both depending on the context.
+
 pkgname=oscr-ui
-pkgver=9.14.2
+pkgver=10.0.0
 pkgrel=1
 pkgdesc="OSCR-UI Open Source Combat Reader for Star Trek Online"
 arch=('x86_64')
 url="https://github.com/STOCD/OSCR-UI/"
 license=('GPL-3.0')
 
-# runtime deps are usually bundled by PyInstaller. Add here only if your app
-# depends on system libs at runtime (e.g. qt libraries if you didn't bundle them).
-
+# Runtime deps are usually bundled by PyInstaller, but if we need system libs
+# at runtime for any reason that aren't bundled, maybe Qt .so's that are missed
+# here vvvvvvvvvv
 depends=()
-makedepends=('pyinstaller') # only if you plan to build from source in the PKGBUILD
-source=()
-sha256sums=('SKIP') # local package: skip checksum checks
 
-# No build() step because we use an already-built PyInstaller tree in dist/OSCR-UI.
-# Makepkg’s $srcdir points to the directory where you run makepkg (repo root).
-#
+# Only when building from source from the PKGBUILD, won't need this for a 
+# non-AUR compliant version (see build step below)
+makedepends=('pyinstaller') 
+source=()
+
+sha256sums=('SKIP') # Once we have our final hashes confirmed, we can modify this
+
+# No build() step in a non-AUR version because we use an already-built 
+# PyInstaller tree in dist/OSCR-UI. Makepkg’s $srcdir points to the directory 
+# where you run makepkg (repo root).
 
 build() {
   cd "${srcdir}"
@@ -37,7 +46,7 @@ build() {
 }
 
 package() {
-  # where we will place files inside the package image
+  # Where we will place files inside the package image
   install -d "${pkgdir}/opt/oscr-ui"
   install -d "${pkgdir}/usr/bin"
   install -d "${pkgdir}/usr/share/applications"
@@ -51,7 +60,6 @@ package() {
     return 1
   fi
 
-  # Ensure main binary is executable (PyInstaller normally does this)
   if [ -f "${pkgdir}/opt/oscr-ui/oscr-ui" ]; then
     chmod 755 "${pkgdir}/opt/oscr-ui/oscr-ui"
   fi
@@ -80,7 +88,6 @@ Categories=Utility;Development;
 EOF
   fi
 
-  # Icon: try a few likely locations inside repo's assets/
   if [ -f "${srcdir}/assets/oscr_icon.png" ]; then
     install -Dm644 "${srcdir}/assets/oscr_icon.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/oscr-ui.png"
   elif [ -f "${srcdir}/assets/oscr_icon_128.png" ]; then
@@ -88,7 +95,7 @@ EOF
   elif [ -f "${srcdir}/assets/oscr_icon_small.png" ]; then
     install -Dm644 "${srcdir}/assets/oscr_icon_small.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/oscr-ui.png"
   else
-    # no icon found; not fatal — desktop environments will show a generic icon
+    # No icon found; not fatal — desktop environments will show a generic icon
     echo "Warning: no icon found in assets/ (optional)."
   fi
 }
