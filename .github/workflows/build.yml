@@ -1,9 +1,7 @@
 name: Build Python Distribution
 
 on:
-  release:
-    types:
-      - published
+  workflow_dispatch:
 
 jobs:
   build_msi:
