@@ -3,10 +3,10 @@
 These are currently just development notes, subject to change, easier to have it in one place.
 
 ## Windows
-[Currently Testing With Inno Setup](https://jrsoftware.org/isinfo.php)
-[OSCR-UI.iss](./OSCR-UI.iss)
+- [Currently Testing With Inno Setup](https://jrsoftware.org/isinfo.php)
+  - [OSCR-UI.iss](./OSCR-UI.iss)
 
-_..._
+## Linux
 
 
 #### System Wide Paths
