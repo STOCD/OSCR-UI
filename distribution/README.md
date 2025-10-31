@@ -20,10 +20,10 @@ _..._
   - Location for the application icon, referred to in the `.desktop` entry.
 
 #### Config Paths
-- 1. If `$XDG_CONFIG_HOME` is set, takes priority. Is supposed to be a directory . If a file, fallback to
-- 2. `$HOME/.config` if the `.config` folder exists, but do not create it if it does not, fall back to:
-- 3: `$HOME/.<filename>` if you can keep the settings in one file (and the dot here is important), if not, fall back to
-- 4` $HOME/.oscr/<config-file>`
+- 1 If `$XDG_CONFIG_HOME` is set, takes priority. Is supposed to be a directory . If a file, fallback to
+- 2 `$HOME/.config` if the `.config` folder exists, but do not create it if it does not, fall back to:
+- 3 `$HOME/.<filename>` if you can keep the settings in one file (and the dot here is important), if not, fall back to
+- 4 ` $HOME/.oscr/<config-file>`
 
 ##### .desktop entry template
 ```
