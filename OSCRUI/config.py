@@ -78,7 +78,7 @@ class OSCRSettings():
         if os.name == 'nt':
             self._settings = QSettings(str(settings_file_path), QSettings.Format.IniFormat)
         else:
-            self._settings = QSettings(settings_file_path, QSettings.Format.NativeFormat)
+            self._settings = QSettings(str(settings_file_path), QSettings.Format.NativeFormat)
 
         self.load_settings()
 
