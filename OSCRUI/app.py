@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+import sys
 
 from PySide6.QtWidgets import (
         QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QListWidgetItem,
@@ -7,6 +9,7 @@ from PySide6.QtCore import QSize, QSettings, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
+from .config import OSCRConfig, OSCRSettings
 from .datamodels import CombatModel
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
@@ -81,6 +84,13 @@ class OSCRUI():
         self.widgets = WidgetStorage()
         self.live_parser_window = None
         self.live_parser = None
+        self.config_dir = self.get_config_dir_path(self.args.config_dir)
+        if self.config_dir is None:
+            # TODO show error message
+            sys.exit(1)
+        self.config2 = OSCRConfig()
+        self.settings2 = OSCRSettings(Path(self.config_dir, self.config2.settings_file))
+        self.settings2.store_settings()
         self.init_settings()
         self.init_config()
 
@@ -148,13 +158,59 @@ class OSCRUI():
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
+    def setup_config_dir(self, dir_path: Path) -> None | OSError:
+        """
+        Sets up config directory.
+        """
+        try:
+            dir_path.mkdir(exist_ok=True)
+            templog_folder_path = dir_path / '_temp'
+            templog_folder_path.mkdir(mode=0o755, exist_ok=True)
+        except OSError as e:
+            return e
+
+    def get_config_dir_path(self, override: str | None = None) -> Path | None:
+        """
+        Identifies appropriate config directory and returns path to that directory. Returns `None`
+        if no usable config dir could be identified.
+        """
+        if override is not None:
+            config_dir = Path(override)
+            if self.setup_config_dir(config_dir) is None:
+                return config_dir
+            else:
+                return
+
+        if os.name == 'nt':
+            for env_name in ('APPDATA', 'USERPROFILE'):
+                config_basedir = os.getenv(env_name)
+                if config_basedir is not None:
+                    config_dir = Path(config_basedir, 'OSCR_UI')
+                    if self.setup_config_dir(config_dir) is None:
+                        return config_dir
+        else:
+            config_basedir = os.getenv('XDG_CONFIG_HOME')
+            if config_basedir is not None:
+                config_dir = Path(config_basedir, 'OSCR_UI')
+                if self.setup_config_dir(config_dir) is None:
+                    return config_dir
+            home_dir = os.getenv('HOME')
+            if home_dir is None:
+                return
+            config_dir = Path(home_dir, '.config', 'OSCR_UI')
+            if self.setup_config_dir(config_dir) is None:
+                return config_dir
+            config_dir = home_dir / '.oscr_ui'
+            if self.setup_config_dir(config_dir) is None:
+                return config_dir
+
     def init_settings(self):
         """
         Prepares settings. Loads stored settings. Saves current settings for next startup.
         """
 
         # For Windows, Keep the Local settings for now as people are more familiar with that.
-        if os.name == "nt":
+        if os.name == 'nt':
             settings_path = os.path.abspath(self.app_dir + self.config["settings_path"])
             self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
         else:

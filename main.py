@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from multiprocessing import freeze_support, set_start_method, get_start_method
 import os
 import sys
@@ -826,11 +827,14 @@ class Launcher():
 
     @staticmethod
     def launch():
-        args = {}
+        argparser = ArgumentParser(prog='OSCR UI', description='The OSCR parser app.')
+        argparser.add_argument(
+            '--config_dir', type=str, required=False,
+            help='Change configuration directory (must be readable and writable)')
+        args, _ = argparser.parse_known_args()
         exit_code = OSCRUI(
-                theme=Launcher.theme, args=args,
-                path=Launcher.base_path(), config=Launcher.app_config(),
-                versions=(Launcher.__version__, Launcher.version)).run()
+            theme=Launcher.theme, args=args, path=Launcher.base_path(),
+            config=Launcher.app_config(), versions=(Launcher.__version__, Launcher.version)).run()
         sys.exit(exit_code)
 
 
