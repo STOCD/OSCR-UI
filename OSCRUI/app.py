@@ -200,7 +200,7 @@ class OSCRUI():
             config_dir = Path(home_dir, '.config', 'OSCR_UI')
             if self.setup_config_dir(config_dir) is None:
                 return config_dir
-            config_dir = home_dir / '.oscr_ui'
+            config_dir = Path(home_dir, '.oscr_ui')
             if self.setup_config_dir(config_dir) is None:
                 return config_dir
 

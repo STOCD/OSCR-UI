@@ -19,7 +19,7 @@ class OSCRConfig():
         self.live_parser_scale: float = 1.0
         self.minimum_window_width: int = 1280
         self.minimum_window_height: int = 720
-        self.settings_file: str = 'OSCR_UI_settings.ini'
+        self.settings_file: str = 'OSCR_UI_settings'
         self.templog_folder_name: str = '_temp'
         self.config_folder_path: Path = Path()
         self.ui_scale: float = 1.0
@@ -76,9 +76,11 @@ class OSCRSettings():
         self.liveparser__window_opacity: float = 0.85
 
         if os.name == 'nt':
-            self._settings = QSettings(str(settings_file_path), QSettings.Format.IniFormat)
+            settings_file_path_full = str(settings_file_path) + '.ini'
+            self._settings = QSettings(settings_file_path_full, QSettings.Format.IniFormat)
         else:
-            self._settings = QSettings(str(settings_file_path), QSettings.Format.NativeFormat)
+            settings_file_path_full = str(settings_file_path) + '.conf'
+            self._settings = QSettings(settings_file_path_full, QSettings.Format.NativeFormat)
 
         self.load_settings()
 
