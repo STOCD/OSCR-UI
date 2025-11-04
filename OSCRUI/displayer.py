@@ -137,7 +137,7 @@ def create_grouped_bar_plot(
     bottom_axis.unit = 's'
     legend_data = list()
 
-    group_width = self.settings.value('graph_resolution', type=float) * 0.9
+    group_width = self.settings.graph_resolution * 0.9
     player_num = len(data)
     if player_num == 0:
         return
@@ -294,11 +294,11 @@ def create_overview_table(self, table_data: Iterable[Sequence]) -> QTableView:
     table = QTableView(self.widgets.overview_tab_frames[0])
     table.setModel(sort)
     style_table(self, table)
-    if self.settings.value('overview_sort_order') == 'Descending':
+    if self.settings.overview_sort_order == 'Descending':
         sort_order = Qt.SortOrder.AscendingOrder
     else:
         sort_order = Qt.SortOrder.DescendingOrder
-    table.sortByColumn(self.settings.value('overview_sort_column', type=int), sort_order)
+    table.sortByColumn(self.settings.overview_sort_column, sort_order)
     return table
 
 

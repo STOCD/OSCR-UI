@@ -210,13 +210,13 @@ def download_and_view_combat(self):
     result = gzip.decompress(result)
 
     with tempfile.NamedTemporaryFile(
-        mode="wb", dir=self.config['templog_folder_path'], delete=False
+        mode="wb", dir=str(self.config.templog_folder_path), delete=False
     ) as file:
         file.write(result)
     analyze_log_callback(
         self, path=file.name, hidden_path=True
     )
-    switch_overview_tab(self, self.settings.value('first_overview_tab', type=int))
+    switch_overview_tab(self, self.settings.first_overview_tab)
     switch_main_tab(self, 1)
 
 
@@ -232,7 +232,8 @@ def upload_callback(self):
 
     establish_league_connection(self)
 
-    with tempfile.NamedTemporaryFile(delete=False, dir=self.config['templog_folder_path']) as temp:
+    with tempfile.NamedTemporaryFile(
+            delete=False, dir=str(self.config.templog_folder_path)) as temp:
         with open(current_combat.log_file, 'rb') as log_file:
             log_file.seek(current_combat.file_pos[0])
             data = gzip.compress(

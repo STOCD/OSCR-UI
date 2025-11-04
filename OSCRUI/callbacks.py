@@ -25,7 +25,7 @@ def browse_log(self, entry: QLineEdit):
     path = self.browse_path(current_path, 'Logfile (*.log);;Any File (*.*)')
     if path != '':
         entry.setText(format_path(path))
-        if self.settings.value('auto_scan', type=bool):
+        if self.settings.auto_scan:
             self.analyze_log_callback(path=path, parser_num=1)
 
 
@@ -112,10 +112,8 @@ def add_favorite_ladder(self):
     current_item = self.widgets.ladder_selector.currentItem()
     if current_item is not None:
         current_ladder_key = f'{current_item.text()}|{current_item.difficulty}'
-        favorite_ladders = self.settings.value('favorite_ladders', type=list)
-        if current_ladder_key not in favorite_ladders:
-            favorite_ladders.append(current_ladder_key)
-            self.settings.setValue('favorite_ladders', favorite_ladders)
+        if current_ladder_key not in self.settings.favorite_ladders:
+            self.settings.favorite_ladders.append(current_ladder_key)
             ladder_text, difficulty = current_ladder_key.split('|')
             if difficulty == 'None':
                 difficulty = None
@@ -135,10 +133,8 @@ def remove_favorite_ladder(self):
     current_item = self.widgets.favorite_ladder_selector.currentItem()
     if current_item is not None:
         current_ladder_key = f'{current_item.text()}|{current_item.difficulty}'
-        favorite_ladders = self.settings.value('favorite_ladders', type=list)
-        if current_ladder_key in favorite_ladders:
-            favorite_ladders.remove(current_ladder_key)
-            self.settings.setValue('favorite_ladders', favorite_ladders)
+        if current_ladder_key in self.settings.favorite_ladders:
+            self.settings.favorite_ladders.remove(current_ladder_key)
             row = self.widgets.favorite_ladder_selector.row(current_item)
             self.widgets.favorite_ladder_selector.takeItem(row)
 
@@ -152,34 +148,34 @@ def set_graph_resolution_setting(self, new_value: int):
     """
     try:
         setting_value = round(new_value / 10, 1)
-        self.settings.setValue('graph_resolution', setting_value)
+        self.settings.graph_resolution = setting_value
         return setting_value
     except (ValueError, ZeroDivisionError):
         return
 
 
-def set_parser_opacity_setting(self, new_value: int):
+def set_parser_opacity_setting(self, new_value: int) -> str:
     """
     Calculates new_value / 10 and stores it to settings.
 
     Parameters:
     - :param new_value: 20 times the opacity percentage
     """
-    setting_value = f'{new_value / 20:.2f}'
-    self.settings.setValue('live_parser_opacity', setting_value)
-    return setting_value
+    setting_value = round(new_value / 20, 2)
+    self.settings.liveparser__window_opacity = setting_value
+    return f'{setting_value:.2f}'
 
 
-def set_ui_scale_setting(self, new_value: int):
+def set_ui_scale_setting(self, new_value: int) -> str:
     """
     Calculates new_value / 50 and stores it to settings.
 
     Parameters:
     - :param new_value: 50 times the ui scale percentage
     """
-    setting_value = f'{new_value / 50:.2f}'
-    self.settings.setValue('ui_scale', setting_value)
-    return setting_value
+    setting_value = round(new_value / 50, 2)
+    self.settings.ui_scale = setting_value
+    return f'{setting_value:.2f}'
 
 
 def set_live_scale_setting(self, new_value: int):
@@ -189,9 +185,9 @@ def set_live_scale_setting(self, new_value: int):
     Parameters:
     - :param new_value: 50 times the live scale percentage
     """
-    setting_value = f'{new_value / 50:.2f}'
-    self.settings.setValue('live_scale', setting_value)
-    return setting_value
+    setting_value = round(new_value / 50, 2)
+    self.settings.liveparser__window_scale = setting_value
+    return f'{setting_value:.2f}'
 
 
 def set_sto_logpath_setting(self, entry: QLineEdit):
@@ -202,7 +198,7 @@ def set_sto_logpath_setting(self, entry: QLineEdit):
     - :param entry: the entry that holds the path
     """
     formatted_path = format_path(entry.text())
-    self.settings.setValue('sto_log_path', formatted_path)
+    self.settings.sto_log_path = formatted_path
     entry.setText(formatted_path)
 
 
@@ -219,7 +215,7 @@ def browse_sto_logpath(self, entry: QLineEdit):
     new_path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
     if new_path:
         formatted_path = format_path(new_path)
-        self.settings.setValue('sto_log_path', formatted_path)
+        self.settings.sto_log_path = formatted_path
         entry.setText(formatted_path)
 
 
@@ -230,8 +226,8 @@ def copy_live_data_callback(self):
     data_model = self.widgets.live_parser_table.model()
     cell_data = data_model._data
     output = list()
-    name_index = 0 if self.settings.value('live_player') == 'Name' else 1
-    if self.settings.value('live_copy_kills', type=bool):
+    name_index = 0 if self.settings.liveparser__player_display == 'Name' else 1
+    if self.settings.liveparser__copy_kills:
         for row in cell_data:
             output.append(f"{row[0][name_index]}: {row[1]:,.2f} ({row[6]:.0f})")
         output = '{ OSCR } DPS (Kills): ' + ' | '.join(output)
@@ -261,7 +257,7 @@ def expand_analysis_graph(self):
     Shows the analysis graph
     """
     self.widgets.analysis_graph_tabber.show()
-    self.settings.setValue('analysis_graph', True)
+    self.settings.analysis_graph = True
 
 
 def collapse_analysis_graph(self):
@@ -269,7 +265,7 @@ def collapse_analysis_graph(self):
     Hides the analysis graph
     """
     self.widgets.analysis_graph_tabber.hide()
-    self.settings.setValue('analysis_graph', False)
+    self.settings.analysis_graph = False
 
 
 def confirm_trim_logfile(self):
@@ -312,7 +308,7 @@ def repair_logfile(self):
     """
     log_path = os.path.abspath(self.entry.text())
     if os.path.isfile(log_path):
-        res = oscr_repair_logfile(log_path, self.config['templog_folder_path'])
+        res = oscr_repair_logfile(log_path, str(self.config.templog_folder_path))
         if res == '':
             show_message(self, tr('Repair Logfile'), tr('The Logfile has been repaired.'))
         elif res == 'PermissionError':
@@ -344,7 +340,7 @@ def extract_combats(self, selected_indices: list):
             self, os.path.dirname(source_path), 'Logfile (*.log);;Any File (*.*)', save=True)
     if target_path != '':
         compose_logfile(
-                source_path, target_path, combat_intervals, self.config['templog_folder_path'])
+                source_path, target_path, combat_intervals, str(self.config.templog_folder_path))
         show_message(self, tr('Split Logfile'), tr('Logfile has been saved.'))
 
 

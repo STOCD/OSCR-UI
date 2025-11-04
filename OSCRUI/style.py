@@ -91,7 +91,7 @@ def get_css(self, style: dict) -> str:
     values.
     """
     css = str()
-    ui_scale = self.config['ui_scale']
+    ui_scale = self.config.ui_scale
     for key, val in style.items():
         if isinstance(val, str) and val.startswith('@'):
             v = self.theme['defaults'][val[1:]]
@@ -129,7 +129,7 @@ def theme_font(self, key, font_spec=()) -> QFont:
     except KeyError:
         font = self.theme['app']['font']
     font_family = (font[0], *self.theme['app']['font-fallback'])
-    font_size = int(font[1] * self.config['ui_scale'])
+    font_size = int(font[1] * self.config.ui_scale)
     try:
         font_weight = WEIGHT_CONVERSION[font[2]]
     except KeyError:
