@@ -8,7 +8,6 @@ These are currently just development notes, subject to change, easier to have it
 
 ## Linux
 
-
 #### System Wide Paths
 - /opt/oscr/
   - This is the ideal loation for Linux, include all the assets there.
@@ -97,7 +96,6 @@ package() {
 ```
 
 Is a minimal PKGBUILD file.  Then you run `makepkg -si` from the repository's directory, that contains the `PKGBUILD` file and that spits out the `oscr-ui-v2025.9.14.1.pkg.tar.zt` file, which can then be installed via pacman: 
-
 
 ```
 sudo pacman -U /path/to/oscr-ui-1.0.0-1-x86_64.pkg.tar.zst
