@@ -37,7 +37,7 @@ def show_message(self, title: str, message: str, icon: str = 'info'):
     top_layout.setContentsMargins(0, 0, 0, 0)
     top_layout.setSpacing(2 * thick)
     icon_label = create_label(self, '')
-    icon_size = self.theme['s.c']['big_icon_size'] * self.config['ui_scale']
+    icon_size = self.theme['s.c']['big_icon_size'] * self.config.ui_scale
     icon_label.setPixmap(self.icons[icon].pixmap(icon_size))
     top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
     message_label = create_label(self, message)
@@ -95,7 +95,7 @@ def confirmation_dialog(self, title: str, message: str, icon: str = 'warning') -
     top_layout.setContentsMargins(0, 0, 0, 0)
     top_layout.setSpacing(2 * thick)
     icon_label = create_label(self, '')
-    icon_size = self.theme['s.c']['big_icon_size'] * self.config['ui_scale']
+    icon_size = self.theme['s.c']['big_icon_size'] * self.config.ui_scale
     icon_label.setPixmap(self.icons[icon].pixmap(icon_size))
     top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
     message_label = create_label(self, message)

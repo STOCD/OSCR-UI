@@ -1,12 +1,15 @@
 import os
+from pathlib import Path
+import sys
 
 from PySide6.QtWidgets import (
         QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QListWidgetItem,
         QScrollArea, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout)
-from PySide6.QtCore import QSize, QSettings, Qt, QTimer, QThread
+from PySide6.QtCore import QDir, QSize, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
+from .config import OSCRConfig, OSCRSettings
 from .datamodels import CombatModel
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
@@ -53,10 +56,6 @@ class OSCRUI():
 
     versions = ('', '')  # (release version, dev version)
 
-    config = {}  # see main.py for contents
-
-    settings: QSettings  # see main.py for defaults
-
     # stores widgets that need to be accessed from outside their creating function
     widgets: WidgetStorage
 
@@ -77,14 +76,22 @@ class OSCRUI():
         self.theme = theme
         self.args = args
         self.app_dir = path
-        self.config = config
         self.widgets = WidgetStorage()
         self.live_parser_window = None
         self.live_parser = None
+        self.config = OSCRConfig()
+        self.config.config_dir = self.get_config_dir_path(self.args.config_dir)
+        if self.config.config_dir is None:
+            # TODO show error message
+            sys.exit(1)
+        self.settings = OSCRSettings(Path(self.config.config_dir, self.config.settings_file))
+        self.settings.store_settings()
         self.init_settings()
         self.init_config()
+        QDir.addSearchPath('assets_folder', 'assets')
+        QDir.addSearchPath('assets_folder', '_internal/assets')
 
-        init_translation(self.settings.value('language'))
+        init_translation(self.settings.language)
         self.league_api = None
 
         self.app, self.window = self.create_main_window()
@@ -95,7 +102,7 @@ class OSCRUI():
         self.setup_main_layout()
 
         self.window.show()
-        if self.settings.value('auto_scan', type=bool):
+        if self.settings.auto_scan:
             QTimer.singleShot(
                     100,
                     lambda: self.analyze_log_callback(path=self.entry.text()))
@@ -148,36 +155,72 @@ class OSCRUI():
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
+    def setup_config_dir(self, dir_path: Path) -> None | OSError:
+        """
+        Sets up config directory.
+        """
+        try:
+            dir_path.mkdir(exist_ok=True)
+            templog_folder_path = dir_path / '_temp'
+            templog_folder_path.mkdir(mode=0o755, exist_ok=True)
+        except OSError as e:
+            return e
+
+    def get_config_dir_path(self, override: str | None = None) -> Path | None:
+        """
+        Identifies appropriate config directory and returns path to that directory. Returns `None`
+        if no usable config dir could be identified.
+        """
+        if override is not None:
+            config_dir = Path(override)
+            if self.setup_config_dir(config_dir) is None:
+                return config_dir
+            else:
+                return
+
+        if os.name == 'nt':
+            for env_name in ('APPDATA', 'USERPROFILE'):
+                config_basedir = os.getenv(env_name)
+                if config_basedir is not None:
+                    config_dir = Path(config_basedir, 'OSCR_UI')
+                    if self.setup_config_dir(config_dir) is None:
+                        return config_dir
+        else:
+            config_basedir = os.getenv('XDG_CONFIG_HOME')
+            if config_basedir is not None:
+                config_dir = Path(config_basedir, 'OSCR_UI')
+                if self.setup_config_dir(config_dir) is None:
+                    return config_dir
+            home_dir = os.getenv('HOME')
+            if home_dir is None:
+                return
+            config_dir = Path(home_dir, '.config', 'OSCR_UI')
+            if self.setup_config_dir(config_dir) is None:
+                return config_dir
+            config_dir = home_dir / '.oscr_ui'
+            if self.setup_config_dir(config_dir) is None:
+                return config_dir
+
     def init_settings(self):
         """
-        Prepares settings. Loads stored settings. Saves current settings for next startup.
+        Prepares settings.
         """
-
-        # For Windows, Keep the Local settings for now as people are more familiar with that.
-        if os.name == "nt":
-            settings_path = os.path.abspath(self.app_dir + self.config["settings_path"])
-            self.settings = QSettings(settings_path, QSettings.Format.IniFormat)
-        else:
-            self.settings = QSettings("OSCR", "OSCR-UI")
-
-        for setting, value in self.config['default_settings'].items():
-            if self.settings.value(setting, None) is None:
-                self.settings.setValue(setting, value)
-        if not self.settings.value('log_path', ''):
-            self.settings.setValue('log_path', format_path(self.app_dir))
+        if not self.settings.log_path:
+            if os.name == 'nt':
+                self.settings.log_path = os.getenv('USERPROFILE')
+            else:
+                self.settings.log_path = os.getenv('HOME')
 
     def init_config(self):
         """
         Prepares config.
         """
         self.current_combat_id = -1
-        self.config['ui_scale'] = self.settings.value('ui_scale', type=float)
-        self.config['live_scale'] = self.settings.value('live_scale', type=float)
-        self.config['icon_size'] = round(
-                self.config['ui_scale'] * self.theme['s.c']['button_icon_size'])
-        self.config['settings_path'] = os.path.abspath(self.app_dir + self.config['settings_path'])
-        self.config['templog_folder_path'] = os.path.abspath(
-                self.app_dir + self.config['templog_folder_path'])
+        self.config.ui_scale = self.settings.ui_scale
+        self.config.live_parser_scale = self.settings.liveparser__window_scale
+        self.config.icon_size = round(
+                self.config.ui_scale * self.theme['s.c']['button_icon_size'])
+        self.config.templog_folder_path = self.config.config_dir / self.config.templog_folder_name
 
     def init_parser(self):
         """
@@ -197,15 +240,14 @@ class OSCRUI():
         Returns settings relevant to the parser
         """
         relevant_settings = (
-                ('combats_to_parse', int), ('seconds_between_combats', int),
-                ('excluded_event_ids', list), ('graph_resolution', float),
-                ('combat_min_lines', int))
-        settings = dict()
-        for setting_key, settings_type in relevant_settings:
-            setting = self.settings.value(setting_key, type=settings_type, defaultValue='')
+            'combats_to_parse', 'seconds_between_combats',
+            'graph_resolution', 'combat_min_lines')
+        settings = {'excluded_event_ids': self.config.excluded_event_ids}
+        for setting_key in relevant_settings:
+            setting = getattr(self.settings, setting_key)
             if setting != '':
                 settings[setting_key] = setting
-        settings['templog_folder_path'] = self.config['templog_folder_path']
+        settings['templog_folder_path'] = str(self.config.templog_folder_path.absolute())
         return settings
 
     @property
@@ -213,7 +255,7 @@ class OSCRUI():
         """
         Returns settings relevant to the LiveParser
         """
-        return {'seconds_between_combats': self.settings.value('seconds_between_combats', type=int)}
+        return {'seconds_between_combats': self.settings.seconds_between_combats}
 
     @property
     def sidebar_item_width(self) -> int:
@@ -223,16 +265,16 @@ class OSCRUI():
         return int(
                 self.theme['s.c']['sidebar_item_width']
                 * self.window.width()
-                * self.config['ui_scale'])
+                * self.config.ui_scale)
 
     def main_window_close_callback(self, event):
         """
         Executed when application is closed.
         """
-        window_geometry = self.window.saveGeometry()
-        self.settings.setValue('geometry', window_geometry)
-        self.settings.setValue('overview_splitter', self.widgets.overview_splitter.saveState())
-        self.settings.setValue('analysis_splitter', self.widgets.analysis_splitter.saveState())
+        self.settings.state__geometry = self.window.saveGeometry()
+        self.settings.state__overview_splitter = self.widgets.overview_splitter.saveState()
+        self.settings.state__analysis_splitter = self.widgets.analysis_splitter.saveState()
+        self.settings.store_settings()
         event.accept()
 
     def main_window_resize_callback(self, event):
@@ -263,12 +305,12 @@ class OSCRUI():
         app.setStyleSheet(self.create_style_sheet(self.theme['app']['style']))
         window = QWidget()
         window.setMinimumSize(
-                self.config['ui_scale'] * self.config['minimum_window_width'],
-                self.config['ui_scale'] * self.config['minimum_window_height'])
+                self.config.ui_scale * self.config.minimum_window_width,
+                self.config.ui_scale * self.config.minimum_window_height)
         window.setWindowIcon(load_icon('oscr_icon_small.png', self.app_dir))
         window.setWindowTitle('Open Source Combatlog Reader')
-        if self.settings.value('geometry'):
-            window.restoreGeometry(self.settings.value('geometry'))
+        if self.settings.state__geometry:
+            window.restoreGeometry(self.settings.state__geometry)
         window.closeEvent = self.main_window_close_callback
         window.resizeEvent = self.main_window_resize_callback
         return app, window
@@ -294,7 +336,7 @@ class OSCRUI():
         button_column.setContentsMargins(csp, csp, csp, csp)
         button_column.setRowStretch(0, 1)
         main_layout.addLayout(button_column, 0, 1)
-        icon_size = self.config['icon_size']
+        icon_size = self.config.icon_size
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
@@ -409,9 +451,9 @@ class OSCRUI():
         favorite_selector.setSizePolicy(SMIXMIN)
         favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
         self.widgets.favorite_ladder_selector = favorite_selector
-        for favorite_ladder in self.settings.value('favorite_ladders', type=list):
+        for favorite_ladder in self.settings.favorite_ladders:
             if '|' not in favorite_ladder:
-                self.settings.setValue('favorite_ladders', list())
+                self.settings.favorite_ladders = list()
                 break
             ladder_text, difficulty = favorite_ladder.split('|')
             if difficulty == 'None':
@@ -453,7 +495,7 @@ class OSCRUI():
         head_layout.addWidget(cut_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
 
-        self.entry = QLineEdit(self.settings.value('log_path', ''))
+        self.entry = QLineEdit(self.settings.log_path)
         self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
         self.entry.setFont(self.theme_font('entry'))
         self.entry.setSizePolicy(SMIXMAX)
@@ -465,7 +507,7 @@ class OSCRUI():
                 'style': {'margin-left': 0}
             },
             tr('Default'): {
-                'callback': lambda: self.entry.setText(self.settings.value('sto_log_path')),
+                'callback': lambda: self.entry.setText(self.settings.sto_log_path),
                 'align': AHCENTER
             },
             tr('Analyze'): {
@@ -490,7 +532,7 @@ class OSCRUI():
         self.current_combats.setAlternatingRowColors(True)
         self.current_combats.setSizePolicy(SMIXMIN)
         self.current_combats.setModel(CombatModel())
-        ui_scale = self.config['ui_scale']
+        ui_scale = self.config.ui_scale
         border_width = 1 * ui_scale
         padding = 4 * ui_scale
         self.current_combats.setItemDelegate(CombatDelegate(border_width, padding))
@@ -511,7 +553,7 @@ class OSCRUI():
         combat_button_row.addWidget(more_combats_button, 0, 1)
         left_layout.addLayout(combat_button_row)
         more_combats_button.clicked.connect(lambda: self.analyze_log_background(
-                self.settings.value('combats_to_parse', type=int)))
+                self.settings.combats_to_parse))
         export_button.clicked.connect(
                 lambda: self.save_combat(self.current_combats.currentIndex().data()[0]))
 
@@ -566,17 +608,17 @@ class OSCRUI():
         link_button_style = {
             'default': {},
             tr('Website'): {
-                'callback': lambda: open_link(self.config['link_website']), 'align': AHCENTER},
+                'callback': lambda: open_link(self.config.link_website), 'align': AHCENTER},
             tr('Github'): {
-                'callback': lambda: open_link(self.config['link_github']), 'align': AHCENTER},
+                'callback': lambda: open_link(self.config.link_github), 'align': AHCENTER},
             tr('Downloads'): {
-                'callback': lambda: open_link(self.config['link_downloads']), 'align': AHCENTER}
+                'callback': lambda: open_link(self.config.link_downloads), 'align': AHCENTER}
         }
         button_layout, buttons = self.create_button_series(
                 link_button_style, 'button', shape='column', ret=True)
-        buttons[0].setToolTip(self.config['link_website'])
-        buttons[1].setToolTip(self.config['link_github'])
-        buttons[2].setToolTip(self.config['link_downloads'])
+        buttons[0].setToolTip(self.config.link_website)
+        buttons[1].setToolTip(self.config.link_github)
+        buttons[2].setToolTip(self.config.link_downloads)
         link_button_frame = self.create_frame(style='medium_frame')
         link_button_frame.setLayout(button_layout)
         left_layout.addWidget(link_button_frame, alignment=AHCENTER)
@@ -589,16 +631,16 @@ class OSCRUI():
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setColumnStretch(1, 1)
-        logo_size = [self.config['icon_size'] * 4] * 2
+        logo_size = [self.config.icon_size * 4] * 2
         stocd_logo = self.create_icon_button(
-                self.icons['stocd'], self.config['link_stocd'],
+                self.icons['stocd'], self.config.link_stocd,
                 style_override={'border-style': 'none'}, icon_size=logo_size)
-        stocd_logo.clicked.connect(lambda: open_link(self.config['link_stocd']))
+        stocd_logo.clicked.connect(lambda: open_link(self.config.link_stocd))
         logo_layout.addWidget(stocd_logo, 0, 0)
         stobuilds_logo = self.create_icon_button(
-                self.icons['stobuilds'], self.config['link_stobuilds'],
+                self.icons['stobuilds'], self.config.link_stobuilds,
                 style_override={'border-style': 'none'}, icon_size=logo_size)
-        stobuilds_logo.clicked.connect(lambda: open_link(self.config['link_stobuilds']))
+        stobuilds_logo.clicked.connect(lambda: open_link(self.config.link_stobuilds))
         logo_layout.addWidget(stobuilds_logo, 0, 2)
         logo_frame = self.create_frame(style='medium_frame', size_policy=SMINMAX)
         logo_frame.setLayout(logo_layout)
@@ -741,8 +783,8 @@ class OSCRUI():
         splitter.addWidget(table_frame)
         self.widgets.overview_table_frame = table_frame
         o_frame.setLayout(layout)
-        if self.settings.value('overview_splitter'):
-            splitter.restoreState(self.settings.value('overview_splitter'))
+        if self.settings.state__overview_splitter:
+            splitter.restoreState(self.settings.state__overview_splitter)
         else:
             h = splitter.height()
             splitter.setSizes((h * 0.5, h * 0.5))
@@ -786,7 +828,7 @@ class OSCRUI():
         a_graph_tabber.addTab(hin_graph_frame, 'HIN')
         self.widgets.analysis_graph_tabber = a_graph_tabber
         splitter.addWidget(a_graph_tabber)
-        if not self.settings.value('analysis_graph', type=bool):
+        if not self.settings.analysis_graph:
             self.widgets.analysis_graph_button.flip()
         a_tree_tabber = QTabWidget(a_frame)
         a_tree_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
@@ -845,7 +887,7 @@ class OSCRUI():
             (hout_graph_frame, hout_tree_frame, 'analysis_table_hout', 'analysis_plot_hout'),
             (hin_graph_frame, hin_tree_frame, 'analysis_table_hin', 'analysis_plot_hin')
         )
-        csp = self.theme['defaults']['csp'] * self.config['ui_scale']
+        csp = self.theme['defaults']['csp'] * self.config.ui_scale
         for graph_frame, tree_frame, table_name, plot_name in tabs:
             graph_layout = QHBoxLayout()
             graph_layout.setContentsMargins(csp, csp, csp, 0)
@@ -899,8 +941,8 @@ class OSCRUI():
             tree_frame.setLayout(tree_layout)
 
         a_frame.setLayout(layout)
-        if self.settings.value('analysis_splitter'):
-            splitter.restoreState(self.settings.value('analysis_splitter'))
+        if self.settings.state__analysis_splitter:
+            splitter.restoreState(self.settings.state__analysis_splitter)
         else:
             h = splitter.height()
             splitter.setSizes((h * 0.5, h * 0.5))
@@ -997,7 +1039,7 @@ class OSCRUI():
         menu_layout.addLayout(bt_lay, 0, 0)
         self.widgets.main_menu_buttons = buttons
 
-        size = [self.config['icon_size'] * 1.3] * 2
+        size = [self.config.icon_size * 1.3] * 2
         live_parser_button = self.create_icon_button(
                 self.icons['live-parser'], tr('Live Parser'), 'live_icon_button', icon_size=size)
         live_parser_button.setCheckable(True)
@@ -1046,11 +1088,11 @@ class OSCRUI():
         combat_delta_validator = QIntValidator()
         combat_delta_validator.setBottom(1)
         combat_delta_entry = self.create_entry(
-                self.settings.value('seconds_between_combats', type=str),
+                str(self.settings.seconds_between_combats),
                 combat_delta_validator, style_override={'margin-top': 0})
         combat_delta_entry.setSizePolicy(SMIXMAX)
-        combat_delta_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'seconds_between_combats', combat_delta_entry.text()))
+        combat_delta_entry.editingFinished.connect(
+            lambda: self.settings.set('seconds_between_combats', int(combat_delta_entry.text())))
         sec_1.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
 
         combat_num_label = self.create_label(tr('Number of combats to isolate:'), 'label_subhead')
@@ -1058,11 +1100,11 @@ class OSCRUI():
         combat_num_validator = QIntValidator()
         combat_num_validator.setBottom(1)
         combat_num_entry = self.create_entry(
-                self.settings.value('combats_to_parse', type=str), combat_num_validator,
+                str(self.settings.combats_to_parse), combat_num_validator,
                 style_override={'margin-top': 0})
         combat_num_entry.setSizePolicy(SMIXMAX)
-        combat_num_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'combats_to_parse', combat_num_entry.text()))
+        combat_num_entry.editingFinished.connect(
+            lambda: self.settings.set('combats_to_parse', int(combat_num_entry.text())))
         sec_1.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
 
         combat_lines_label = self.create_label(
@@ -1071,18 +1113,18 @@ class OSCRUI():
         combat_lines_validator = QIntValidator()
         combat_lines_validator.setBottom(1)
         combat_lines_entry = self.create_entry(
-                self.settings.value('combat_min_lines', type=str), combat_lines_validator,
+                str(self.settings.combat_min_lines), combat_lines_validator,
                 style_override={'margin-top': 0})
         combat_lines_entry.setSizePolicy(SMIXMAX)
-        combat_lines_entry.editingFinished.connect(lambda: self.settings.setValue(
-                'combat_min_lines', combat_lines_entry.text()))
+        combat_lines_entry.editingFinished.connect(
+            lambda: self.settings.set('combat_min_lines', int(combat_lines_entry.text())))
         sec_1.addWidget(combat_lines_entry, 2, 1, alignment=AVCENTER)
 
         graph_resolution_label = self.create_label(
                 tr('Graph resolution (interval in seconds):'), 'label_subhead')
         sec_1.addWidget(graph_resolution_label, 3, 0, alignment=ARIGHT)
         graph_resolution_layout = self.create_annotated_slider(
-                self.settings.value('graph_resolution', type=float) * 10, 1, 20,
+                self.settings.graph_resolution * 10, 1, 20,
                 callback=self.set_graph_resolution_setting)
         sec_1.addLayout(graph_resolution_layout, 3, 1, alignment=ALEFT)
 
@@ -1091,9 +1133,9 @@ class OSCRUI():
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
         overview_sort_combo = self.create_combo_box(style_override={'font': '@small_text'})
         overview_sort_combo.addItems(TABLE_HEADER)
-        overview_sort_combo.setCurrentIndex(self.settings.value('overview_sort_column', type=int))
+        overview_sort_combo.setCurrentIndex(self.settings.overview_sort_column)
         overview_sort_combo.currentIndexChanged.connect(
-                lambda new_index: self.settings.setValue('overview_sort_column', new_index))
+                lambda new_index: self.settings.set('overview_sort_column', new_index))
         sec_1.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
 
         overview_sort_order_label = self.create_label(
@@ -1101,9 +1143,9 @@ class OSCRUI():
         sec_1.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
         overview_sort_order_combo = self.create_combo_box(style_override={'font': '@small_text'})
         overview_sort_order_combo.addItems((tr('Descending'), tr('Ascending')))
-        overview_sort_order_combo.setCurrentText(self.settings.value('overview_sort_order'))
+        overview_sort_order_combo.setCurrentText(self.settings.overview_sort_order)
         overview_sort_order_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.setValue('overview_sort_order', new_text))
+                lambda new_text: self.settings.set('overview_sort_order', new_text))
         sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
 
         auto_scan_label = self.create_label(tr('Scan log automatically:'), 'label_subhead')
@@ -1112,9 +1154,9 @@ class OSCRUI():
         auto_scan_button.setStyleSheet(self.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         auto_scan_button.setFont(self.theme_font('app', '@font'))
-        auto_scan_button.r_function = lambda: self.settings.setValue('auto_scan', True)
-        auto_scan_button.l_function = lambda: self.settings.setValue('auto_scan', False)
-        if self.settings.value('auto_scan', type=bool):
+        auto_scan_button.r_function = lambda: self.settings.set('auto_scan', True)
+        auto_scan_button.l_function = lambda: self.settings.set('auto_scan', False)
+        if self.settings.auto_scan:
             auto_scan_button.flip()
         sec_1.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
         sto_log_path_button = self.create_button(tr('STO Logfile:'), style_override={
@@ -1122,7 +1164,7 @@ class OSCRUI():
                 'border-style': 'solid', 'border-width': '@bw', 'padding-bottom': 1})
         sec_1.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
         sto_log_path_entry = self.create_entry(
-                self.settings.value('sto_log_path'), style_override={'margin-top': 0})
+                self.settings.sto_log_path, style_override={'margin-top': 0})
         sto_log_path_entry.setSizePolicy(SMIXMAX)
         sto_log_path_entry.editingFinished.connect(
                 lambda: self.set_sto_logpath_setting(sto_log_path_entry))
@@ -1132,7 +1174,7 @@ class OSCRUI():
         opacity_label = self.create_label(tr('Live Parser Opacity:'), 'label_subhead')
         sec_1.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
         opacity_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.value('live_parser_opacity', type=float) * 20, 0),
+                default_value=round(self.settings.liveparser__window_opacity * 20, 0),
                 min=1, max=20,
                 style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
                 callback=self.set_parser_opacity_setting)
@@ -1145,51 +1187,51 @@ class OSCRUI():
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_graph_active_button.setFont(self.theme_font('app', '@font'))
         live_graph_active_button.r_function = (
-                lambda: self.settings.setValue('live_graph_active', True))
+                lambda: self.settings.set('live_graph_active', True))
         live_graph_active_button.l_function = (
-                lambda: self.settings.setValue('live_graph_active', False))
-        if self.settings.value('live_graph_active', type=bool):
+                lambda: self.settings.set('live_graph_active', False))
+        if self.settings.liveparser__graph_active:
             live_graph_active_button.flip()
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
 
         live_graph_field_label = self.create_label(tr('LiveParser Graph Field:'), 'label_subhead')
         sec_1.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
         live_graph_field_combo = self.create_combo_box(style_override={'font': '@small_text'})
-        live_graph_field_combo.addItems(self.config['live_graph_fields'])
-        live_graph_field_combo.setCurrentIndex(self.settings.value('live_graph_field', type=int))
+        live_graph_field_combo.addItems(self.config.live_graph_fields)
+        live_graph_field_combo.setCurrentIndex(self.settings.liveparser__graph_field)
         live_graph_field_combo.currentIndexChanged.connect(
-                lambda new_index: self.settings.setValue('live_graph_field', new_index))
+                lambda new_index: self.settings.set('liveparser__graph_field', new_index))
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
 
         live_name_label = self.create_label(tr('LiveParser Player:'), 'label_subhead')
         sec_1.addWidget(live_name_label, 11, 0, alignment=ARIGHT)
         live_player_combo = self.create_combo_box(style_override={'font': '@small_text'})
         live_player_combo.addItems(('Name', 'Handle'))
-        live_player_combo.setCurrentText(self.settings.value('live_player', type=str))
+        live_player_combo.setCurrentText(self.settings.liveparser__player_display)
         live_player_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.setValue('live_player', new_text))
+                lambda new_text: self.settings.set('liveparser__player_display', new_text))
         sec_1.addWidget(live_player_combo, 11, 1, alignment=ALEFT)
 
         overview_tab_label = self.create_label(tr('Default Overview Tab:'), 'label_subhead')
         sec_1.addWidget(overview_tab_label, 12, 0, alignment=ARIGHT)
         overview_tab_combo = self.create_combo_box(style_override={'font': '@small_text'})
         overview_tab_combo.addItems((tr('DPS Bar'), tr('DPS Graph'), tr('Damage Graph')))
-        overview_tab_combo.setCurrentIndex(self.settings.value('first_overview_tab', type=int))
+        overview_tab_combo.setCurrentIndex(self.settings.first_overview_tab)
         overview_tab_combo.currentIndexChanged.connect(
-            lambda new_index: self.settings.setValue('first_overview_tab', new_index))
+            lambda new_index: self.settings.set('first_overview_tab', new_index))
         sec_1.addWidget(overview_tab_combo, 12, 1, alignment=ALEFT)
 
         ui_scale_label = self.create_label(tr('UI Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
         ui_scale_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.value('ui_scale', type=float) * 50, 0),
+                default_value=round(self.settings.ui_scale * 50, 0),
                 min=25, max=75, callback=self.set_ui_scale_setting)
         sec_1.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
 
         ui_scale_label = self.create_label(tr('LiveParser Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 14, 0, alignment=ARIGHT)
         live_scale_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.value('live_scale', type=float) * 50, 0),
+                default_value=round(self.settings.liveparser__window_scale * 50, 0),
                 min=25, max=75, callback=self.set_live_scale_setting)
         sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
         sec_1.setAlignment(AHCENTER)
@@ -1201,10 +1243,10 @@ class OSCRUI():
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_enabled_button.setFont(self.theme_font('app', '@font'))
         live_enabled_button.r_function = (
-                lambda: self.settings.setValue('live_enabled', True))
+                lambda: self.settings.set('liveparser__auto_enabled', True))
         live_enabled_button.l_function = (
-                lambda: self.settings.setValue('live_enabled', False))
-        if self.settings.value('live_enabled', type=bool):
+                lambda: self.settings.set('liveparser__auto_enabled', False))
+        if self.settings.liveparser__auto_enabled:
             live_enabled_button.flip()
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
 
@@ -1212,9 +1254,9 @@ class OSCRUI():
         sec_1.addWidget(result_format_label, 16, 0, alignment=ARIGHT)
         result_format_combo = self.create_combo_box(style_override={'font': '@small_text'})
         result_format_combo.addItems(('Compact', 'Verbose', 'CSV'))
-        result_format_combo.setCurrentText(self.settings.value('result_format', type=str))
+        result_format_combo.setCurrentText(self.settings.copy_format)
         result_format_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.setValue('result_format', new_text))
+                lambda new_text: self.settings.set('copy_format', new_text))
         sec_1.addWidget(result_format_combo, 16, 1, alignment=ALEFT)
 
         live_copy_label = self.create_label(tr('Show kills in LiveParser Copy:'), 'label_subhead')
@@ -1224,10 +1266,10 @@ class OSCRUI():
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_copy_button.setFont(self.theme_font('app', '@font'))
         live_copy_button.r_function = (
-                lambda: self.settings.setValue('live_copy_kills', True))
+                lambda: self.settings.set('liveparser__copy_kills', True))
         live_copy_button.l_function = (
-                lambda: self.settings.setValue('live_copy_kills', False))
-        if self.settings.value('live_copy_kills', type=bool):
+                lambda: self.settings.setValue('liveparser__copy_kills', False))
+        if self.settings.liveparser__copy_kills:
             live_copy_button.flip()
         sec_1.addWidget(live_copy_button, 17, 1, alignment=ALEFT)
 
@@ -1237,10 +1279,10 @@ class OSCRUI():
         sec_1.addWidget(language_label, 18, 0, alignment=ARIGHT)
         language_combo = self.create_combo_box(style_override={'font': '@small_text'})
         language_combo.addItems(languages)
-        current_language_code = self.settings.value('language')
+        current_language_code = self.settings.language
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
         language_combo.currentIndexChanged.connect(
-                lambda index: self.settings.setValue('language', language_codes[index]))
+                lambda index: self.settings.set('language', language_codes[index]))
         sec_1.addWidget(language_combo, 18, 1, alignment=ALEFT | AVCENTER)
         scroll_layout.addLayout(sec_1)
 
@@ -1266,14 +1308,13 @@ class OSCRUI():
         dmg_hider_frame = self.create_frame(
                 size_policy=SMINMAX, style_override=hider_frame_style_override)
         dmg_hider_frame.setMinimumWidth(self.sidebar_item_width)
-        self.set_buttons = list()
         for i, head in enumerate(tr(TREE_HEADER)[1:]):
             bt = self.create_button(
                     head, 'toggle_button',
-                    toggle=self.settings.value(f'dmg_columns|{i}', type=bool))
+                    toggle=self.settings.dmg_columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
-                    lambda state, i=i: self.settings.setValue(f'dmg_columns|{i}', state))
+                    lambda state, i=i: self.settings.dmg_columns.__setitem__(i, state))
             dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_seperator = self.create_frame(
                 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
@@ -1294,10 +1335,10 @@ class OSCRUI():
         for i, head in enumerate(tr(HEAL_TREE_HEADER)[1:]):
             bt = self.create_button(
                     head, 'toggle_button',
-                    toggle=self.settings.value(f'heal_columns|{i}', type=bool))
+                    toggle=self.settings.heal_columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
-                    lambda state, i=i: self.settings.setValue(f'heal_columns|{i}', state))
+                    lambda state, i=i: self.settings.heal_columns.__setitem__(i, state))
             heal_hider_layout.addWidget(bt, stretch=1)
         heal_seperator = self.create_frame(
             'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
@@ -1318,10 +1359,10 @@ class OSCRUI():
         for i, head in enumerate(tr(LIVE_TABLE_HEADER)):
             bt = self.create_button(
                     head, 'toggle_button',
-                    toggle=self.settings.value(f'live_columns|{i}', type=bool))
+                    toggle=self.settings.liveparser__columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
-                    lambda state, i=i: self.settings.setValue(f'live_columns|{i}', state))
+                    lambda state, i=i: self.settings.liveparser__columns.__setitem__(i, state))
             live_hider_layout.addWidget(bt, stretch=1)
         live_hider_frame.setLayout(live_hider_layout)
         sec_2.addWidget(live_hider_frame, alignment=ATOP)

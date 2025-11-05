@@ -88,7 +88,7 @@ def create_icon_button(
         button.setToolTip(tooltip)
     button.setStyleSheet(get_style_class(self, 'QPushButton', style, style_override))
     if len(icon_size) != 2:
-        icon_size = [self.config['icon_size']] * 2
+        icon_size = [self.config.icon_size] * 2
     button.setIconSize(QSize(*icon_size))
     button.setCursor(Qt.CursorShape.PointingHandCursor)
     button.setSizePolicy(SMAXMAX)

@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from multiprocessing import freeze_support, set_start_method, get_start_method
 import os
 import sys
@@ -513,11 +514,11 @@ class Launcher():
             },
             # down-pointing arrow
             '::branch:open:has-children': {
-                'image': 'url(assets/chevron-down.svg)'
+                'image': 'url(assets_folder:chevron-down.svg)'
             },
             # right-pointing arrow
             '::branch:closed:has-children': {
-                'image': 'url(assets/chevron-right.svg)'
+                'image': 'url(assets_folder:chevron-right.svg)'
             }
         },
         # header of the analysis table; ::section refers to the individual buttons
@@ -550,7 +551,7 @@ class Launcher():
             'color': '@fg',
             'font': '@subhead',
             '::down-arrow': {
-                'image': 'url(assets/thick-chevron-down.svg)',
+                'image': 'url(assets_folder:thick-chevron-down.svg)',
                 'width': '@margin',
             },
             '::drop-down': {
@@ -678,7 +679,7 @@ class Launcher():
         'resize_handle': {
             'border-style': 'none',
             'background-color': 'none',
-            'image': 'url(assets/resize.svg)',
+            'image': 'url(assets_folder:resize.svg)',
         },
         'splitter': {
             'margin': (10, 0, 10, 0),
@@ -826,11 +827,14 @@ class Launcher():
 
     @staticmethod
     def launch():
-        args = {}
+        argparser = ArgumentParser(prog='OSCR UI', description='The OSCR parser app.')
+        argparser.add_argument(
+            '--config_dir', type=str, required=False,
+            help='Change configuration directory (must be readable and writable)')
+        args, _ = argparser.parse_known_args()
         exit_code = OSCRUI(
-                theme=Launcher.theme, args=args,
-                path=Launcher.base_path(), config=Launcher.app_config(),
-                versions=(Launcher.__version__, Launcher.version)).run()
+            theme=Launcher.theme, args=args, path=Launcher.base_path(),
+            config=Launcher.app_config(), versions=(Launcher.__version__, Launcher.version)).run()
         sys.exit(exit_code)
 
 

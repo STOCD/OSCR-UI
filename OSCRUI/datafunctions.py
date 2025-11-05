@@ -47,8 +47,8 @@ def analyze_log_callback(self, path=None, hidden_path=False):
     if self.thread is not None and self.thread.is_alive():
         return
 
-    if not hidden_path and path != self.settings.value('log_path'):
-        self.settings.setValue('log_path', path)
+    if not hidden_path and path != self.settings.log_path:
+        self.settings.log_path = path
 
     self.parser.reset_parser()
     self.current_combats.model().clear()
@@ -58,7 +58,7 @@ def analyze_log_callback(self, path=None, hidden_path=False):
 
     # reset tabber
     switch_main_tab(self, 0)
-    switch_overview_tab(self, self.settings.value('first_overview_tab', type=int))
+    switch_overview_tab(self, self.settings.first_overview_tab)
 
 
 def analyze_log_background(self, amount: int):
@@ -146,7 +146,7 @@ def copy_summary_callback(self):
     }
     try:
         summary = copy_dispatch.get(
-            self.settings.value("result_format", type=str), "Compact"
+            self.settings.copy_format, 'Compact'
         )(self, combat_time, current_combat)
     except Exception as e:
         print(e)
@@ -171,7 +171,7 @@ def insert_combat(self, combat: Combat):
         create_overview(self, combat)
         populate_analysis(self, combat)
         self.current_combat_id = 0
-        analyze_log_background(self, self.settings.value('combats_to_parse', type=int) - 1)
+        analyze_log_background(self, self.settings.combats_to_parse - 1)
 
 
 def analysis_data_slot(self, index: int):
@@ -248,8 +248,7 @@ def update_shown_columns_dmg(self):
     """
     dout_table = self.widgets.analysis_table_dout
     dtaken_table = self.widgets.analysis_table_dtaken
-    for i in range(self.settings.value('dmg_columns_length', type=int)):
-        state = self.settings.value(f'dmg_columns|{i}', type=bool)
+    for i, state in enumerate(self.settings.dmg_columns):
         if state:
             dout_table.showColumn(i + 1)
             dtaken_table.showColumn(i + 1)
@@ -264,8 +263,7 @@ def update_shown_columns_heal(self):
     """
     hout_table = self.widgets.analysis_table_hout
     hin_table = self.widgets.analysis_table_hin
-    for i in range(self.settings.value('heal_columns_length', type=int)):
-        state = self.settings.value(f'heal_columns|{i}', type=bool)
+    for i, state in enumerate(self.settings.heal_columns):
         if state:
             hout_table.showColumn(i + 1)
             hin_table.showColumn(i + 1)

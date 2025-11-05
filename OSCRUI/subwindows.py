@@ -120,7 +120,7 @@ def split_dialog(self):
     combat_list.setAlternatingRowColors(True)
     combat_list.setSizePolicy(SMIXMIN)
     combat_list.setModel(CombatModel())
-    ui_scale = self.config['ui_scale']
+    ui_scale = self.config.ui_scale
     border_width = 1 * ui_scale
     padding = 4 * ui_scale
     combat_list.setItemDelegate(CombatDelegate(border_width, padding))
@@ -160,7 +160,7 @@ def uploadresult_dialog(self, result: dict):
     view_button.clicked.connect(lambda: view_upload_result(self, result.combatlog))
     if result.results:
         content_layout.addWidget(view_button, 0, 0, 1, 4, alignment=ARIGHT)
-    icon_size = QSize(self.config['icon_size'] / 1.5, self.config['icon_size'] / 1.5)
+    icon_size = QSize(self.config.icon_size / 1.5, self.config.icon_size / 1.5)
     row = 0
     if result.results:
         for row, line in enumerate(result.results, 1):
@@ -210,7 +210,7 @@ def live_parser_toggle(self, activate: bool):
     - :param activate: True when parser should be shown; False when open parser should be closed.
     """
     if activate:
-        log_path = self.settings.value('sto_log_path')
+        log_path = self.settings.sto_log_path
         if not log_path or not os.path.isfile(log_path):
             show_message(self, tr('Invalid Logfile'), tr(
                     'Make sure to set the STO Logfile setting in the settings tab to a valid '
@@ -218,9 +218,9 @@ def live_parser_toggle(self, activate: bool):
             self.widgets.live_parser_button.setChecked(False)
             return
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
-        graph_active = self.settings.value('live_graph_active', type=bool)
+        graph_active = self.settings.liveparser__graph_active
         data_buffer = list()
-        data_field = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
+        data_field = FIELD_INDEX_CONVERSION[self.settings.liveparser__graph_field]
         self.live_parser = LiveParser(log_path, update_callback=lambda p, t: update_live_display(
                 self, p, t, graph_active, data_buffer, data_field),
                 settings=self.live_parser_settings)
@@ -248,8 +248,9 @@ def create_live_parser_window(self):
     """
     Creates the LiveParser window.
     """
-    ui_scale = self.config['ui_scale']
-    self.config['ui_scale'] = self.config['live_scale']
+    self.config.live_parser_scale = self.settings.liveparser__window_scale
+    ui_scale = self.config.ui_scale
+    self.config.ui_scale = self.config.live_parser_scale
 
     live_window = LiveParserWindow()
     live_window.setStyleSheet(get_style(self, 'live_parser'))
@@ -261,9 +262,9 @@ def create_live_parser_window(self):
             | Qt.WindowType.WindowDoesNotAcceptFocus
             | Qt.WindowType.FramelessWindowHint)
     # live_window.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
-    live_window.setWindowOpacity(self.settings.value('live_parser_opacity', type=float))
-    if self.settings.value('live_geometry'):
-        live_window.restoreGeometry(self.settings.value('live_geometry'))
+    live_window.setWindowOpacity(self.settings.liveparser__window_opacity)
+    if self.settings.state__live_geometry:
+        live_window.restoreGeometry(self.settings.state__live_geometry)
     live_window.closeEvent = lambda close_event: live_parser_close_callback(self, close_event)
     live_window.mousePressEvent = lambda press_event: live_parser_press_event(self, press_event)
     live_window.mouseMoveEvent = lambda move_event: live_parser_move_event(self, move_event)
@@ -274,8 +275,7 @@ def create_live_parser_window(self):
 
     graph_colors = None
     graph_column = None
-    graph_active = self.settings.value('live_graph_active', type=bool)
-    if graph_active:
+    if self.settings.liveparser__graph_active:
         splitter = QSplitter(Qt.Orientation.Vertical)
         splitter.setStyleSheet(get_style_class(
                 self, 'QSplitter', 'splitter', {'border': 'none', 'margin': 0}))
@@ -286,7 +286,7 @@ def create_live_parser_window(self):
         splitter.addWidget(graph_frame)
         self.widgets.live_parser_curves = curves
         FIELD_INDEX_CONVERSION = {0: 0, 1: 2, 2: 3, 3: 4}
-        graph_column = FIELD_INDEX_CONVERSION[self.settings.value('live_graph_field', type=int)]
+        graph_column = FIELD_INDEX_CONVERSION[self.settings.liveparser__graph_field]
         graph_colors = (*self.theme['plot']['color_cycler'][:5], '#eeeeee')
         layout.addWidget(splitter, stretch=1)
 
@@ -310,7 +310,7 @@ def create_live_parser_window(self):
     table.setMinimumWidth(self.sidebar_item_width * 0.1)
     table.setMinimumHeight(self.sidebar_item_width * 0.1)
     table.setSortingEnabled(True)
-    if self.settings.value('live_player', defaultValue='Handle') == 'Handle':
+    if self.settings.liveparser__player_display == 'Handle':
         name_index = 1
     else:
         name_index = 0
@@ -322,18 +322,18 @@ def create_live_parser_window(self):
     table.setModel(model)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
-    for index in range(len(LIVE_TABLE_HEADER)):
-        if not self.settings.value(f'live_columns|{index}', type=bool):
+    for index, state in enumerate(self.settings.liveparser__columns):
+        if not state:
             table.hideColumn(index)
     self.widgets.live_parser_table = table
-    if graph_active:
+    if self.settings.liveparser__graph_active:
         splitter.addWidget(table)
-        if self.settings.value('live_splitter'):
-            splitter.restoreState(self.settings.value('live_splitter'))
+        if self.settings.state__live_splitter:
+            splitter.restoreState(self.settings.state__live_splitter)
     else:
         layout.addWidget(table, 1)
 
-    margin = self.config['ui_scale'] * 6
+    margin = self.config.ui_scale * 6
     bottom_layout = QGridLayout()
     bottom_layout.setContentsMargins(margin, 0, 0, 0)
     bottom_layout.setSpacing(margin)
@@ -346,7 +346,7 @@ def create_live_parser_window(self):
     activate_button.r_function = lambda: self.live_parser.start()
     activate_button.l_function = lambda: self.live_parser.stop()
     bottom_layout.addWidget(activate_button, 0, 0, alignment=ALEFT | AVCENTER)
-    icon_size = [self.theme['s.c']['button_icon_size'] * self.config['live_scale'] * 0.8] * 2
+    icon_size = [self.theme['s.c']['button_icon_size'] * self.config.live_parser_scale * 0.8] * 2
     copy_button = create_icon_button(
             self, self.icons['copy'], tr('Copy Result'), style_override={'margin': (0, 0, 3, 0)},
             icon_size=icon_size)
@@ -370,10 +370,10 @@ def create_live_parser_window(self):
     live_window.update_table.connect(lambda data: update_live_table(self, data))
     live_window.update_graph.connect(update_live_graph)
     self.live_parser_window = live_window
-    self.config['ui_scale'] = ui_scale
+    self.config.ui_scale = ui_scale
     live_window.show()
 
-    if self.settings.value('live_enabled', type=bool):
+    if self.settings.liveparser__auto_enabled:
         activate_button.flip()
 
 
@@ -382,9 +382,9 @@ def live_parser_close_callback(self, event):
     Executed when application is closed.
     """
     window_geometry = self.live_parser_window.saveGeometry()
-    self.settings.setValue('live_geometry', window_geometry)
+    self.settings.state__live_geometry = window_geometry
     try:
-        self.settings.setValue('live_splitter', self.widgets.live_parser_splitter.saveState())
+        self.settings.state__live_splitter = self.widgets.live_parser_splitter.saveState()
     except AttributeError:
         pass
     event.accept()
@@ -524,7 +524,7 @@ def show_parser_error(self, error: BaseException):
     top_layout.setContentsMargins(0, 0, 0, 0)
     top_layout.setSpacing(2 * thick)
     icon_label = create_label(self, '')
-    icon_size = self.theme['s.c']['big_icon_size'] * self.config['ui_scale']
+    icon_size = self.theme['s.c']['big_icon_size'] * self.config.ui_scale
     icon_label.setPixmap(self.icons['error'].pixmap(icon_size))
     top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
     msg = tr(
