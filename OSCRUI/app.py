@@ -5,7 +5,7 @@ import sys
 from PySide6.QtWidgets import (
         QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QListWidgetItem,
         QScrollArea, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout)
-from PySide6.QtCore import QSize, Qt, QTimer, QThread
+from PySide6.QtCore import QDir, QSize, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
@@ -88,6 +88,8 @@ class OSCRUI():
         self.settings.store_settings()
         self.init_settings()
         self.init_config()
+        QDir.addSearchPath('assets_folder', 'assets')
+        QDir.addSearchPath('assets_folder', '_internal/assets')
 
         init_translation(self.settings.language)
         self.league_api = None

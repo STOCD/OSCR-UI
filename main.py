@@ -514,11 +514,11 @@ class Launcher():
             },
             # down-pointing arrow
             '::branch:open:has-children': {
-                'image': 'url(assets/chevron-down.svg)'
+                'image': 'url(assets_folder:chevron-down.svg)'
             },
             # right-pointing arrow
             '::branch:closed:has-children': {
-                'image': 'url(assets/chevron-right.svg)'
+                'image': 'url(assets_folder:chevron-right.svg)'
             }
         },
         # header of the analysis table; ::section refers to the individual buttons
@@ -551,7 +551,7 @@ class Launcher():
             'color': '@fg',
             'font': '@subhead',
             '::down-arrow': {
-                'image': 'url(assets/thick-chevron-down.svg)',
+                'image': 'url(assets_folder:thick-chevron-down.svg)',
                 'width': '@margin',
             },
             '::drop-down': {
@@ -679,7 +679,7 @@ class Launcher():
         'resize_handle': {
             'border-style': 'none',
             'background-color': 'none',
-            'image': 'url(assets/resize.svg)',
+            'image': 'url(assets_folder:resize.svg)',
         },
         'splitter': {
             'margin': (10, 0, 10, 0),
