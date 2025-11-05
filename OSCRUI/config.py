@@ -120,15 +120,3 @@ class OSCRSettings():
         (e.g. inside a lambda function).
         """
         setattr(self, setting_name, value)
-
-
-if __name__ == '__main__':
-    sett = OSCRSettings(Path('new_settings.ini'))
-    print({k: getattr(sett, k) for k in sett.__slots__})
-
-    sett.liveparser__auto_enabled = True
-    sett.overview_sort_order = 'Ascending'
-    sett.heal_columns[3] = False
-    sett.favourite_ladders.append('ISE')
-
-    sett.store_settings()
