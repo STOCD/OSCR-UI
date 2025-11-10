@@ -10,3 +10,4 @@ rtifacts
 *.zip
 *.desktop
 .artifacts
+*settings.ini
