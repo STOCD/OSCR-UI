@@ -55,3 +55,167 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
+[Code]
+var
+  checkbox: TNewCheckBox;
+  UninstallFirstPage: TNewNotebookPage;
+  configPath: string;
+
+function GetConfigPath(): string;
+var
+  envAppdata: string;
+  envProf: string;
+begin
+  envAppdata := GetEnv('APPDATA');
+  envProf := GetEnv('USERPROFILE');
+  if DirExists(envAppdata + '\OSCR_UI') and FileExists(envAppdata + '\OSCR_UI\OSCR_UI_settings.ini') then
+  begin
+    Result := envAppdata + '\OSCR_UI';
+  end
+  else if DirExists(envProf + '\OSCR_UI') and FileExists(envProf + '\OSCR_UI\OSCR_UI_settings.ini') then
+  begin
+    Result := envProf + '\OSCR_UI';
+  end
+  else
+  begin
+    Result := '';
+  end;
+end;
+
+procedure UpdateUninstallWizard;
+begin
+  if UninstallProgressForm.InnerNotebook.ActivePage = UninstallFirstPage then
+  begin
+    UninstallProgressForm.PageNameLabel.Caption := 'Uninstall OSCR-UI';
+    UninstallProgressForm.PageDescriptionLabel.Caption := 'Preparing to remove OSCR-UI from your device.';
+  end;
+end;
+  
+
+procedure InitializeUninstallProgressForm();
+var
+  UninstallButton: TNewButton;
+  infotext: TNewStaticText;
+  CancelButtonEnabled: Boolean;
+  CancelButtonModalResult: Integer;
+  PageNameLabel: string;
+  PageDescriptionLabel: string;
+begin
+  if not UninstallSilent then
+  begin
+    PageNameLabel := UninstallProgressForm.PageNameLabel.Caption;
+    PageDescriptionLabel := UninstallProgressForm.PageDescriptionLabel.Caption;
+  
+    UninstallFirstPage := TNewNotebookPage.Create(UninstallProgressForm);
+    UninstallFirstPage.Notebook := UninstallProgressForm.InnerNotebook;
+    UninstallFirstPage.Parent := UninstallProgressForm.InnerNotebook;
+    UninstallFirstPage.Align := alClient;
+    
+    infotext := TNewStaticText.Create(UninstallProgressForm);
+    infotext.Parent := UninstallFirstPage;
+    infotext.Top := UninstallProgressForm.StatusLabel.Top;
+    infotext.Left := UninstallProgressForm.PageNameLabel.Left;
+    infotext.AutoSize := True;
+    infotext.WordWrap := True;
+    infotext.Width := UninstallProgressForm.PageNameLabel.Width;
+    
+    checkbox := TNewCheckBox.Create(UninstallProgressForm);
+    checkbox.Caption := 'Delete App Configuration';
+    checkbox.Checked := True;
+    checkbox.Parent := UninstallFirstPage;
+    checkbox.Left := UninstallProgressForm.StatusLabel.Left;
+    checkbox.Width := UninstallProgressForm.StatusLabel.Width;
+  
+    configPath := GetConfigPath();
+    if configPath = '' then
+    begin
+      checkbox.Checked := False;
+      checkbox.Enabled := False;
+      infotext.Caption := 'No app configuration found. Press Uninstall to proceed with uninstallation.';
+    end
+    else
+    begin
+      infotext.Caption := 'App configuration found in following location:'#13 + configPath;
+    end;
+
+    infotext.AdjustHeight;
+    checkbox.Top := infotext.Top + infotext.Height + ScaleY(8);
+    
+    UninstallButton := TNewButton.Create(UninstallProgressForm);
+    UninstallButton.Parent := UninstallProgressForm;
+    UninstallButton.Left :=
+      UninstallProgressForm.CancelButton.Left -
+      UninstallProgressForm.CancelButton.Width -
+      ScaleX(10);
+    UninstallButton.Top := UninstallProgressForm.CancelButton.Top;
+    UninstallButton.Width := UninstallProgressForm.CancelButton.Width;
+    UninstallButton.Height := UninstallProgressForm.CancelButton.Height;
+    UninstallButton.ModalResult := mrOK;
+    UninstallButton.Caption := 'Uninstall';
+    UninstallButton.TabOrder := UninstallProgressForm.CancelButton.TabOrder;
+    UninstallButton.Default := True;
+    UninstallProgressForm.CancelButton.TabOrder := UninstallButton.TabOrder + 1;
+    
+    UninstallProgressForm.InnerNotebook.ActivePage := UninstallFirstPage;
+    
+    UpdateUninstallWizard;
+    CancelButtonEnabled := UninstallProgressForm.CancelButton.Enabled
+    UninstallProgressForm.CancelButton.Enabled := True;
+    CancelButtonModalResult := UninstallProgressForm.CancelButton.ModalResult;
+    UninstallProgressForm.CancelButton.ModalResult := mrCancel;
+    if UninstallProgressForm.ShowModal = mrCancel then Abort;
+        
+    UninstallButton.Visible := False;
+    UninstallProgressForm.CancelButton.Enabled := CancelButtonEnabled;
+    UninstallProgressForm.CancelButton.ModalResult := CancelButtonModalResult;
+
+    UninstallProgressForm.PageNameLabel.Caption := PageNameLabel;
+    UninstallProgressForm.PageDescriptionLabel.Caption := PageDescriptionLabel;
+
+    UninstallProgressForm.InnerNotebook.ActivePage := UninstallProgressForm.InstallingPage;
+  end;
+end;
+
+procedure removeConfig();
+var
+  findRecord: TFindRec;
+  FileFound: Boolean;
+begin
+  if DirExists(configPath + '\_temp') then
+  begin
+    DelTree(configPath + '\_temp', True, True, True);
+  end;
+  if FileExists(configPath + '\OSCR_UI_settings.ini') then
+  begin
+    DelTree(configPath + '\OSCR_UI_settings.ini', False, True, False);
+  end;
+  FileFound := False;
+  if FindFirst(configPath + '\*', findRecord) then
+  begin
+    try
+      repeat
+        if (findRecord.Name <> '.') and (findRecord.Name <> '..') then begin
+          FileFound := True;
+          break;
+        end;
+      until not FindNext(findRecord);
+    finally
+      FindClose(findRecord);
+    end;
+  end;
+  if not FileFound then
+  begin
+    DelTree(configPath, True, False, False);
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if checkbox.Checked then
+    begin
+      removeConfig();
+    end;
+  end;
+end;
