@@ -5,12 +5,13 @@ on:
 
 jobs:
   build_pyinst_windows:
-    name: Build Windows Executable (PyInstaller)
-    runs-on: {{ $matrix.os }}
+    name: Build Windows Binary (PyInstaller)
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-          os: [windows-latest]
+        os: [windows-latest]
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,35 +19,18 @@ jobs:
           python-version: "3.13"
 
       - name: Install Python Dependencies
+        shell: pwsh
         run: |
-          shell: pwsh
           python -m pip install --upgrade pip
-          python -m pip install "pyinstaller==6.10.0" `
-                                "PySide6==6.10.0" `
-                                "pyqtgraph==0.13.7" `
-                                "numpy==2.2.4" `
-                                "STO-OSCR==2025.8.10.0" `
-                                "OSCR-django-client==2025.7.19.0" `
-                                "pydantic==2.12.3"
+          python -m pip install "pyinstaller==6.10.0" "PySide6==6.10.0" "pyqtgraph==0.13.7" "numpy==2.2.4" "STO-OSCR==2025.8.10.0" "OSCR-django-client==2025.7.19.0" "pydantic==2.12.3"
 
       - name: Build OSCR-UI Executable with PyInstaller
+        shell: pwsh
         run: |
-          shell: pwsh
-          pyinstaller --name OSCR-UI `
-                      --onedir main.py `
-                      --add-data "assets;assets" `
-                      --add-data "locales;locales" `
-                      --icon "assets\oscr_icon_small.ico" `
-                      --windowed
-
-      # - name: Compress PyInstaller output
-      #   run: |
-      #     Compress-Archive -Path dist/OSCR-UI -DestinationPath dist/OSCR-UI.zip
-      #   shell: pwsh
+          pyinstaller --name OSCR-UI --onedir main.py --add-data "assets;assets" --add-data "locales;locales" --icon "assets\oscr_icon_small.ico" --windowed
 
       - name: Upload PyInstaller Artifact
         uses: actions/upload-artifact@v4
         with:
           name: OSCR-UI_x86-64_Windows
           path: dist/OSCR-UI
-
