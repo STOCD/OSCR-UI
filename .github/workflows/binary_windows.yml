@@ -32,7 +32,7 @@ jobs:
 
       - name: Build OSCR-UI Binary with PyInstaller
         run: |
-          pyinstaller --name OSCR-UI --onedir main.py --add-data "assets;assets" --add-data "locales;locales"
+          pyinstaller --name OSCR-UI --onedir main.py --add-data "assets;assets" --add-data "locales;locales" --icon "assets\oscr_icon_small.ico" --windowed
 
       - uses: actions/upload-artifact@v4
         with:
