@@ -1,0 +1,10 @@
+Package: oscr-ui
+Maintainer: Shinga
+Architecture: all
+Version: 10.0.0
+Section: misc
+Priority: optional
+Standards-Version: 4.7.2
+Description: Open Source Combatlog Reader for Star Trek Online
+
+
