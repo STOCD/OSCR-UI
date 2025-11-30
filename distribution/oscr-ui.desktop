@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=OSCR
+Comment=Open Source Combatlog Reader
+Icon=/usr/share/icons/hicolor/256x256/apps/oscr-ui.png
+Exec=/opt/oscr-ui/OSCR-UI
+Terminal=False
+Categories=Utility;Scanning;GameTool;DataVisualization;
+StartupWMClass=Open Source Combatlog Reader
+

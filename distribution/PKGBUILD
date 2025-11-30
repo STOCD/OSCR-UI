@@ -1,0 +1,101 @@
+# Maintainer: PsychedelicShayna <Eternal0000FF@protonmail.com>
+# (^ For the AUR package, is a convention)
+
+# I started with an AUR version, need to make a separate one, or see if I
+# can make a PKGBUILD that can do both depending on the context.
+
+pkgname=oscr-ui
+pkgver=10.0.0
+pkgrel=1
+pkgdesc="OSCR-UI Open Source Combat Reader for Star Trek Online"
+arch=('x86_64')
+url="https://github.com/STOCD/OSCR-UI/"
+license=('GPL-3.0')
+
+# Runtime deps are usually bundled by PyInstaller, but if we need system libs
+# at runtime for any reason that aren't bundled, maybe Qt .so's that are missed
+# here vvvvvvvvvv
+depends=()
+
+# Only when building from source from the PKGBUILD, won't need this for a 
+# non-AUR compliant version (see build step below)
+makedepends=('pyinstaller') 
+source=()
+
+sha256sums=('SKIP') # Once we have our final hashes confirmed, we can modify this
+
+# No build() step in a non-AUR version because we use an already-built 
+# PyInstaller tree in dist/OSCR-UI. Makepkg’s $srcdir points to the directory 
+# where you run makepkg (repo root).
+
+build() {
+  cd "${srcdir}"
+  python -m venv .venv
+  . .venv/bin/activate
+
+  pip install --upgrade pip setuptools wheel
+  pip install -e .
+
+  pip install "pyinstaller==6.10.0"
+
+  pyinstaller --noconfirm --clean --onedir --name OSCR-UI main.py \
+    --add-data assets:assets --add-data locales:locales --windowed \
+    -- icon assets/oscr_icon_small.png
+
+  deactivate
+}
+
+package() {
+  # Where we will place files inside the package image
+  install -d "${pkgdir}/opt/oscr-ui"
+  install -d "${pkgdir}/usr/bin"
+  install -d "${pkgdir}/usr/share/applications"
+  install -d "${pkgdir}/usr/share/icons/hicolor/128x128/apps"
+
+  # Copy PyInstaller one-dir output into /opt/oscr-ui
+  if [ -d "${srcdir}/dist/OSCR-UI" ]; then
+    cp -a "${srcdir}/dist/OSCR-UI/." "${pkgdir}/opt/oscr-ui/"
+  else
+    echo "ERROR: dist/OSCR-UI not found. Build the PyInstaller artifact first." >&2
+    return 1
+  fi
+
+  if [ -f "${pkgdir}/opt/oscr-ui/oscr-ui" ]; then
+    chmod 755 "${pkgdir}/opt/oscr-ui/oscr-ui"
+  fi
+
+  # Wrapper launcher (placed in /usr/bin so users can run `oscr-ui`)
+  cat > "${pkgdir}/usr/bin/oscr-ui" <<'EOF'
+#!/bin/sh
+exec /opt/oscr-ui/oscr-ui "$@"
+EOF
+  chmod 755 "${pkgdir}/usr/bin/oscr-ui"
+
+  # .desktop file: prefer repo desktop/oscr-ui.desktop if present,
+  # otherwise write a simple one that points to /usr/bin/oscr-ui
+  if [ -f "${srcdir}/desktop/oscr-ui.desktop" ]; then
+    install -Dm644 "${srcdir}/desktop/oscr-ui.desktop" "${pkgdir}/usr/share/applications/oscr-ui.desktop"
+  else
+    cat > "${pkgdir}/usr/share/applications/oscr-ui.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=OSCR-UI
+Comment=STO combat log parser
+Exec=/usr/bin/oscr-ui
+Icon=oscr-ui
+Terminal=false
+Categories=Utility;Development;
+EOF
+  fi
+
+  if [ -f "${srcdir}/assets/oscr_icon.png" ]; then
+    install -Dm644 "${srcdir}/assets/oscr_icon.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/oscr-ui.png"
+  elif [ -f "${srcdir}/assets/oscr_icon_128.png" ]; then
+    install -Dm644 "${srcdir}/assets/oscr_icon_128.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/oscr-ui.png"
+  elif [ -f "${srcdir}/assets/oscr_icon_small.png" ]; then
+    install -Dm644 "${srcdir}/assets/oscr_icon_small.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/oscr-ui.png"
+  else
+    # No icon found; not fatal — desktop environments will show a generic icon
+    echo "Warning: no icon found in assets/ (optional)."
+  fi
+}
