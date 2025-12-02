@@ -9,20 +9,20 @@ These are currently just development notes, subject to change, easier to have it
 ## Linux
 
 #### System Wide Paths
-- /opt/oscr/
+- /opt/oscr-ui/
   - This is the ideal loation for Linux, include all the assets there.
 - /usr/local/bin/oscr -> /opt/bin/oscr/oscr
   - Symlink to the binary
 - /usr/share/applications/
   - The `.desktop` entry that registers the application.
-- /usr/share/icons/hicolor/128x128/apps/oscr-ui.png
+- /usr/share/icons/hicolor/256x256/apps/oscr-ui.png
   - Location for the application icon, referred to in the `.desktop` entry.
 
 #### Config Paths
-- 1 If `$XDG_CONFIG_HOME` is set, takes priority. Is supposed to be a directory . If a file, fallback to
-- 2 `$HOME/.config` if the `.config` folder exists, but do not create it if it does not, fall back to:
-- 3 `$HOME/.<filename>` if you can keep the settings in one file (and the dot here is important), if not, fall back to
-- 4 ` $HOME/.oscr/<config-file>`
+1. If `$XDG_CONFIG_HOME` is set, takes priority. Is supposed to be a directory . If a file, fallback to
+2. `$HOME/.config` if the `.config` folder exists, but do not create it if it does not, fall back to:
+3. [`$HOME/.<filename>` if you can keep the settings in one file (and the dot here is important), if not, fall back to]
+4. ` $HOME/.oscr/<config-file>`
 
 ##### .desktop entry template
 ```
@@ -30,22 +30,24 @@ These are currently just development notes, subject to change, easier to have it
 Type=Application
 Name=OSCR-UI
 Comment=OSCR combatlog parser for Star Trek Online
-Exec=/opt/oscr-ui/oscr-ui
-Icon=oscr-ui
+Exec=/opt/oscr-ui/OSCR-UI
+Icon=/usr/share/icons/hicolor/256x256/apps/oscr-ui.png
 Terminal=false
-Categories=Utility;
+Categories=Utility;Scanning;GameTool;DataVisualization;
+StartupWMClass=Open Source Combatlog Reader
 ```
 
 #### Debian `.deb` Package Approach
 
 
 ```bash
-apt install ./oscr-ui.deb
+apt install -f ./oscr-ui.deb
 ```
 - Unpacks the contents to `/opt/oscr-ui`, `/usr/share/applications/oscr-ui.desktop`, etc
 - Registers the package manager metadata with `dpkg` so the system becomes aware which files belong to which package
   - This is the biggest advantage.
 - Allows uninstallation by name (apt remove oscr-ui), because it recorded which files it put there.
+- uses `-f` flag to install dependencies
 
 For `.deb`, `fpm` is the simplest route that could be integrated into GitHub workflows as well:
 
