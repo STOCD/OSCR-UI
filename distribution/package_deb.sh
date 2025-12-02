@@ -41,6 +41,7 @@ cat > "${PKGDIR}/usr/bin/${PKGNAME}" <<EOF
 #!/bin/sh
 exec $LAUNCHCOMMAND
 EOF
+chmod 755 "${PKGDIR}/usr/bin/${PKGNAME}"
 
 echo "[Info]  Copying app icon."
 mkdir -p "${PKGDIR}/usr/share/icons/hicolor/256x256/apps"

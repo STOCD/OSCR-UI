@@ -46,11 +46,11 @@ package() {
   install -d "${pkgdir}/usr/share/applications"
   install -d "${pkgdir}/usr/share/icons/hicolor/256x256/apps"
 
-  cp -r "${srcdir}/${srcdir_name}/dist/OSCR-UI" "${pkgdir}/opt/oscr-ui/"
+  cp -r "${srcdir}/${srcdir_name}/dist/OSCR-UI/*" "${pkgdir}/opt/oscr-ui/"
 
   cat > "${pkgdir}/usr/bin/oscr-ui" <<'EOF'
 #!/bin/sh
-exec /opt/oscr-ui/OSCR-UI/OSCR-UI "$@"
+exec /opt/oscr-ui/OSCR-UI "$@"
 EOF
 
   chmod 755 "${pkgdir}/usr/bin/oscr-ui"
@@ -59,12 +59,13 @@ EOF
   cat > "${pkgdir}/usr/share/applications/oscr-ui.desktop" <<EOF
 [Desktop Entry]
 Name=OSCR-UI
-Comment=OSCR GUI client
-Exec=oscr-ui
-Icon=/opt/oscr-ui/assets/oscr_icon_small.png
+Comment=Open Source Combatlog Reader
+Exec=/opt/oscr-ui/OSCR-UI
+Icon=/usr/share/icons/hicolor/256x256/apps/oscr-ui.png
 Terminal=false
 Type=Application
-Categories=Utility;Games;
+Categories=Utility;Scanning;GameTool;DataVisualization;
+StartupWMClass=Open Source Combatlog Reader
 EOF
 
   # Install an icon into the icon theme

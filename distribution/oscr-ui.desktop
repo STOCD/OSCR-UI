@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=OSCR
+Name=OSCR-UI
 Comment=Open Source Combatlog Reader
 Icon=/usr/share/icons/hicolor/256x256/apps/oscr-ui.png
 Exec=/opt/oscr-ui/OSCR-UI

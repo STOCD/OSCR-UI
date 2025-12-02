@@ -1,6 +1,6 @@
 # Development Notes
 
-These are currently just development notes, subject to change, easier to have it in one place.
+These are currently reflecting the state of the app, but are subject ot change.
 
 ## Windows
 - [Currently Testing With Inno Setup](https://jrsoftware.org/isinfo.php)
@@ -10,18 +10,18 @@ These are currently just development notes, subject to change, easier to have it
 
 #### System Wide Paths
 - /opt/oscr-ui/
-  - This is the ideal loation for Linux, include all the assets there.
-- /usr/local/bin/oscr -> /opt/bin/oscr/oscr
-  - Symlink to the binary
-- /usr/share/applications/
+  - This is the ideal loation for Linux, all assets are located here.
+- /usr/bin/oscr-ui -> /opt/oscr-ui/OSCR-UI
+  - shell script to execute the binary from a PATH location
+- /usr/share/applications/oscr-ui.desktop
   - The `.desktop` entry that registers the application.
 - /usr/share/icons/hicolor/256x256/apps/oscr-ui.png
   - Location for the application icon, referred to in the `.desktop` entry.
 
 #### Config Paths
-1. If `$XDG_CONFIG_HOME` is set, takes priority. Is supposed to be a directory . If a file, fallback to
-2. `$HOME/.config` if the `.config` folder exists, but do not create it if it does not, fall back to:
-3. [`$HOME/.<filename>` if you can keep the settings in one file (and the dot here is important), if not, fall back to]
+1. If `$XDG_CONFIG_HOME` is set, takes priority. Is supposed to be a directory. Don't use if it is a file. Don't create it if it doesn't exist.
+2. `$HOME/.config` if the `.config` folder exists, but do not create it if it does not.
+3. [`$HOME/.<filename>` if you can keep the settings in one file (and the dot here is important)] -> not used, because OSCR-UI requires a folder
 4. ` $HOME/.oscr/<config-file>`
 
 ##### .desktop entry template
@@ -44,10 +44,15 @@ StartupWMClass=Open Source Combatlog Reader
 apt install -f ./oscr-ui.deb
 ```
 - Unpacks the contents to `/opt/oscr-ui`, `/usr/share/applications/oscr-ui.desktop`, etc
-- Registers the package manager metadata with `dpkg` so the system becomes aware which files belong to which package
+- Automatically registers the package manager metadata with `dpkg` so the system becomes aware which files belong to which package
   - This is the biggest advantage.
 - Allows uninstallation by name (apt remove oscr-ui), because it recorded which files it put there.
+  - Does not remove settings.
 - uses `-f` flag to install dependencies
+
+To check whether it was installed correctly: `apt list --installed oscr-ui`
+
+Use `dpkg -L oscr-ui` to list registered files for OSCR-UI.
 
 For `.deb`, `fpm` is the simplest route that could be integrated into GitHub workflows as well:
 
@@ -71,7 +76,7 @@ FPM hadles metadata and compression, and spits out a `.deb` file ready to instal
 On Arch there is similar tools, but there is no standard format like `.deb`, rather it's usually jusst a compressed archive `oscr-ui.pkg.tar.ztbuilt` by a `PKGBUILD` script, which can then be fed into `pacman`/`paru`/`yay`/`dpkg`
 
 ##### PKGBUILD Template
-
+*The following template is a draft and not actually used or completed.*
 ```
 pkgname=oscr-ui
 pkgver=2025.9.14.1
@@ -106,6 +111,4 @@ sudo pacman -U /path/to/oscr-ui-1.0.0-1-x86_64.pkg.tar.zst
 And `pacman -Qs oscr-ui` to confirm that it is registered, just as a sanity check.
 
 For debugging `pacman -Ql oscr-ui` lists where everything registers under that package is located (the assets and `.desktop` files, to ensure the `PKGBUILD` file was defined properly)
- 
-There might be equivalent apt commands but I don't remember them off the top of my head because I use primarily Arch. However it might not be necessary from what I've seen with `fpm` and how `.deb` files work? Unsure
 
