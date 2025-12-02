@@ -1,0 +1,22 @@
+name: oscr_ui_deb_build
+
+services:
+  oscr_ui_deb_build:
+    image: oscruideb
+    build:
+      context: ..
+      dockerfile: distribution/build_deb.Dockerfile
+    container_name: running_oscr_ui_deb_build
+    volumes:
+      - type: bind
+        source: ../dist/
+        target: /mnt/
+        read_only: false
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /build
+        distribution/build_pyinstaller.sh
+        distribution/package_deb.sh
+        cp dist/oscr-ui.deb /mnt/oscr-ui.deb
