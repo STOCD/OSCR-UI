@@ -69,7 +69,7 @@ class OSCRUI():
         - :param version: version of the app
         - :param theme: dict -> default theme
         - :param args: command line arguments
-        - :param path: absolute path to main.py file
+        - :param path: absolute path to install directory
         - :param config: app configuration (!= settings these are not changed by the user)
         """
         self.versions = versions
@@ -88,8 +88,7 @@ class OSCRUI():
         self.settings.store_settings()
         self.init_settings()
         self.init_config()
-        QDir.addSearchPath('assets_folder', 'assets')
-        QDir.addSearchPath('assets_folder', '_internal/assets')
+        QDir.addSearchPath('assets_folder', os.path.join(path, 'assets'))
 
         init_translation(self.settings.language)
         self.league_api = None
