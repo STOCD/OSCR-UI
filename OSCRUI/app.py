@@ -1186,9 +1186,9 @@ class OSCRUI():
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_graph_active_button.setFont(self.theme_font('app', '@font'))
         live_graph_active_button.r_function = (
-                lambda: self.settings.set('live_graph_active', True))
+                lambda: self.settings.set('liveparser__graph_active', True))
         live_graph_active_button.l_function = (
-                lambda: self.settings.set('live_graph_active', False))
+                lambda: self.settings.set('liveparser__graph_active', False))
         if self.settings.liveparser__graph_active:
             live_graph_active_button.flip()
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
