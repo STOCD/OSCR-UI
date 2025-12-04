@@ -206,9 +206,9 @@ class OSCRUI():
         """
         if not self.settings.log_path:
             if os.name == 'nt':
-                self.settings.log_path = os.getenv('USERPROFILE')
+                self.settings.log_path = os.getenv('USERPROFILE') + '/'
             else:
-                self.settings.log_path = os.getenv('HOME')
+                self.settings.log_path = os.getenv('HOME') + '/'
 
     def init_config(self):
         """
@@ -220,6 +220,10 @@ class OSCRUI():
         self.config.icon_size = round(
                 self.config.ui_scale * self.theme['s.c']['button_icon_size'])
         self.config.templog_folder_path = self.config.config_dir / self.config.templog_folder_name
+        if os.name == 'nt':
+            self.config.home_dir = os.getenv('USERPROFILE') + '/'
+        else:
+            self.config.home_dir = os.getenv('HOME') + '/'
 
     def init_parser(self):
         """

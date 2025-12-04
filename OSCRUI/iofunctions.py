@@ -22,10 +22,10 @@ def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', s
     - :param save: False => open file with dialog; True => save file with dialog
     """
     if default_path is None or default_path == '':
-        default_path = self.app_dir
+        default_path = self.config.home_dir
     default_path = os.path.abspath(default_path)
     if not os.path.exists(os.path.dirname(default_path)):
-        default_path = self.app_dir
+        default_path = self.config.home_dir
     if save:
         f = QFileDialog.getSaveFileName(self.window, 'Save Log', default_path, types)[0]
     else:

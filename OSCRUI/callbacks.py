@@ -211,7 +211,7 @@ def browse_sto_logpath(self, entry: QLineEdit):
     """
     current_path = entry.text()
     if not current_path:
-        current_path = self.app_dir
+        current_path = self.config.home_dir
     new_path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
     if new_path:
         formatted_path = format_path(new_path)

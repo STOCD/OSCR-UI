@@ -11,6 +11,7 @@ class OSCRConfig():
         self.default_live_parser_scale: float = 1.0
         self.default_ui_scale: float = 1.0
         self.excluded_event_ids: list[str] = ['Autodesc.Combatevent.Falling']
+        self.home_dir: Path = Path()
         self.icon_size: int = 24
         self.link_downloads: str = 'https://github.com/STOCD/OSCR-UI/releases'
         self.link_github: str = 'https://github.com/STOCD/OSCR-UI'
