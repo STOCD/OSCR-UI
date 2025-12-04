@@ -266,8 +266,11 @@ def create_live_parser_window(self):
     if self.settings.state__live_geometry:
         live_window.restoreGeometry(self.settings.state__live_geometry)
     live_window.closeEvent = lambda close_event: live_parser_close_callback(self, close_event)
-    live_window.mousePressEvent = lambda press_event: live_parser_press_event(self, press_event)
-    live_window.mouseMoveEvent = lambda move_event: live_parser_move_event(self, move_event)
+    if self.app.platformName() == 'wayland':
+        live_window.mousePressEvent = lambda event: live_parser_move_wayland(self, event)
+    else:
+        live_window.mousePressEvent = lambda press_event: live_parser_press_event(self, press_event)
+        live_window.mouseMoveEvent = lambda move_event: live_parser_move_event(self, move_event)
     live_window.setSizePolicy(SMAXMAX)
     layout = QVBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
@@ -406,6 +409,14 @@ def live_parser_move_event(self, event: QMouseEvent):
     pos_delta = QPoint(event.globalPosition().toPoint() - parser_window.start_pos)
     parser_window.move(parser_window.x() + pos_delta.x(), parser_window.y() + pos_delta.y())
     parser_window.start_pos = event.globalPosition().toPoint()
+    event.accept()
+
+
+def live_parser_move_wayland(self, event: QMouseEvent):
+    """
+    Used to move the parser window on wayland.
+    """
+    self.live_parser_window.windowHandle().startSystemMove()
     event.accept()
 
 
