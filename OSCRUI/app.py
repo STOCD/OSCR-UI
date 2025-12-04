@@ -1271,7 +1271,7 @@ class OSCRUI():
         live_copy_button.r_function = (
                 lambda: self.settings.set('liveparser__copy_kills', True))
         live_copy_button.l_function = (
-                lambda: self.settings.setValue('liveparser__copy_kills', False))
+                lambda: self.settings.set('liveparser__copy_kills', False))
         if self.settings.liveparser__copy_kills:
             live_copy_button.flip()
         sec_1.addWidget(live_copy_button, 17, 1, alignment=ALEFT)
