@@ -293,6 +293,7 @@ def create_annotated_slider(
     slider.setFocusPolicy(Qt.FocusPolicy.WheelFocus)
     slider.setSizePolicy(SMINMAX)
     slider.setStyleSheet(get_style_class(self, 'QSlider', style, style_override_slider))
+    slider.setFixedHeight(22)
     slider.valueChanged.connect(label_updater)
     layout.addWidget(slider, stretch=1, alignment=AVCENTER)
     label_updater(default_value)
