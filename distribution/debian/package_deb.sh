@@ -22,7 +22,7 @@ echo "[Info]  Cleaning \"${PKGDIR}/\" folder."
 rm -rf "${PKGDIR}"/*
 
 echo "[Info]  Copying base structure."
-cp -r "distribution/DEBIAN" "${PKGDIR}"
+cp -r "distribution/debian/DEBIAN" "${PKGDIR}"
 echo "[Info]  Copying copyright information."
 mkdir -p "${PKGDIR}/usr/share/doc/${PKGNAME}"
 cp "distribution/debian/copyright" "${PKGDIR}/usr/share/doc/${PKGNAME}/copyright"
