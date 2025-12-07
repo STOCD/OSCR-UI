@@ -9,7 +9,7 @@ services:
     container_name: running_oscr_ui_deb_build
     volumes:
       - type: bind
-        source: ../dist/
+        source: ../../dist/
         target: /mnt/
         read_only: false
     command:
