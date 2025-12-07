@@ -53,6 +53,10 @@ cp "distribution/oscr-ui.desktop" "${PKGDIR}/usr/share/applications/oscr-ui.desk
 
 echo "[Info]  Building .deb package."
 dpkg-deb -b "${PKGDIR}"
+if [ ! -d dist ]
+then
+  mkdir "dist"
+fi
 mv "${PKGDIR}.deb" "dist/${PKGNAME}.deb"
 
 echo "[Info]  Done."
