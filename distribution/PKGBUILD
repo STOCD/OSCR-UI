@@ -46,7 +46,8 @@ package() {
   install -d "${pkgdir}/usr/share/applications"
   install -d "${pkgdir}/usr/share/icons/hicolor/256x256/apps"
 
-  cp -r "${srcdir}/${srcdir_name}/dist/OSCR-UI/*" "${pkgdir}/opt/oscr-ui/"
+  cp -r "${srcdir}/${srcdir_name}/dist/OSCR-UI/_internal" "${pkgdir}/opt/oscr-ui/"
+  cp  "${srcdir}/${srcdir_name}/dist/OSCR-UI/OSCR-UI" "${pkgdir}/opt/oscr-ui/"
 
   cat > "${pkgdir}/usr/bin/oscr-ui" <<'EOF'
 #!/bin/sh
