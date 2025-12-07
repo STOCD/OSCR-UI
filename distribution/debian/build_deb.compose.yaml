@@ -18,5 +18,5 @@ services:
       - |
         cd /build
         distribution/build_pyinstaller.sh
-        distribution/package_deb.sh
+        distribution/debian/package_deb.sh
         cp dist/oscr-ui.deb /mnt/oscr-ui.deb
