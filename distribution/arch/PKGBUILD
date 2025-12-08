@@ -23,7 +23,7 @@ build() {
 
   # Upgrade pip then install exact packages used in CI
   pip install --upgrade pip
-  pip install pyinstaller==6.10.0 PySide6==6.10.0 pyqtgraph==0.13.7 numpy==2.2.4 STO-OSCR==2025.8.10.0 OSCR-django-client==2025.7.19.0 pydantic==2.12.3
+  pip install pyinstaller==6.10.0 PySide6==6.10.0 pyqtgraph==0.13.7 numpy==2.2.4 STO-OSCR==10.0.0 OSCR-django-client==2025.7.19.0 pydantic==2.12.3
 
   # Run pyinstaller from the venv
   # ensure we run pyinstaller in project root and output to dist/
