@@ -70,7 +70,7 @@ StartupWMClass=Open Source Combatlog Reader
 EOF
 
   # Install an icon into the icon theme
-  if [ -f "${pkgdir}/opt/oscr-ui/assets/oscr_icon_small.png" ]; then
-    install -Dm644 "${pkgdir}/opt/oscr-ui/assets/oscr_icon_small.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/oscr-ui.png"
+  if [ -f "${pkgdir}/opt/oscr-ui/_internal/assets/oscr_icon_small.png" ]; then
+    install -Dm644 "${pkgdir}/opt/oscr-ui/_internal/assets/oscr_icon_small.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/oscr-ui.png"
   fi
 }
