@@ -7,8 +7,8 @@ from OSCRUI import OSCRUI
 
 
 class Launcher():
-    version = '2025.9.14.2'
-    __version__ = '1.0'
+
+    __version__ = '10.0.0'
 
     # holds the style of the app
     theme = {
