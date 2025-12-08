@@ -4,8 +4,8 @@ services:
   oscr_ui_deb_build:
     image: oscruideb
     build:
-      context: ..
-      dockerfile: distribution/build_deb.Dockerfile
+      context: ../..
+      dockerfile: distribution/debian/build_deb.Dockerfile
     container_name: running_oscr_ui_deb_build
     volumes:
       - type: bind
