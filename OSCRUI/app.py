@@ -54,14 +54,12 @@ class OSCRUI():
 
     app_dir = None
 
-    versions = ('', '')  # (release version, dev version)
-
     # stores widgets that need to be accessed from outside their creating function
     widgets: WidgetStorage
 
     league_api: OSCRClient
 
-    def __init__(self, theme, args, path, config, versions) -> None:
+    def __init__(self, theme, args, path, config, version) -> None:
         """
         Creates new Instance of OSCR.
 
@@ -72,7 +70,7 @@ class OSCRUI():
         - :param path: absolute path to install directory
         - :param config: app configuration (!= settings these are not changed by the user)
         """
-        self.versions = versions
+        self.version = version
         self.theme = theme
         self.args = args
         self.app_dir = path
@@ -629,7 +627,7 @@ class OSCRUI():
         seperator.setFixedHeight(1)
         left_layout.addWidget(seperator)
         version_label = self.create_label(
-                f'{tr("Version")}: {self.versions[0]} ({self.versions[1]})', 'label_subhead')
+                f'{tr("Version")}: {self.version}', 'label_subhead')
         left_layout.addWidget(version_label)
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)

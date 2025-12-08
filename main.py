@@ -834,7 +834,7 @@ class Launcher():
         args, _ = argparser.parse_known_args()
         exit_code = OSCRUI(
             theme=Launcher.theme, args=args, path=Launcher.base_path(),
-            config=Launcher.app_config(), versions=(Launcher.__version__, Launcher.version)).run()
+            config=Launcher.app_config(), version=Launcher.__version__).run()
         sys.exit(exit_code)
 
 
