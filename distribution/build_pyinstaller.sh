@@ -26,7 +26,7 @@ python3 -m pip install "pyinstaller==6.10.0"
 echo "[Info]  Creating binary app."
 pyinstaller --noconfirm --clean --onedir --name OSCR-UI main.py \
   --add-data assets:assets --add-data locales:locales --windowed \
-  -- icon assets/oscr_icon_small.png
+  --icon assets/oscr_icon_small.png
 
 echo "[Info]  Leaving venv."
 deactivate
