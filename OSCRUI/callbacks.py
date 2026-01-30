@@ -7,7 +7,7 @@ from OSCR import (
     compose_logfile, repair_logfile as oscr_repair_logfile, extract_bytes)
 
 from .dialogs import confirmation_dialog, show_message
-from .iofunctions import browse_path
+from .iofunctions import browse_path, save_to_json
 from .textedit import format_path
 from .translation import tr
 
@@ -29,14 +29,16 @@ def browse_log(self, entry: QLineEdit):
             self.analyze_log_callback(path=path, parser_num=1)
 
 
-def save_combat(self, combat_num: int):
+def save_combat(self, combat_info: tuple | None):
     """
     Callback for save button.
 
     Parameters:
-    - :param combat_num: number of combat in self.combats
+    - :param combat_info: tuple of combat-identifying data (id, map, date, time, difficulty)
     """
-    combat = self.parser.combats[combat_num]
+    if combat_info is None or combat_info[0] >= len(self.parser.combats):
+        return
+    combat = self.parser.combats[combat_info[0]]
     if not combat:
         return
     filename = combat.map
@@ -46,7 +48,7 @@ def save_combat(self, combat_num: int):
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     path = browse_path(self, base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
     if path:
-        self.parser.export_combat(combat_num, path)
+        self.parser.export_combat(combat_info[0], path)
 
 
 def switch_analysis_tab(self, tab_index: int):
@@ -353,3 +355,23 @@ def populate_split_combats_list(self, combat_list):
     """
     combats = self.parser.isolate_combats(self.entry.text())
     combat_list.model().set_items(combats)
+
+
+def export_combat_json(self, combat_info: tuple | None):
+    """
+    Exports current combat to JSON file
+
+    Parameters:
+    - :param combat_info: tuple of combat-identifying data (id, map, date, time, difficulty)
+    """
+    if combat_info is None or combat_info[0] >= len(self.parser.combats):
+        return
+    combat = self.parser.combats[combat_info[0]]
+    filename = combat.map
+    if combat.difficulty is not None and combat.difficulty != '':
+        filename += ' ' + combat.difficulty
+    filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.json'
+    base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
+    path = browse_path(self, base_dir, 'JSON File (*.json);;Any File (*.*)', save=True)
+    if path:
+        save_to_json(path, combat.get_export())

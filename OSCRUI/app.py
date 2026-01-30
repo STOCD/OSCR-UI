@@ -32,9 +32,9 @@ class OSCRUI():
     from .callbacks import (
             add_favorite_ladder, browse_log, browse_sto_logpath, collapse_analysis_graph,
             collapse_overview_table, expand_analysis_graph, expand_overview_table,
-            remove_favorite_ladder, save_combat, set_live_scale_setting, set_parser_opacity_setting,
-            set_graph_resolution_setting, set_sto_logpath_setting, set_ui_scale_setting,
-            switch_analysis_tab, switch_main_tab, switch_overview_tab)
+            export_combat_json, remove_favorite_ladder, save_combat, set_live_scale_setting,
+            set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
+            set_ui_scale_setting, switch_analysis_tab, switch_main_tab, switch_overview_tab)
     from .datafunctions import (
             analysis_data_slot, analyze_log_background, analyze_log_callback,
             copy_analysis_callback, copy_analysis_table_callback, copy_summary_callback,
@@ -148,7 +148,8 @@ class OSCRUI():
             'chevron-down': 'chevron-down.svg',
             'TFO-normal': 'TFO_normal.png',
             'TFO-advanced': 'TFO_advanced.png',
-            'TFO-elite': 'TFO_elite.png'
+            'TFO-elite': 'TFO_elite.png',
+            'json': 'json.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
 
@@ -545,18 +546,23 @@ class OSCRUI():
         combat_button_row = QGridLayout()
         combat_button_row.setContentsMargins(0, 0, 0, 0)
         combat_button_row.setSpacing(self.theme['defaults']['csp'])
-        combat_button_row.setColumnStretch(2, 1)
+        combat_button_row.setColumnStretch(3, 1)
         export_button = self.create_icon_button(
                 self.icons['export-parse'], tr('Export Combat'), parent=frame)
         combat_button_row.addWidget(export_button, 0, 0)
         more_combats_button = self.create_icon_button(
                 self.icons['parser-down'], tr('Parse Older Combats'), parent=frame)
         combat_button_row.addWidget(more_combats_button, 0, 1)
+        json_export_button = self.create_icon_button(
+                self.icons['json'], tr('Export Combat to JSON File'), parent=frame)
+        combat_button_row.addWidget(json_export_button, 0, 2)
         left_layout.addLayout(combat_button_row)
         more_combats_button.clicked.connect(lambda: self.analyze_log_background(
                 self.settings.combats_to_parse))
         export_button.clicked.connect(
-                lambda: self.save_combat(self.current_combats.currentIndex().data()[0]))
+                lambda: self.save_combat(self.current_combats.currentIndex().data()))
+        json_export_button.clicked.connect(
+                lambda: self.export_combat_json(self.current_combats.currentIndex().data()))
 
         sep = self.create_frame(style='medium_frame')
         sep.setFixedHeight(margin)
