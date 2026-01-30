@@ -13,8 +13,9 @@ WEIGHT_CONVERSION = {
 class ThemeOptions:
     """Contains Theme options affecting the UI, but not directly related to the style"""
 
-    __slots__ = ('sidebar_item_width', 'button_icon_size', 'table_alternate', 'table_gridline',
-                 'overview_graph_stretch', 'overview_table_stretch', 'big_icon_size')
+    __slots__ = ('sidebar_item_width', 'icon_size', 'default_icon_size', 'default_big_icon_size',
+                 'table_alternate', 'table_gridline', 'overview_graph_stretch',
+                 'overview_table_stretch')
 
     def __init__(self, initial_options: dict[str] = {}):
         """
@@ -22,8 +23,9 @@ class ThemeOptions:
         - :param initial_options: options to use instead of defaults (optional)
         """
         self.sidebar_item_width: float = 0.2
-        self.button_icon_size: int = 24
-        self.big_icon_size: int = 70
+        self.icon_size: int = 24
+        self.default_icon_size: int = 24
+        self.default_big_icon_size: int = 70
         self.table_alternate: bool = True
         self.table_gridline: bool = False
         self.overview_graph_stretch: int = 1

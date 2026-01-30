@@ -13,7 +13,7 @@ from .config import OSCRConfig, OSCRSettings
 from .datamodels import CombatModel
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
-from .textedit import format_path
+from .theme import AppTheme
 from .translation import init_translation, tr
 from .widgetbuilder import (
         ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL,
@@ -87,6 +87,7 @@ class OSCRUI():
         self.init_settings()
         self.init_config()
         QDir.addSearchPath('assets_folder', os.path.join(path, 'assets'))
+        self.theme2: AppTheme = AppTheme(self.config.ui_scale)
 
         init_translation(self.settings.language)
         self.league_api = None
@@ -216,8 +217,7 @@ class OSCRUI():
         self.current_combat_id = -1
         self.config.ui_scale = self.settings.ui_scale
         self.config.live_parser_scale = self.settings.liveparser__window_scale
-        self.config.icon_size = round(
-                self.config.ui_scale * self.theme['s.c']['button_icon_size'])
+        self.config.icon_size = round(self.config.ui_scale * 24)  # TODO replace with new theme.opt
         self.config.templog_folder_path = self.config.config_dir / self.config.templog_folder_name
         if os.name == 'nt':
             self.config.home_dir = os.getenv('USERPROFILE') + '/'
@@ -265,7 +265,7 @@ class OSCRUI():
         Width of the sidebar.
         """
         return int(
-                self.theme['s.c']['sidebar_item_width']
+                self.theme2.opt.sidebar_item_width
                 * self.window.width()
                 * self.config.ui_scale)
 
@@ -304,7 +304,7 @@ class OSCRUI():
         font_database.addApplicationFont(get_asset_path('Overpass-Regular.ttf', self.app_dir))
         font_database.addApplicationFont(get_asset_path('RobotoMono-Regular.ttf', self.app_dir))
         font_database.addApplicationFont(get_asset_path('RobotoMono-Medium.ttf', self.app_dir))
-        app.setStyleSheet(self.create_style_sheet(self.theme['app']['style']))
+        app.setStyleSheet(self.theme2.create_style_sheet(self.theme['app']['style']))
         window = QWidget()
         window.setMinimumSize(
                 self.config.ui_scale * self.config.minimum_window_width,
@@ -338,7 +338,7 @@ class OSCRUI():
         button_column.setContentsMargins(csp, csp, csp, csp)
         button_column.setRowStretch(0, 1)
         main_layout.addLayout(button_column, 0, 1)
-        icon_size = self.config.icon_size
+        icon_size = self.theme2.opt.icon_size
         left_flip_config = {
             'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
             'icon_l': self.icons['expand-left'], 'func_l': left.show,
@@ -347,7 +347,8 @@ class OSCRUI():
         sidebar_flip_button = FlipButton('', '')
         sidebar_flip_button.configure(left_flip_config)
         sidebar_flip_button.setIconSize(QSize(icon_size, icon_size))
-        sidebar_flip_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
+        sidebar_flip_button.setStyleSheet(
+            self.theme2.get_style_class('QPushButton', 'small_button'))
         sidebar_flip_button.setSizePolicy(SMAXMAX)
         button_column.addWidget(sidebar_flip_button, 0, 0, alignment=ATOP)
 
@@ -360,7 +361,7 @@ class OSCRUI():
         graph_button = FlipButton('', '')
         graph_button.configure(graph_flip_config)
         graph_button.setIconSize(QSize(icon_size, icon_size))
-        graph_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
+        graph_button.setStyleSheet(self.theme2.get_style_class('QPushButton', 'small_button'))
         graph_button.setSizePolicy(SMAXMAX)
         button_column.addWidget(graph_button, 2, 0)
         graph_button.hide()
@@ -375,7 +376,7 @@ class OSCRUI():
         table_button = FlipButton('', '')
         table_button.configure(table_flip_config)
         table_button.setIconSize(QSize(icon_size, icon_size))
-        table_button.setStyleSheet(self.get_style_class('QPushButton', 'small_button'))
+        table_button.setStyleSheet(self.theme2.get_style_class('QPushButton', 'small_button'))
         table_button.setSizePolicy(SMAXMAX)
         button_column.addWidget(table_button, 3, 0)
         self.widgets.overview_table_button = table_button
@@ -423,8 +424,8 @@ class OSCRUI():
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
         ladder_selector = QListWidget(background_frame)
-        ladder_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
-        ladder_selector.setFont(self.theme_font('listbox'))
+        ladder_selector.setStyleSheet(self.theme2.get_style_class('QListWidget', 'listbox'))
+        ladder_selector.setFont(self.theme2.get_font('listbox'))
         ladder_selector.setSizePolicy(SMIXMIN)
         ladder_selector.setCursor(Qt.CursorShape.PointingHandCursor)
         self.widgets.ladder_selector = ladder_selector
@@ -448,8 +449,8 @@ class OSCRUI():
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
         favorite_selector = QListWidget(background_frame)
-        favorite_selector.setStyleSheet(self.get_style_class('QListWidget', 'listbox'))
-        favorite_selector.setFont(self.theme_font('listbox'))
+        favorite_selector.setStyleSheet(self.theme2.get_style_class('QListWidget', 'listbox'))
+        favorite_selector.setFont(self.theme2.get_font('listbox'))
         favorite_selector.setSizePolicy(SMIXMIN)
         favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
         self.widgets.favorite_ladder_selector = favorite_selector
@@ -498,8 +499,8 @@ class OSCRUI():
         left_layout.addLayout(head_layout)
 
         self.entry = QLineEdit(self.settings.log_path)
-        self.entry.setStyleSheet(self.get_style_class('QLineEdit', 'entry'))
-        self.entry.setFont(self.theme_font('entry'))
+        self.entry.setStyleSheet(self.theme2.get_style_class('QLineEdit', 'entry'))
+        self.entry.setFont(self.theme2.get_font('entry'))
         self.entry.setSizePolicy(SMIXMAX)
         left_layout.addWidget(self.entry)
 
@@ -529,8 +530,8 @@ class OSCRUI():
         background_frame.setLayout(background_layout)
         self.current_combats = QListView(background_frame)
         self.current_combats.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
-        self.current_combats.setStyleSheet(self.get_style_class('QListView', 'listbox'))
-        self.current_combats.setFont(self.theme_font('listbox'))
+        self.current_combats.setStyleSheet(self.theme2.get_style_class('QListView', 'listbox'))
+        self.current_combats.setFont(self.theme2.get_font('listbox'))
         self.current_combats.setAlternatingRowColors(True)
         self.current_combats.setSizePolicy(SMIXMIN)
         self.current_combats.setModel(CombatModel())
@@ -638,7 +639,7 @@ class OSCRUI():
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setColumnStretch(1, 1)
-        logo_size = [self.config.icon_size * 4] * 2
+        logo_size = [self.theme2.opt.icon_size * 4] * 2
         stocd_logo = self.create_icon_button(
                 self.icons['stocd'], self.config.link_stocd,
                 style_override={'border-style': 'none'}, icon_size=logo_size)
@@ -665,7 +666,7 @@ class OSCRUI():
         league_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
         about_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
         sidebar_tabber = QTabWidget(frame)
-        sidebar_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        sidebar_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
         sidebar_tabber.tabBar().hide()
         sidebar_tabber.setSizePolicy(SMAXMIN)
         sidebar_tabber.addTab(log_frame, tr('Log'))
@@ -698,7 +699,7 @@ class OSCRUI():
         s_frame = self.create_frame()
 
         main_tabber = QTabWidget(frame)
-        main_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        main_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
         main_tabber.tabBar().hide()
         main_tabber.setSizePolicy(SMINMIN)
         main_tabber.addTab(o_frame, '&O')
@@ -740,20 +741,20 @@ class OSCRUI():
         switch_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(switch_layout)
         splitter = QSplitter(OVERTICAL)
-        splitter.setStyleSheet(self.get_style_class('QSplitter', 'splitter'))
+        splitter.setStyleSheet(self.theme2.get_style_class('QSplitter', 'splitter'))
         splitter.setChildrenCollapsible(False)
         self.widgets.overview_splitter = splitter
         layout.addWidget(splitter)
 
         o_tabber = QTabWidget(o_frame)
-        o_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        o_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
         o_tabber.tabBar().hide()
         o_tabber.addTab(bar_frame, 'BAR')
         o_tabber.addTab(dps_graph_frame, 'DPS')
         o_tabber.addTab(dmg_graph_frame, 'DMG')
         o_tabber.setMinimumHeight(self.sidebar_item_width * 0.8)
         splitter.addWidget(o_tabber)
-        splitter.setStretchFactor(0, self.theme['s.c']['overview_graph_stretch'])
+        splitter.setStretchFactor(0, self.theme2.opt.overview_graph_stretch)
 
         switch_layout.setColumnStretch(0, 1)
         switch_frame = self.create_frame()
@@ -821,13 +822,13 @@ class OSCRUI():
         switch_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(switch_layout)
         splitter = QSplitter(OVERTICAL)
-        splitter.setStyleSheet(self.get_style_class('QSplitter', 'splitter'))
+        splitter.setStyleSheet(self.theme2.get_style_class('QSplitter', 'splitter'))
         splitter.setChildrenCollapsible(False)
         self.widgets.analysis_splitter = splitter
         layout.addWidget(splitter)
 
         a_graph_tabber = QTabWidget(a_frame)
-        a_graph_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        a_graph_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
         a_graph_tabber.tabBar().hide()
         a_graph_tabber.addTab(dout_graph_frame, 'DOUT')
         a_graph_tabber.addTab(dtaken_graph_frame, 'DTAKEN')
@@ -838,7 +839,7 @@ class OSCRUI():
         if not self.settings.analysis_graph:
             self.widgets.analysis_graph_button.flip()
         a_tree_tabber = QTabWidget(a_frame)
-        a_tree_tabber.setStyleSheet(self.get_style_class('QTabWidget', 'tabber'))
+        a_tree_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
         a_tree_tabber.tabBar().hide()
         a_tree_tabber.addTab(dout_tree_frame, 'DOUT')
         a_tree_tabber.addTab(dtaken_tree_frame, 'DTAKEN')
@@ -912,9 +913,9 @@ class OSCRUI():
             plot_legend_frame.setLayout(plot_legend_layout)
             plot_widget = AnalysisPlot(
                     self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
-                    self.theme_font('plot_widget'), plot_legend_layout)
+                    self.theme2.get_font('plot_widget'), plot_legend_layout)
             setattr(self.widgets, plot_name, plot_widget)
-            plot_widget.setStyleSheet(self.get_style('plot_widget_nullifier'))
+            plot_widget.setStyleSheet(self.theme2.get_style('plot_widget_nullifier'))
             plot_widget.setSizePolicy(SMINMAX)
             plot_bundle_layout.addWidget(plot_widget)
             plot_bundle_layout.addWidget(plot_legend_frame, alignment=AHCENTER)
@@ -1046,7 +1047,7 @@ class OSCRUI():
         menu_layout.addLayout(bt_lay, 0, 0)
         self.widgets.main_menu_buttons = buttons
 
-        size = [self.config.icon_size * 1.3] * 2
+        size = [self.theme2.opt.icon_size * 1.3] * 2
         live_parser_button = self.create_icon_button(
                 self.icons['live-parser'], tr('Live Parser'), 'live_icon_button', icon_size=size)
         live_parser_button.setCheckable(True)
@@ -1158,9 +1159,9 @@ class OSCRUI():
         auto_scan_label = self.create_label(tr('Scan log automatically:'), 'label_subhead')
         sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
         auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
-        auto_scan_button.setStyleSheet(self.get_style_class(
+        auto_scan_button.setStyleSheet(self.theme2.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        auto_scan_button.setFont(self.theme_font('app', '@font'))
+        auto_scan_button.setFont(self.theme2.get_font('app', '@font'))
         auto_scan_button.r_function = lambda: self.settings.set('auto_scan', True)
         auto_scan_button.l_function = lambda: self.settings.set('auto_scan', False)
         if self.settings.auto_scan:
@@ -1190,9 +1191,9 @@ class OSCRUI():
         live_graph_active_label = self.create_label(tr('LiveParser Graph:'), 'label_subhead')
         sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
         live_graph_active_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
-        live_graph_active_button.setStyleSheet(self.get_style_class(
+        live_graph_active_button.setStyleSheet(self.theme2.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        live_graph_active_button.setFont(self.theme_font('app', '@font'))
+        live_graph_active_button.setFont(self.theme2.get_font('app', '@font'))
         live_graph_active_button.r_function = (
                 lambda: self.settings.set('liveparser__graph_active', True))
         live_graph_active_button.l_function = (
@@ -1246,9 +1247,9 @@ class OSCRUI():
         live_enabled_label = self.create_label(tr('LiveParser default state:'), 'label_subhead')
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
         live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
-        live_enabled_button.setStyleSheet(self.get_style_class(
+        live_enabled_button.setStyleSheet(self.theme2.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        live_enabled_button.setFont(self.theme_font('app', '@font'))
+        live_enabled_button.setFont(self.theme2.get_font('app', '@font'))
         live_enabled_button.r_function = (
                 lambda: self.settings.set('liveparser__auto_enabled', True))
         live_enabled_button.l_function = (
@@ -1269,9 +1270,9 @@ class OSCRUI():
         live_copy_label = self.create_label(tr('Show kills in LiveParser Copy:'), 'label_subhead')
         sec_1.addWidget(live_copy_label, 17, 0, alignment=ARIGHT)
         live_copy_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
-        live_copy_button.setStyleSheet(self.get_style_class(
+        live_copy_button.setStyleSheet(self.theme2.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
-        live_copy_button.setFont(self.theme_font('app', '@font'))
+        live_copy_button.setFont(self.theme2.get_font('app', '@font'))
         live_copy_button.r_function = (
                 lambda: self.settings.set('liveparser__copy_kills', True))
         live_copy_button.l_function = (
