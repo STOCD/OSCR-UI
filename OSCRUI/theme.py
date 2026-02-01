@@ -108,7 +108,7 @@ class AppTheme:
             if prop.startswith(':'):
                 style_sheet += f''' {class_name}{prop} {{{self.get_css(value)}}}'''
             elif prop.startswith('~'):
-                style_sheet += f' {self.get_style_class(f"{class_name} {prop[1:]}", None, value)}'
+                style_sheet += f' {self.get_style_class(f"{class_name} {prop[1:]}", '', value)}'
         return style_sheet
 
     def merge_style(self, s1: dict[str], s2: dict[str]) -> dict[str]:
