@@ -24,10 +24,10 @@ def browse_log(self, entry: QLineEdit):
     if current_path != '':
         current_path = os.path.dirname(current_path)
     path = browse_path(Path(current_path), 'Logfile (*.log);;Any File (*.*)')
-    if path != '':
-        entry.setText(format_path(path))
+    if path is not None:
+        entry.setText(format_path(str(path)))
         if self.settings.auto_scan:
-            self.analyze_log_callback(path=path, parser_num=1)
+            self.analyze_log_callback(path=str(path), parser_num=1)
 
 
 def save_combat(self, combat_info: tuple | None):
@@ -48,8 +48,8 @@ def save_combat(self, combat_info: tuple | None):
     filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.log'
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     path = browse_path(Path(base_dir), 'Logfile (*.log);;Any File (*.*)', save=True)
-    if path:
-        self.parser.export_combat(combat_info[0], path)
+    if path is not None:
+        self.parser.export_combat(combat_info[0], str(path))
 
 
 def switch_analysis_tab(self, tab_index: int):
@@ -216,8 +216,8 @@ def browse_sto_logpath(self, entry: QLineEdit):
     if not current_path:
         current_path = self.config.home_dir
     new_path = browse_path(Path(os.path.dirname(current_path)), 'Logfile (*.log);;Any File (*.*)')
-    if new_path:
-        formatted_path = format_path(new_path)
+    if new_path is not None:
+        formatted_path = format_path(str(new_path))
         self.settings.sto_log_path = formatted_path
         entry.setText(formatted_path)
 
@@ -341,9 +341,10 @@ def extract_combats(self, selected_indices: list):
     source_path = self.entry.text()
     target_path = browse_path(
             Path(os.path.dirname(source_path)), 'Logfile (*.log);;Any File (*.*)', save=True)
-    if target_path != '':
+    if target_path is not None:
         compose_logfile(
-                source_path, target_path, combat_intervals, str(self.config.templog_folder_path))
+                source_path, str(target_path), combat_intervals,
+                str(self.config.templog_folder_path))
         show_message(self, tr('Split Logfile'), tr('Logfile has been saved.'))
 
 
@@ -374,5 +375,5 @@ def export_combat_json(self, combat_info: tuple | None):
     filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.json'
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     path = browse_path(Path(base_dir), 'JSON File (*.json);;Any File (*.*)', save=True)
-    if path:
-        save_to_json(path, combat.get_export())
+    if path is not None:
+        save_to_json(str(path), combat.get_export())

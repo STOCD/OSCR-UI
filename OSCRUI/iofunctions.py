@@ -11,7 +11,8 @@ from PySide6.QtGui import QIcon
 # --------------------------------------------------------------------------------------------------
 
 
-def browse_path(preset_path: Path, types: str = 'Any File (*.*)', save: bool = False) -> str:
+def browse_path(
+        preset_path: Path, types: str = 'Any File (*.*)', save: bool = False) -> Path | None:
     """
     Opens file dialog prompting the user to select a file.
 
@@ -22,14 +23,23 @@ def browse_path(preset_path: Path, types: str = 'Any File (*.*)', save: bool = F
     Format: `<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]` \
     Example: `Logfile (*.log);;Any File (*.*)`
     - :param save: False => open file with dialog; True => save file with dialog
+
+    :return: returns selected path; None if user aborts or tries to open not-existing file
     """
     if save:
         f = QFileDialog.getSaveFileName(caption='Save Log', dir=str(preset_path), filter=types)[0]
+        if f == '':
+            return None
+        return Path(f)
     else:
         f = QFileDialog.getOpenFileName(caption='Open Log', dir=str(preset_path), filter=types)[0]
-        if not os.path.exists(f):
-            return ''
-    return f
+        if f == '':
+            return None
+        selected_path = Path(f)
+        if selected_path.exists():
+            return selected_path
+        else:
+            return None
 
 # --------------------------------------------------------------------------------------------------
 # static functions
