@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QLineEdit, QListWidgetItem
@@ -22,7 +23,7 @@ def browse_log(self, entry: QLineEdit):
     current_path = entry.text()
     if current_path != '':
         current_path = os.path.dirname(current_path)
-    path = self.browse_path(current_path, 'Logfile (*.log);;Any File (*.*)')
+    path = browse_path(Path(current_path), 'Logfile (*.log);;Any File (*.*)')
     if path != '':
         entry.setText(format_path(path))
         if self.settings.auto_scan:
@@ -46,7 +47,7 @@ def save_combat(self, combat_info: tuple | None):
         filename += ' ' + combat.difficulty
     filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.log'
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
-    path = browse_path(self, base_dir, 'Logfile (*.log);;Any File (*.*)', save=True)
+    path = browse_path(Path(base_dir), 'Logfile (*.log);;Any File (*.*)', save=True)
     if path:
         self.parser.export_combat(combat_info[0], path)
 
@@ -214,7 +215,7 @@ def browse_sto_logpath(self, entry: QLineEdit):
     current_path = entry.text()
     if not current_path:
         current_path = self.config.home_dir
-    new_path = self.browse_path(os.path.dirname(current_path), 'Logfile (*.log);;Any File (*.*)')
+    new_path = browse_path(Path(os.path.dirname(current_path)), 'Logfile (*.log);;Any File (*.*)')
     if new_path:
         formatted_path = format_path(new_path)
         self.settings.sto_log_path = formatted_path
@@ -339,7 +340,7 @@ def extract_combats(self, selected_indices: list):
     combat_intervals.sort(key=lambda element: element[0])
     source_path = self.entry.text()
     target_path = browse_path(
-            self, os.path.dirname(source_path), 'Logfile (*.log);;Any File (*.*)', save=True)
+            Path(os.path.dirname(source_path)), 'Logfile (*.log);;Any File (*.*)', save=True)
     if target_path != '':
         compose_logfile(
                 source_path, target_path, combat_intervals, str(self.config.templog_folder_path))
@@ -372,6 +373,6 @@ def export_combat_json(self, combat_info: tuple | None):
         filename += ' ' + combat.difficulty
     filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.json'
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
-    path = browse_path(self, base_dir, 'JSON File (*.json);;Any File (*.*)', save=True)
+    path = browse_path(Path(base_dir), 'JSON File (*.json);;Any File (*.*)', save=True)
     if path:
         save_to_json(path, combat.get_export())

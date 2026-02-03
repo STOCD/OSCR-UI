@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 import webbrowser
 
 from PySide6.QtWidgets import QFileDialog
@@ -10,27 +11,22 @@ from PySide6.QtGui import QIcon
 # --------------------------------------------------------------------------------------------------
 
 
-def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', save=False) -> str:
+def browse_path(preset_path: Path, types: str = 'Any File (*.*)', save: bool = False) -> str:
     """
     Opens file dialog prompting the user to select a file.
 
     Parameters:
-    - :param default_path: path that the file dialog opens at
+    - :param preset_path: path that the file dialog opens at; includes default file name
     - :param types: string containing all file extensions and their respective names that are \
     allowed. \
     Format: `<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]` \
     Example: `Logfile (*.log);;Any File (*.*)`
     - :param save: False => open file with dialog; True => save file with dialog
     """
-    if default_path is None or default_path == '':
-        default_path = self.config.home_dir
-    default_path = os.path.abspath(default_path)
-    if not os.path.exists(os.path.dirname(default_path)):
-        default_path = self.config.home_dir
     if save:
-        f = QFileDialog.getSaveFileName(self.window, 'Save Log', default_path, types)[0]
+        f = QFileDialog.getSaveFileName(caption='Save Log', dir=str(preset_path), filter=types)[0]
     else:
-        f = QFileDialog.getOpenFileName(self.window, 'Open Log', default_path, types)[0]
+        f = QFileDialog.getOpenFileName(caption='Open Log', dir=str(preset_path), filter=types)[0]
         if not os.path.exists(f):
             return ''
     return f

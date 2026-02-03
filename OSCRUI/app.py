@@ -40,7 +40,6 @@ class OSCRUI():
             copy_analysis_callback, copy_analysis_table_callback, copy_summary_callback,
             insert_combat, update_shown_columns_dmg, update_shown_columns_heal)
     from .displayer import create_legend_item
-    from .iofunctions import browse_path
     from .style import get_style_class, create_style_sheet, theme_font, get_style
     from .subwindows import live_parser_toggle, show_detection_info, show_parser_error, split_dialog
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
