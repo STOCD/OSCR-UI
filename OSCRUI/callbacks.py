@@ -376,4 +376,4 @@ def export_combat_json(self, combat_info: tuple | None):
     base_dir = f'{os.path.dirname(self.entry.text())}/{filename}'
     path = browse_path(Path(base_dir), 'JSON File (*.json);;Any File (*.*)', save=True)
     if path is not None:
-        save_to_json(str(path), combat.get_export())
+        save_to_json(path, combat.get_export())

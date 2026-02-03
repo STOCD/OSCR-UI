@@ -146,12 +146,12 @@ def sanitize_file_name(txt, chr_set='extended') -> str:
     return result
 
 
-def save_to_json(path: str, data: dict):
+def save_to_json(path: Path, data: dict):
     """
     Saves dictionary to JSON file using the json library
 
     :param path: filepath to write the file to
     :param data: dictionary containing the data to be serialized
     """
-    with open(path, 'w') as file:
+    with path.open('w') as file:
         json.dump(data, file)
