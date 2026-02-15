@@ -1,31 +1,35 @@
 from pathlib import Path
 from threading import Thread
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Qt, Signal
 
 from OSCR import OSCR, extract_bytes
 from OSCR.combat import Combat
 
 from .config import OSCRConfig, OSCRSettings
-from .datamodels import CombatModel
+from .datamodels import CombatModel, OverviewTableModel
 from .dialogs import show_message
+from .displayer import create_overview2
 from .iofunctions import browse_path, save_to_json
 from .translation import tr
+from .widgetmanager import WidgetManager
 
 
 class ParserBridge(QObject):
     """Contains logic to connect with the OSCR parser"""
 
-    completed_combat = Signal(object)
+    completed_combat = Signal(Combat)
     parser_error = Signal(object)
 
-    def __init__(self, global_settings: OSCRSettings, global_config: OSCRConfig):
+    def __init__(
+            self, global_settings: OSCRSettings, global_config: OSCRConfig, widgets: WidgetManager):
         """
         Interface that connects with the OSCR parser
 
         Parameters:
         - :param parser_settings: dictionary containing settings for the parser
         """
+        super().__init__()
         self._global_settings: OSCRSettings = global_settings
         self._global_config: OSCRConfig = global_config
         self._parser = OSCR(settings=self.parser_settings)
@@ -35,7 +39,9 @@ class ParserBridge(QObject):
         self._parser.error_callback = lambda error: self.parser_error.emit(error)
         self._thread: Thread | None = None
         self.analyzed_combats: CombatModel = CombatModel()
+        self.overview_table_model: OverviewTableModel = OverviewTableModel()
         self.current_combat_id: int = -1
+        self._widgets: WidgetManager = widgets
 
     @property
     def parser_settings(self) -> dict:
@@ -70,15 +76,15 @@ class ParserBridge(QObject):
         - :param hidden_path: True when settings should not be updated with log path
         """
         if not path.is_file():
-            show_message(
-                self, tr('Invalid Logfile'),
-                tr('The Logfile you are trying to open does not exist.'), 'warning')
+            # show_message(
+            #     self, tr('Invalid Logfile'),
+            #     tr('The Logfile you are trying to open does not exist.'), 'warning')
             return
         if self._thread is not None and self._thread.is_alive():
             # TODO Show feedback
             return
         if not hidden_path and path != self._global_settings.log_path:
-            self._global_settings = path
+            self._global_settings.log_path = str(path)
 
         self._parser.reset_parser()
         self.analyzed_combats.clear()
@@ -87,9 +93,8 @@ class ParserBridge(QObject):
         self._thread = Thread(target=self._parser.analyze_log_file, kwargs={'max_combats': 1})
         self._thread.start()
 
-        # TODO switch tabs
-        # switch_main_tab()
-        # switch_overview_tab()
+        self._widgets.switch_main_tab(0)
+        self._widgets.switch_overview_tab(self._global_settings.first_overview_tab)
 
     def analyze_log_background(self, amount: int):
         """
@@ -120,8 +125,15 @@ class ParserBridge(QObject):
         if combat.id == 0:
             self.current_combat_id = 0
             # TODO replace with new functions
-            # self.current_combats.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
-            # create_overview(self, combat)
+            self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
+            create_overview2(combat, self.overview_table_model)
+            if self._global_settings.overview_sort_order == 'Descending':
+                sort_order = Qt.SortOrder.AscendingOrder
+            else:
+                sort_order = Qt.SortOrder.DescendingOrder
+            self._widgets.overview_table.sortByColumn(
+                self._global_settings.overview_sort_column, sort_order)
+            self._widgets.overview_table.resizeColumnsToContents()
             # populate_analysis(self, combat)
             self.analyze_log_background(self._global_settings.combats_to_parse - 1)
 

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QLabel, QListWidget, QPushButton, QSplitter, QTableView, QTabWidget,
-    QTreeView)
+    QComboBox, QFrame, QLabel, QListView, QListWidget, QPushButton, QSplitter, QTableView,
+    QTabWidget, QTreeView)
 
 from .widgets import AnalysisPlot, FlipButton
 from .config import OSCRSettings
@@ -20,12 +20,14 @@ class WidgetManager():
         self.map_tab_frames: list[QFrame] = list()
         self.map_menu_buttons: list[QPushButton] = list()
 
+        self.combats_list: QListView
         self.log_duration_value: QLabel
         self.player_duration_value: QLabel
 
         self.overview_menu_buttons: list[QPushButton] = list()
         self.overview_tabber: QTabWidget
         self.overview_tab_frames: list[QFrame] = list()
+        self.overview_table: QTableView
         self.overview_table_frame: QFrame
         self.overview_table_button: FlipButton
         self.overview_splitter: QSplitter

@@ -15,36 +15,52 @@ AVCENTER = Qt.AlignmentFlag.AlignVCenter
 
 
 class TableModel(QAbstractTableModel):
-    def __init__(
-            self, data, header: Iterable, index: Iterable, header_font: QFont, cell_font: QFont):
+    def __init__(self):
         """
-        Creates table model from supplied data.
+        Creates table model without content.
+        """
+        super().__init__()
+        self._data: list[list] = list()
+        self._header: list = list()
+        self._index: list = list()
+
+    def init_fonts(self, header_font: QFont, cell_font: QFont):
+        """
+        Sets fonts to use for cells and header/index
 
         Parameters:
-        - :param data: data to be displayed without index or header; two-dimensional iterable; \
-        must support .extend() function
-        - :param header: column headings
-        - :param index: row index
         - :param header_font: font to style the column headings with
         - :param cell_font: font to style the cells with
         """
-        super().__init__()
-        self._data = data
-        self._header = tuple(header)
-        self._index = list(index)
         self._header_font = header_font
         self._cell_font = cell_font
 
-    def rowCount(self, index):
+    def set_data(self, data: list[list], header: list, index: list):
+        """
+        Replace model data with new data.
+
+        Parameters:
+        - :param data: data to be displayed without index or header
+        - :param header: column headings
+        - :param index: row index
+        """
+        self.beginResetModel()
+        self._data = data
+        self._header = header
+        self._index = index
+        self.endResetModel()
+
+    def rowCount(self, index: QModelIndex):
+        super().headerData
         return len(self._data)
 
-    def columnCount(self, index):
+    def columnCount(self, index: QModelIndex):
         try:
             return len(self._data[0])  # all columns must have the same length
         except IndexError:
             return 0
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         # section is the index of the column/row.
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
@@ -72,7 +88,7 @@ class OverviewTableModel(TableModel):
     SHARE_COLUMNS = {2, 4, 5, 6, 7, 9, 12, 13}
     WHOLE_NUMBER_COLUMNS = {10, 17, 18, 19, 20, 21, 22, 23}
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role: int):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
             cell = self._data[index.row()][current_col]
@@ -102,7 +118,7 @@ class LeagueTableModel(TableModel):
         super().__init__(*ar, **kw)
         self._combatlog_id_list = combatlog_id_list
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role: int):
         if role == Qt.ItemDataRole.DisplayRole:
             current_col = index.column()
             cell = self._data[index.row()][current_col]
@@ -125,7 +141,7 @@ class LeagueTableModel(TableModel):
                 return AVCENTER + ALEFT
             return AVCENTER + ARIGHT
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         if role == Qt.ItemDataRole.FontRole and orientation == Qt.Orientation.Vertical:
             return self._cell_font
         return super().headerData(section, orientation, role)

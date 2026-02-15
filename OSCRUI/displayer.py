@@ -17,6 +17,22 @@ from .style import get_style, theme_font
 setConfigOptions(antialias=True)
 
 
+def create_overview2(
+        combat: Combat, table_model: OverviewTableModel):
+    """
+    Creates the overview table and returns it.
+
+    Parameters:
+    - :param combat: combat to create overview for
+    - :param table_model: Table model to insert the data into
+    """
+    time_data, DPS_graph_data, DMG_graph_data, current_table = extract_overview_data(combat)
+    if len(current_table) > 0:
+        table_cell_data = [list(line[2:]) for line in current_table]
+        table_index = [line[0] + line[1] for line in current_table]
+        table_model.set_data(table_cell_data, TABLE_HEADER, table_index)
+
+
 def setup_plot(plot_function: Callable) -> Callable:
     """
     Sets up Plot item and puts it into layout. (Decorator)

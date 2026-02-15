@@ -3,24 +3,27 @@ from pathlib import Path
 import sys
 
 from PySide6.QtWidgets import (
-        QApplication, QWidget, QLayout, QLineEdit, QFrame, QListView, QListWidget, QListWidgetItem,
-        QScrollArea, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout, QGridLayout)
+        QApplication, QWidget, QLayout, QLineEdit, QFrame, QHeaderView, QListView, QListWidget,
+        QListWidgetItem, QScrollArea, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout,
+        QGridLayout)
 from PySide6.QtCore import QDir, QSize, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
 from .config import OSCRConfig, OSCRSettings
-from .datamodels import CombatModel
+from .datamodels import CombatModel, SortingProxy
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
+from .parserbridge import ParserBridge
 from .theme import AppTheme
 from .translation import init_translation, tr
 from .widgetbuilder import (
         ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL,
         SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN,
         SCROLLOFF, SCROLLON)
+from .widgetmanager import WidgetManager
 from .widgets import (
-        AnalysisPlot, BannerLabel, CombatDelegate, FlipButton, ParserSignals, WidgetStorage)
+        AnalysisPlot, BannerLabel, CombatDelegate, FlipButton, ParserSignals)
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 # from signal import signal, SIGINT, SIG_DFL
@@ -53,9 +56,6 @@ class OSCRUI():
 
     app_dir = None
 
-    # stores widgets that need to be accessed from outside their creating function
-    widgets: WidgetStorage
-
     league_api: OSCRClient
 
     def __init__(self, theme, args, path, config, version) -> None:
@@ -73,7 +73,6 @@ class OSCRUI():
         self.theme = theme
         self.args = args
         self.app_dir = path
-        self.widgets = WidgetStorage()
         self.live_parser_window = None
         self.live_parser = None
         self.config = OSCRConfig()
@@ -87,6 +86,7 @@ class OSCRUI():
         self.init_config()
         QDir.addSearchPath('assets_folder', os.path.join(path, 'assets'))
         self.theme2: AppTheme = AppTheme(self.config.ui_scale)
+        self.widgets: WidgetManager = WidgetManager(self.settings)
 
         init_translation(self.settings.language)
         self.league_api = None
@@ -94,7 +94,7 @@ class OSCRUI():
         self.app, self.window = self.create_main_window()
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
-        self.init_parser()
+        self.parser: ParserBridge = ParserBridge(self.settings, self.config, self.widgets)
         self.cache_assets()
         self.setup_main_layout()
 
@@ -102,7 +102,7 @@ class OSCRUI():
         if self.settings.auto_scan:
             QTimer.singleShot(
                     100,
-                    lambda: self.analyze_log_callback(path=self.entry.text()))
+                    lambda: self.parser.analyze_log_file(Path(self.entry.text())))
 
     def run(self) -> int:
         """
@@ -513,7 +513,7 @@ class OSCRUI():
                 'align': AHCENTER
             },
             tr('Analyze'): {
-                'callback': lambda: self.analyze_log_callback(path=self.entry.text()),
+                'callback': lambda: self.parser.analyze_log_file(Path(self.entry.text())),
                 'align': ARIGHT, 'style': {'margin-right': 0}
             }
         }
@@ -527,20 +527,21 @@ class OSCRUI():
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_frame.setLayout(background_layout)
-        self.current_combats = QListView(background_frame)
-        self.current_combats.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
-        self.current_combats.setStyleSheet(self.theme2.get_style_class('QListView', 'listbox'))
-        self.current_combats.setFont(self.theme2.get_font('listbox'))
-        self.current_combats.setAlternatingRowColors(True)
-        self.current_combats.setSizePolicy(SMIXMIN)
-        self.current_combats.setModel(CombatModel())
+        combats_list = QListView(background_frame)
+        combats_list.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
+        combats_list.setStyleSheet(self.theme2.get_style_class('QListView', 'listbox'))
+        combats_list.setFont(self.theme2.get_font('listbox'))
+        combats_list.setAlternatingRowColors(True)
+        combats_list.setSizePolicy(SMIXMIN)
+        combats_list.setModel(self.parser.analyzed_combats)
         ui_scale = self.config.ui_scale
         border_width = 1 * ui_scale
         padding = 4 * ui_scale
-        self.current_combats.setItemDelegate(CombatDelegate(border_width, padding))
-        self.current_combats.doubleClicked.connect(
-            lambda: self.analysis_data_slot(self.current_combats.currentIndex().data()[0]))
-        background_layout.addWidget(self.current_combats)
+        combats_list.setItemDelegate(CombatDelegate(border_width, padding))
+        combats_list.doubleClicked.connect(
+            lambda: self.analysis_data_slot(combats_list.currentIndex().data()[0]))
+        background_layout.addWidget(combats_list)
+        self.widgets.combats_list = combats_list
         left_layout.addWidget(background_frame, stretch=1)
 
         combat_button_row = QGridLayout()
@@ -557,12 +558,12 @@ class OSCRUI():
                 self.icons['json'], tr('Export Combat to JSON File'), parent=frame)
         combat_button_row.addWidget(json_export_button, 0, 2)
         left_layout.addLayout(combat_button_row)
-        more_combats_button.clicked.connect(lambda: self.analyze_log_background(
+        more_combats_button.clicked.connect(lambda: self.parser.analyze_log_background(
                 self.settings.combats_to_parse))
         export_button.clicked.connect(
-                lambda: self.save_combat(self.current_combats.currentIndex().data()))
+                lambda: self.parser.save_combat(self.current_combats.currentIndex().data()))
         json_export_button.clicked.connect(
-                lambda: self.export_combat_json(self.current_combats.currentIndex().data()))
+                lambda: self.parser.export_combat_json(self.current_combats.currentIndex().data()))
 
         sep = self.create_frame(style='medium_frame')
         sep.setFixedHeight(margin)
@@ -787,6 +788,19 @@ class OSCRUI():
         switch_layout.setColumnStretch(2, 1)
         table_frame = self.create_frame(size_policy=SMINMIN)
         table_frame.setMinimumHeight(self.sidebar_item_width * 0.4)
+        table_layout = QVBoxLayout()
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        sorting_proxy = SortingProxy()
+        self.parser.overview_table_model.init_fonts(
+            self.theme2.get_font('table_header'), self.theme2.get_font('table'))
+        sorting_proxy.setSourceModel(self.parser.overview_table_model)
+        table = QTableView()
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        table.setModel(sorting_proxy)
+        self.style_table(table)
+        table_layout.addWidget(table)
+        self.widgets.overview_table = table
+        table_frame.setLayout(table_layout)
         splitter.addWidget(table_frame)
         self.widgets.overview_table_frame = table_frame
         o_frame.setLayout(layout)
