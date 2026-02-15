@@ -526,7 +526,7 @@ class AppTheme:
             },
             # horizontal sliding selector
             'slider': {
-                'font': ('Roboto Mono', 11, 'Normal'),
+                'font': ('Roboto Mono', 11, 'normal'),
                 'color': '@fg',
                 'margin-bottom': 3,
                 '::groove:horizontal': {
@@ -594,7 +594,7 @@ class AppTheme:
                 'gridline-color': 'rgba(0,0,0,0)',
                 'outline': '0',  # removes dotted line around clicked item
                 'margin': (5, 0, 0, 0),
-                'font': ('Roboto Mono', 12, 'Medium'),
+                'font': ('Roboto Mono', 12, 'medium'),
                 '::item': {
                     'padding': (0, 5, 0, 5),
                     'border-width': '@bw',
@@ -644,7 +644,7 @@ class AppTheme:
                 'border-bottom-style': 'solid',
                 'border-bottom-color': '@bc',
                 'outline': '0',  # removes dotted line around clicked item
-                'font': ('Overpass', 12, 'Medium'),
+                'font': ('Overpass', 12, 'medium'),
                 '::section': {
                     'background-color': '@mbg',
                     'color': '@fg',
@@ -684,9 +684,9 @@ class AppTheme:
                 'color': '@fg',
                 'margin': (5, 0, 0, 0),
                 'outline': '0',  # removes dotted line around clicked item
-                'font': ('Overpass', 12, 'Normal'),
+                'font': ('Overpass', 12, 'normal'),
                 '::item': {
-                    'font': ('Roboto Mono', 12, 'Normal'),
+                    'font': ('Roboto Mono', 12, 'normal'),
                     'border-right-width': '@bw',
                     'border-right-style': 'solid',
                     'border-right-color': '@bc',
@@ -800,7 +800,7 @@ class AppTheme:
                                  '#B45492', '#A27534', '#54A9B4', '#E47B1C', '#BCBCBC')
             },
             'plot_legend': {
-                'font': ('Overpass', 11, 'Medium'),
+                'font': ('Overpass', 11, 'medium'),
                 'border-style': 'none',
                 'padding': 0,
                 'margin': 0
@@ -823,7 +823,7 @@ class AppTheme:
                 'gridline-color': 'rgba(0,0,0,0)',
                 'outline': '0',  # removes dotted line around clicked item
                 'margin': (4, 4, 4, 4),
-                'font': ('Roboto Mono', 10, 'Medium'),
+                'font': ('Roboto Mono', 10, 'medium'),
                 '::item': {
                     'padding': (0, 2, 0, 2),
                     'margin': 0,
@@ -847,7 +847,7 @@ class AppTheme:
                 'border-bottom-style': 'solid',
                 'border-bottom-color': '@bc',
                 'outline': '0',  # removes dotted line around clicked item
-                'font': ('Overpass', 10, 'Medium'),
+                'font': ('Overpass', 10, 'medium'),
                 '::section': {
                     'background-color': '@mbg',
                     'color': '@fg',
