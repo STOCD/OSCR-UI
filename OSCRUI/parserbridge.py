@@ -2,12 +2,14 @@ from pathlib import Path
 from threading import Thread
 
 from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtGui import QFont
 
 from OSCR import OSCR, extract_bytes
 from OSCR.combat import Combat
 
+from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
-from .datamodels import CombatModel, OverviewTableModel
+from .datamodels import CombatModel, DamageTreeModel, HealTreeModel, OverviewTableModel
 from .dialogs import show_message
 from .displayer import create_overview2
 from .iofunctions import browse_path, save_to_json
@@ -39,9 +41,14 @@ class ParserBridge(QObject):
         self._parser.error_callback = lambda error: self.parser_error.emit(error)
         self._thread: Thread | None = None
         self.analyzed_combats: CombatModel = CombatModel()
-        self.overview_table_model: OverviewTableModel = OverviewTableModel()
         self.current_combat_id: int = -1
+        self.overview_table_model: OverviewTableModel = OverviewTableModel()
+        self.damage_out_model: DamageTreeModel = DamageTreeModel()
+        self.damage_in_model: DamageTreeModel = DamageTreeModel()
+        self.heal_out_model: HealTreeModel = HealTreeModel()
+        self.heal_in_model: HealTreeModel = HealTreeModel()
         self._widgets: WidgetManager = widgets
+        self._tables: AnalysisTables
 
     @property
     def parser_settings(self) -> dict:
@@ -127,15 +134,25 @@ class ParserBridge(QObject):
             # TODO replace with new functions
             self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
             create_overview2(combat, self.overview_table_model)
-            if self._global_settings.overview_sort_order == 'Descending':
-                sort_order = Qt.SortOrder.AscendingOrder
-            else:
-                sort_order = Qt.SortOrder.DescendingOrder
-            self._widgets.overview_table.sortByColumn(
-                self._global_settings.overview_sort_column, sort_order)
-            self._widgets.overview_table.resizeColumnsToContents()
-            # populate_analysis(self, combat)
+            self.populate_analysis(combat)
+            self._tables.refresh_tables(
+                self.damage_out_model.player_index, self.damage_in_model.player_index,
+                self.heal_out_model.player_index, self.heal_in_model.player_index)
             self.analyze_log_background(self._global_settings.combats_to_parse - 1)
+
+    def populate_analysis(self, combat: Combat):
+        """
+        Inserts the data of `combat` into the analysis treeview tables by replacing the underlying
+        datamodel.
+
+        Parameters:
+        - :param combat: combat containing the data to show
+        """
+        damage_out_item, damage_in_item, heal_out_item, heal_in_item = combat.root_items
+        self.damage_out_model.set_data(damage_out_item)
+        self.damage_in_model.set_data(damage_in_item)
+        self.heal_out_model.set_data(heal_out_item)
+        self.heal_in_model.set_data(heal_in_item)
 
     def show_parser_error(self, error: BaseException):
         """
@@ -156,8 +173,11 @@ class ParserBridge(QObject):
         """
         combat = self._parser.combats[index]
         self.current_combat_id = combat.id
-        # create_overview(self, combat)
-        # populate_analysis(self, combat)
+        create_overview2(combat, self.overview_table_model)
+        self.populate_analysis(combat)
+        self._tables.refresh_tables(
+            self.damage_out_model.player_index, self.damage_in_model.player_index,
+            self.heal_out_model.player_index, self.heal_in_model.player_index)
         # TODO replace with new methods
 
     def save_combat(self, combat_info: tuple[int, str, str, str, str] | None):
@@ -240,3 +260,17 @@ class ParserBridge(QObject):
             return False
         combats = self._parser.isolate_combats(log_path)
         combat_list.set_items(combats)
+
+    def init_analysis_table_fonts(self, header_font: QFont, name_font: QFont, cell_font: QFont):
+        """
+        Sets fonts to use for cells and header and names.
+
+        Parameters:
+        - :param header_font: font used for the header
+        - :param name_font: font used for the first column
+        - :param cell_font: font used for the second to last column
+        """
+        self.damage_out_model.init_fonts(header_font, name_font, cell_font)
+        self.damage_in_model.init_fonts(header_font, name_font, cell_font)
+        self.heal_out_model.init_fonts(header_font, name_font, cell_font)
+        self.heal_in_model.init_fonts(header_font, name_font, cell_font)

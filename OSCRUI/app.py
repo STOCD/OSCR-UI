@@ -4,14 +4,15 @@ import sys
 
 from PySide6.QtWidgets import (
         QApplication, QWidget, QLayout, QLineEdit, QFrame, QHeaderView, QListView, QListWidget,
-        QListWidgetItem, QScrollArea, QSplitter, QTabWidget, QTableView, QVBoxLayout, QHBoxLayout,
-        QGridLayout)
+        QListWidgetItem, QScrollArea, QSplitter, QTabWidget, QTableView, QTreeView, QVBoxLayout,
+        QHBoxLayout, QGridLayout)
 from PySide6.QtCore import QDir, QSize, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
+from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
-from .datamodels import CombatModel, SortingProxy
+from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
 from .parserbridge import ParserBridge
@@ -95,6 +96,8 @@ class OSCRUI():
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.parser: ParserBridge = ParserBridge(self.settings, self.config, self.widgets)
+        self.tables: AnalysisTables = AnalysisTables(self.theme2, self.settings)
+        self.parser._tables = self.tables
         self.cache_assets()
         self.setup_main_layout()
 
@@ -539,7 +542,7 @@ class OSCRUI():
         padding = 4 * ui_scale
         combats_list.setItemDelegate(CombatDelegate(border_width, padding))
         combats_list.doubleClicked.connect(
-            lambda: self.analysis_data_slot(combats_list.currentIndex().data()[0]))
+            lambda: self.parser.show_combat(combats_list.currentIndex().data()[0]))
         background_layout.addWidget(combats_list)
         self.widgets.combats_list = combats_list
         left_layout.addWidget(background_frame, stretch=1)
@@ -799,7 +802,7 @@ class OSCRUI():
         table.setModel(sorting_proxy)
         self.style_table(table)
         table_layout.addWidget(table)
-        self.widgets.overview_table = table
+        self.tables.overview_table = table
         table_frame.setLayout(table_layout)
         splitter.addWidget(table_frame)
         self.widgets.overview_table_frame = table_frame
@@ -810,6 +813,79 @@ class OSCRUI():
             h = splitter.height()
             splitter.setSizes((h * 0.5, h * 0.5))
         self.widgets.overview_tabber = o_tabber
+
+    def create_analysis_tab(
+            self, graph_frame: QFrame, tree_frame: QFrame, tree_model: TreeModel,
+            is_heal_table: bool) -> tuple[QTreeView, AnalysisPlot]:
+        """
+        Creates analysis graph and table, prepares and returns them.
+
+        Parameters:
+        - :param graph_frame: frame to put the graph into
+        - :param tree_frame: frame to put the tree table into
+        - :param tree_model: data model for the tree table
+        - :param is_heal_table: initializes `tree_model` with heal header if `True`; initializes
+        `tree_model` with damage header if `False`
+        """
+        csp = self.theme['defaults']['csp'] * self.config.ui_scale
+        graph_layout = QHBoxLayout()
+        graph_layout.setContentsMargins(csp, csp, csp, 0)
+        graph_layout.setSpacing(csp)
+
+        plot_bundle_frame = self.create_frame(size_policy=SMINMAX)
+        plot_bundle_layout = QVBoxLayout()
+        plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
+        plot_bundle_layout.setSpacing(0)
+        plot_bundle_layout.setSizeConstraint(QLayout.SizeConstraint.SetMaximumSize)
+        plot_legend_frame = self.create_frame()
+        plot_legend_layout = QHBoxLayout()
+        plot_legend_layout.setContentsMargins(0, 0, 0, 0)
+        plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
+        plot_legend_frame.setLayout(plot_legend_layout)
+        plot_widget = AnalysisPlot(
+                self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
+                self.theme2.get_font('plot_widget'), plot_legend_layout)
+        plot_widget.setStyleSheet(self.theme2.get_style('plot_widget_nullifier'))
+        plot_widget.setSizePolicy(SMINMAX)
+        plot_bundle_layout.addWidget(plot_widget)
+        plot_bundle_layout.addWidget(plot_legend_frame, alignment=AHCENTER)
+        plot_bundle_frame.setLayout(plot_bundle_layout)
+        graph_layout.addWidget(plot_bundle_frame, stretch=1)
+
+        plot_button_frame = self.create_frame(size_policy=SMAXMIN)
+        plot_button_layout = QVBoxLayout()
+        plot_button_layout.setContentsMargins(0, 0, 0, 0)
+        plot_button_layout.setSpacing(0)
+        plot_button_layout.setAlignment(AVCENTER)
+        freeze_button = self.create_icon_button(self.icons['freeze'], tr('Freeze Graph'))
+        freeze_button.setCheckable(True)
+        freeze_button.setChecked(True)
+        freeze_button.clicked.connect(plot_widget.toggle_freeze)
+        plot_button_layout.addWidget(freeze_button, alignment=ABOTTOM)
+        clear_button = self.create_icon_button(self.icons['clear-plot'], tr('Clear Graph'))
+        clear_button.clicked.connect(plot_widget.clear_plot)
+        plot_button_layout.addWidget(clear_button, alignment=ATOP)
+        plot_button_frame.setLayout(plot_button_layout)
+        graph_layout.addWidget(plot_button_frame, stretch=0)
+        graph_frame.setLayout(graph_layout)
+
+        tree_layout = QVBoxLayout()
+        tree_layout.setContentsMargins(0, 0, 0, 0)
+        tree_layout.setSpacing(0)
+        tree = self.create_analysis_table('tree_table')
+        if is_heal_table:
+            tree_model.header_data = tr(HEAL_TREE_HEADER)
+        else:
+            tree_model.header_data = tr(TREE_HEADER)
+        tree_model.init_fonts(
+            self.theme2.get_font('tree_table_header'), self.theme2.get_font('tree_table'),
+            self.theme2.get_font('tree_table_cells'))
+        tree.setModel(tree_model)
+        tree.setSelectionModel(TreeSelectionModel(tree_model))
+        tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
+        tree_layout.addWidget(tree)
+        tree_frame.setLayout(tree_layout)
+        return tree, plot_widget
 
     def setup_analysis_frame(self):
         """
@@ -901,65 +977,14 @@ class OSCRUI():
         switch_layout.addLayout(copy_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
 
-        tabs = (
-            (dout_graph_frame, dout_tree_frame, 'analysis_table_dout', 'analysis_plot_dout'),
-            (dtaken_graph_frame, dtaken_tree_frame, 'analysis_table_dtaken',
-             'analysis_plot_dtaken'),
-            (hout_graph_frame, hout_tree_frame, 'analysis_table_hout', 'analysis_plot_hout'),
-            (hin_graph_frame, hin_tree_frame, 'analysis_table_hin', 'analysis_plot_hin')
-        )
-        csp = self.theme['defaults']['csp'] * self.config.ui_scale
-        for graph_frame, tree_frame, table_name, plot_name in tabs:
-            graph_layout = QHBoxLayout()
-            graph_layout.setContentsMargins(csp, csp, csp, 0)
-            graph_layout.setSpacing(csp)
-
-            plot_bundle_frame = self.create_frame(size_policy=SMINMAX)
-            plot_bundle_layout = QVBoxLayout()
-            plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
-            plot_bundle_layout.setSpacing(0)
-            plot_bundle_layout.setSizeConstraint(QLayout.SizeConstraint.SetMaximumSize)
-            plot_legend_frame = self.create_frame()
-            plot_legend_layout = QHBoxLayout()
-            plot_legend_layout.setContentsMargins(0, 0, 0, 0)
-            plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
-            plot_legend_frame.setLayout(plot_legend_layout)
-            plot_widget = AnalysisPlot(
-                    self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
-                    self.theme2.get_font('plot_widget'), plot_legend_layout)
-            setattr(self.widgets, plot_name, plot_widget)
-            plot_widget.setStyleSheet(self.theme2.get_style('plot_widget_nullifier'))
-            plot_widget.setSizePolicy(SMINMAX)
-            plot_bundle_layout.addWidget(plot_widget)
-            plot_bundle_layout.addWidget(plot_legend_frame, alignment=AHCENTER)
-            plot_bundle_frame.setLayout(plot_bundle_layout)
-            graph_layout.addWidget(plot_bundle_frame, stretch=1)
-
-            plot_button_frame = self.create_frame(size_policy=SMAXMIN)
-            plot_button_layout = QVBoxLayout()
-            plot_button_layout.setContentsMargins(0, 0, 0, 0)
-            plot_button_layout.setSpacing(0)
-            plot_button_layout.setAlignment(AVCENTER)
-            freeze_button = self.create_icon_button(self.icons['freeze'], tr('Freeze Graph'))
-            freeze_button.setCheckable(True)
-            freeze_button.setChecked(True)
-            freeze_button.clicked.connect(plot_widget.toggle_freeze)
-            plot_button_layout.addWidget(freeze_button, alignment=ABOTTOM)
-            clear_button = self.create_icon_button(self.icons['clear-plot'], tr('Clear Graph'))
-            clear_button.clicked.connect(plot_widget.clear_plot)
-            plot_button_layout.addWidget(clear_button, alignment=ATOP)
-            plot_button_frame.setLayout(plot_button_layout)
-            graph_layout.addWidget(plot_button_frame, stretch=0)
-            graph_frame.setLayout(graph_layout)
-
-            tree_layout = QVBoxLayout()
-            tree_layout.setContentsMargins(0, 0, 0, 0)
-            tree_layout.setSpacing(0)
-            tree = self.create_analysis_table('tree_table')
-            setattr(self.widgets, table_name, tree)
-            tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
-            tree_layout.addWidget(tree)
-            tree_frame.setLayout(tree_layout)
+        self.tables.damage_out_table, _ = self.create_analysis_tab(
+            dout_graph_frame, dout_tree_frame, self.parser.damage_out_model, is_heal_table=False)
+        self.tables.damage_in_table, _ = self.create_analysis_tab(
+            dtaken_graph_frame, dtaken_tree_frame, self.parser.damage_in_model, is_heal_table=False)
+        self.tables.heal_out_table, _ = self.create_analysis_tab(
+            hout_graph_frame, hout_tree_frame, self.parser.heal_out_model, is_heal_table=True)
+        self.tables.heal_in_table, _ = self.create_analysis_tab(
+            hin_graph_frame, hin_tree_frame, self.parser.heal_in_model, is_heal_table=True)
 
         a_frame.setLayout(layout)
         if self.settings.state__analysis_splitter:

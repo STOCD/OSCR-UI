@@ -23,6 +23,8 @@ class TableModel(QAbstractTableModel):
         self._data: list[list] = list()
         self._header: list = list()
         self._index: list = list()
+        self._header_font: QFont
+        self._cell_font: QFont
 
     def init_fonts(self, header_font: QFont, cell_font: QFont):
         """
@@ -267,50 +269,47 @@ class TreeModel(QAbstractItemModel):
     """
     Data model for the analysis table
     """
-    def __init__(
-            self, root_item, header_font: QFont, name_font: QFont, cell_font: QFont,
-            header_data=None):
+    def __init__(self):
         """
         Initializes Tree Model with data in root item.
+        """
+        super().__init__()
+        self._root: TreeItem | None = None
+        self._player: TreeItem
+        self.player_index: QModelIndex
+        self._npc: TreeItem
+        self.header_data: tuple[str] = list()
+        self._header_font: QFont
+        self._name_font: QFont
+        self._cell_font: QFont
+
+    def init_fonts(self, header_font: QFont, name_font: QFont, cell_font: QFont):
+        """
+        Sets fonts to use for cells and header and names.
 
         Parameters:
-        - :param root_item: item supporting the following operations:
-            - function "get_child(row: int)" returning the n-th child of the item; None if not
-            exists
-            - function "get_data(column: int)" returning the data of the item at the given column;
-            None if
-            not exists
-            - function "append_child(item)" adds the given item as child to the item
-            - property "parent" containing the parent item of the item; None for the root item
-            - property "row" containing the row number which the item is stored at in its parent
-            item
-            - property "child_count" containing the number of children the item has
-            - property "column_count" containing the number of columns the items data row
-        - :param header_data: the headers using in the analysis UI.
-
-        The item may already contain childen.
         - :param header_font: font used for the header
         - :param name_font: font used for the first column
         - :param cell_font: font used for the second to last column
         """
-        super().__init__()
-        self._root = root_item
-        self._root_index = self.createIndex(0, 0, self._root)
         self._header_font = header_font
         self._name_font = name_font
         self._cell_font = cell_font
-        if header_data is None:
-            self._header_data = self._root.data
-        else:
-            self._header_data = header_data
-        if root_item.get_child(0).get_data(0) == 'Player':
-            self._player = root_item.get_child(0)
-            self._npc = root_item.get_child(1)
-        else:
-            self._player = root_item.get_child(1)
-            self._npc = root_item.get_child(0)
+
+    def set_data(self, new_root_item: TreeItem):
+        """
+        Replaces the data in the table with the new data sourced from the `new_root_item`
+        """
+        self.beginResetModel()
+        self._root = new_root_item
+        self._player = new_root_item.get_child(0)
+        self._npc = new_root_item.get_child(1)
+        self.player_index = self.createIndex(0, 0, self._player)
+        self.endResetModel()
 
     def sort(self, column: int, order: Qt.SortOrder):
+        if self._root is None:
+            return
         if order == Qt.SortOrder.AscendingOrder:
             descending = True
         else:
@@ -326,47 +325,48 @@ class TreeModel(QAbstractItemModel):
                 self.recursive_sort(child, column, desc)
             item._children.sort(key=lambda row: row.get_data(column), reverse=desc)
 
-    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex | None:
-        if not self.hasIndex(row, column, parent):
-            return QModelIndex()
-        if not parent.isValid():
-            p = self._root
-        else:
-            p = parent.internalPointer()
-        c = p.get_child(row)
-        if c is not None:
-            return self.createIndex(row, column, c)
+    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+        if self.hasIndex(row, column, parent):
+            if parent.isValid():
+                p = parent.internalPointer()
+            else:
+                p = self._root
+            c = p.get_child(row)
+            if c is not None:
+                return self.createIndex(row, column, c)
         return QModelIndex()
 
-    def parent(self, index: QModelIndex) -> QModelIndex | None:
+    def parent(self, index: QModelIndex) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
-        child = index.internalPointer()
-        parent = child.parent
+        current_item: TreeItem = index.internalPointer()
+        parent = current_item.parent
         if parent is None:
             return QModelIndex()
         return self.createIndex(parent.row, 0, parent)
 
-    def rowCount(self, parent: QModelIndex) -> int:
-        if not parent.isValid():
-            parent = self._root
-        else:
-            parent = parent.internalPointer()
-        return parent.child_count
+    def rowCount(self, parent_index: QModelIndex) -> int:
+        if parent_index.isValid():
+            return parent_index.internalPointer().child_count
+        elif self._root is not None:
+            return self._root.child_count
+        return 0
 
-    def columnCount(self, parent: QModelIndex) -> int:
-        if parent.isValid():
-            return parent.internalPointer().column_count
-        return self._root.column_count
+    def columnCount(self, parent_index: QModelIndex) -> int:
+        if parent_index.isValid():
+            return parent_index.internalPointer().column_count
+        elif self._root is not None:
+            return self._root.column_count
+        return 0
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        if not index.isValid():
-            return Qt.ItemFlag.NoItemFlags
-        return super().flags(index)
+        if index.isValid():
+            return super().flags(index)
+        return Qt.ItemFlag.NoItemFlags
 
-    def headerData(self, section, orientation, role) -> str:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> str:
         if role == Qt.ItemDataRole.DisplayRole:
-            return self._header_data[section]
+            return self.header_data[section]
         elif role == Qt.ItemDataRole.FontRole:
             return self._header_font
         elif role == Qt.ItemDataRole.TextAlignmentRole:
