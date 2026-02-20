@@ -594,7 +594,7 @@ class AppTheme:
                 'gridline-color': 'rgba(0,0,0,0)',
                 'outline': '0',  # removes dotted line around clicked item
                 'margin': (5, 0, 0, 0),
-                'font': ('Roboto Mono', 12, 'medium'),
+                'font': ('Roboto Mono', 12, 'normal'),
                 '::item': {
                     'padding': (0, 5, 0, 5),
                     'border-width': '@bw',
@@ -644,7 +644,7 @@ class AppTheme:
                 'border-bottom-style': 'solid',
                 'border-bottom-color': '@bc',
                 'outline': '0',  # removes dotted line around clicked item
-                'font': ('Overpass', 12, 'medium'),
+                'font': ('Overpass', 12, 'normal'),
                 '::section': {
                     'background-color': '@mbg',
                     'color': '@fg',
@@ -717,6 +717,10 @@ class AppTheme:
                 '::branch:closed:has-children': {
                     'image': 'url(assets_folder:chevron-right.svg)'
                 }
+            },
+            # font for analysis table cells, mirrors ['tree_table']['::item']['font']
+            'tree_table_cells': {
+                'font': ('Roboto Mono', 12, 'normal'),
             },
             # header of the analysis table; ::section refers to the individual buttons
             'tree_table_header': {
