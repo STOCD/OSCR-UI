@@ -1,14 +1,16 @@
 from math import sqrt, frexp
+from typing import Iterable
 
 import numpy as np
 from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
 from PySide6.QtCore import QObject, QRect, QSize, Qt, QThread, Signal, Slot
-from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPixmap
+from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QLabel, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle,
-    QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QWidget)
+    QComboBox, QFrame, QHBoxLayout, QLabel, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle,
+    QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QVBoxLayout, QWidget)
 
-from .widgetbuilder import SMINMIN
+from .widgetbuilder import ACENTER, AVCENTER, SMAXMAX, SMINMIN, create_frame2, create_label2
+from .theme import AppTheme
 
 
 ATOPLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
@@ -199,8 +201,23 @@ class CustomPlotAxis(AxisItem):
     """
     Extending AxisItem for custom tick formatting
     """
-    def __init__(self, *args, unit: str = '', no_labels=False, compressed=False, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self, side: str, text_font: QFont, text_color: str = '#FFFFFF', unit: str = '',
+            no_labels: bool = False, compressed: bool = False):
+        """
+        Creates a new plot axis with custom tick formatting, style, spacing and units.
+
+        Parameters:
+        - :param side: side that the axis will be used for, e.g. `left`, `bottom`
+        - :param text_font: font to use for the ticks labels
+        - :param text_color: color to use for tick labels
+        - :param unit: unit to display along with the number on the tick labels
+        - :param no_labels: set to `True` to suppress creation of tick labels
+        - :param compressed: set to `True` to adjust tick label spacing to show more meaningful
+        tick labels on very small layouts
+        """
+        super().__init__(side, textPen=text_color)
+        self.setTickFont(text_font)
         self._unit = ' ' + unit
         self._no_labels = no_labels
         self._compressed = compressed
@@ -325,12 +342,8 @@ class AnalysisPlot(PlotWidget):
         self._colors = colors
         self._frozen = True
         self._legend_layout = legend_layout
-        left_axis = CustomPlotAxis('left')
-        left_axis.setTickFont(tick_font)
-        left_axis.setTextPen(color=tick_color)
-        bottom_axis = CustomPlotAxis('bottom', unit='s')
-        bottom_axis.setTickFont(tick_font)
-        bottom_axis.setTextPen(color=tick_color)
+        left_axis = CustomPlotAxis('left', tick_font, tick_color)
+        bottom_axis = CustomPlotAxis('bottom', tick_font, tick_color, unit='s')
         self.setAxisItems({'left': left_axis, 'bottom': bottom_axis})
         self.setBackground(None)
         self.setMouseEnabled(False, False)
@@ -395,6 +408,125 @@ class AnalysisPlot(PlotWidget):
         Freezes when unfrozen, unfreezes when frozen
         """
         self._frozen = not self._frozen
+
+
+class LegendPlot(QFrame):
+    """Represents a plot widget with legend below the plot area."""
+
+    def __init__(
+            self, theme: AppTheme, x_unit: str = '', y_unit: str = '', y_font: str = 'plot_widget'):
+        super().__init__()
+        self._theme: AppTheme = theme
+        self.setStyleSheet(self._theme.get_style('plot_widget'))
+        self.setSizePolicy(SMAXMAX)
+        self._plot: PlotWidget = PlotWidget()
+        left_axis = CustomPlotAxis(
+            'left', self._theme.get_font(y_font), self._theme['defaults']['fg'], y_unit)
+        bottom_axis = CustomPlotAxis(
+            'bottom', self._theme.get_font('plot_widget'), self._theme['defaults']['fg'], x_unit)
+        self._plot.setAxisItems({'left': left_axis, 'bottom': bottom_axis})
+        self._plot.setStyleSheet(self._theme.get_style('plot_widget_nullifier'))
+        self._plot.setBackground(None)
+        self._plot.setMouseEnabled(False, False)
+        self._plot.setMenuEnabled(False)
+        self._plot.hideButtons()
+        self._plot.setDefaultPadding(padding=0)
+        self._layout = QVBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(self._theme['defaults']['isp'])
+        self._layout.addWidget(self._plot)
+        self._legend: QFrame = create_frame2(self._theme, style='plot_legend')
+        self._layout.addWidget(self._legend, alignment=ACENTER)
+        self.setLayout(self._layout)
+        self._plot.hide()
+
+    def set_padding_fraction(self, padding: float = 0.01):
+        """
+        Adjusts the padding of the plot view area.
+        """
+        self._plot.setDefaultPadding(padding)
+
+    def set_axis_ticks(self, side: str, tick_labels: tuple[str]):
+        self._plot.getAxis(side).setTicks(tick_labels)
+
+    def clear(self):
+        self._plot.clear()
+
+    def show_plot(self):
+        self._plot.show()
+
+    def add_item(self, item):
+        self._plot.addItem(item)
+
+    def set_x_range(self, min, max, padding):
+        self._plot.setXRange(min, max, padding)
+
+    def plot(self, x_data: tuple, y_data: tuple, pen: QPen):
+        self._plot.plot(x_data, y_data, pen=pen)
+
+    def create_legend(self, colors_and_names: Iterable[tuple[str]]) -> QFrame:
+        """
+        Creates Legend from color / name pairs and returns frame containing it.
+
+        Parameters:
+        - :param colors_and_names: Iterable containing color / name pairs : \
+        [('#9f9f00', 'Line 1'), ('#0000ff', 'Line 2'), (...), ...]
+
+        :return: frame containing the legend
+        """
+        upper_frame = create_frame2(self._theme, style='plot_legend')
+        lower_frame = create_frame2(self._theme, style='plot_legend')
+        frame_layout = QVBoxLayout()
+        upper_layout = QHBoxLayout()
+        lower_layout = QHBoxLayout()
+        margin = self._theme['defaults']['margin']
+        frame_layout.setContentsMargins(0, 0, 0, 0)
+        frame_layout.setSpacing(margin)
+        upper_layout.setContentsMargins(0, 0, 0, 0)
+        upper_layout.setSpacing(2 * margin)
+        lower_layout.setContentsMargins(0, 0, 0, 0)
+        lower_layout.setSpacing(2 * margin)
+        second_row = False
+        for num, (color, name) in enumerate(colors_and_names, 1):
+            legend_item = self.create_legend_item(color, name)
+            if num <= 5:
+                upper_layout.addWidget(legend_item)
+            else:
+                second_row = True
+                lower_layout.addWidget(legend_item)
+        upper_frame.setLayout(upper_layout)
+        frame_layout.addWidget(upper_frame, alignment=ACENTER)
+        if second_row:
+            lower_frame.setLayout(lower_layout)
+            frame_layout.addWidget(lower_frame, alignment=ACENTER)
+        QWidget().setLayout(self._legend.layout())
+        self._legend.setLayout(frame_layout)
+
+    def create_legend_item(self, color: str, name: str) -> QFrame:
+        """
+        Creates a colored patch next to a label inside a frame
+
+        Parameters:
+        - :param color: patch color
+        - :param name: text of the label
+
+        :return: frame containing the legend item
+        """
+        frame = create_frame2(self._theme, style='plot_legend')
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(self._theme['defaults']['margin'])
+        colored_patch = QLabel()
+        colored_patch.setStyleSheet(
+            self._theme.get_style('plot_legend', {'background-color': color}))
+        patch_height = self._theme['app']['frame_thickness']
+        colored_patch.setFixedSize(2 * patch_height, patch_height)
+        layout.addWidget(colored_patch, alignment=AVCENTER)
+        label = create_label2(
+                self._theme, name, 'label', {'font': self._theme['plot_legend']['font']})
+        layout.addWidget(label)
+        frame.setLayout(layout)
+        return frame
 
 
 class SizeGrip(QSizeGrip):

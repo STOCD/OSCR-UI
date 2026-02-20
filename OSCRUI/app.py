@@ -10,6 +10,7 @@ from PySide6.QtCore import QDir, QSize, Qt, QTimer, QThread
 from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
 
 from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
+from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
@@ -97,7 +98,9 @@ class OSCRUI():
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.parser: ParserBridge = ParserBridge(self.settings, self.config, self.widgets)
         self.tables: AnalysisTables = AnalysisTables(self.theme2, self.settings)
+        self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme2, self.settings)
         self.parser._tables = self.tables
+        self.parser._graphs = self.graphs
         self.cache_assets()
         self.setup_main_layout()
 
@@ -731,12 +734,6 @@ class OSCRUI():
         Sets up the frame housing the combatlog overview
         """
         o_frame = self.widgets.main_tab_frames[0]
-        bar_frame = self.create_frame()
-        dps_graph_frame = self.create_frame()
-        dmg_graph_frame = self.create_frame()
-        self.widgets.overview_tab_frames.append(bar_frame)
-        self.widgets.overview_tab_frames.append(dps_graph_frame)
-        self.widgets.overview_tab_frames.append(dmg_graph_frame)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -749,12 +746,13 @@ class OSCRUI():
         self.widgets.overview_splitter = splitter
         layout.addWidget(splitter)
 
+        self.graphs.create_overview_plots()
         o_tabber = QTabWidget(o_frame)
         o_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
         o_tabber.tabBar().hide()
-        o_tabber.addTab(bar_frame, 'BAR')
-        o_tabber.addTab(dps_graph_frame, 'DPS')
-        o_tabber.addTab(dmg_graph_frame, 'DMG')
+        o_tabber.addTab(self.graphs.dps_bar_plot, 'BAR')
+        o_tabber.addTab(self.graphs.dps_graph_plot, 'DPS')
+        o_tabber.addTab(self.graphs.dmg_bar_plot, 'DMG')
         o_tabber.setMinimumHeight(self.sidebar_item_width * 0.8)
         splitter.addWidget(o_tabber)
         splitter.setStretchFactor(0, self.theme2.opt.overview_graph_stretch)

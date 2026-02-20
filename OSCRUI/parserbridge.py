@@ -4,14 +4,14 @@ from threading import Thread
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QFont
 
-from OSCR import OSCR, extract_bytes
+from OSCR import OSCR, extract_bytes, TABLE_HEADER
 from OSCR.combat import Combat
 
+from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import CombatModel, DamageTreeModel, HealTreeModel, OverviewTableModel
 from .dialogs import show_message
-from .displayer import create_overview2
 from .iofunctions import browse_path, save_to_json
 from .translation import tr
 from .widgetmanager import WidgetManager
@@ -49,6 +49,7 @@ class ParserBridge(QObject):
         self.heal_in_model: HealTreeModel = HealTreeModel()
         self._widgets: WidgetManager = widgets
         self._tables: AnalysisTables
+        self._graphs: AnalysisGraphs
 
     @property
     def parser_settings(self) -> dict:
@@ -131,13 +132,7 @@ class ParserBridge(QObject):
         self.analyzed_combats.insert_item((combat.id, combat.map, date, time, difficulty))
         if combat.id == 0:
             self.current_combat_id = 0
-            # TODO replace with new functions
-            self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
-            create_overview2(combat, self.overview_table_model)
-            self.populate_analysis(combat)
-            self._tables.refresh_tables(
-                self.damage_out_model.player_index, self.damage_in_model.player_index,
-                self.heal_out_model.player_index, self.heal_in_model.player_index)
+            self.show_combat(combat=combat)
             self.analyze_log_background(self._global_settings.combats_to_parse - 1)
 
     def populate_analysis(self, combat: Combat):
@@ -163,22 +158,38 @@ class ParserBridge(QObject):
         """
         pass
 
-    def show_combat(self, index: int):
+    def show_combat(self, index: int = -1, combat: Combat | None = None):
         """
         Shows analyzed combat. Combat must be isolated and available in the parsers `combat`
-        attribute.
+        attribute or given as argument.
 
         Parameters:
         - :param index: index of the combat in the parsers combat list
+        - :param combat: combat to show
         """
-        combat = self._parser.combats[index]
-        self.current_combat_id = combat.id
-        create_overview2(combat, self.overview_table_model)
+        if combat is None:
+            combat = self._parser.combats[index]
+            self.current_combat_id = combat.id
+
+        overview_table = list()
+        dps_graph_data = dict()
+        dmg_bar_data = dict()
+        time_data = dict()
+        for player in combat.players.values():
+            overview_table.append((*player,))
+            dps_graph_data[player.handle] = player.DPS_graph_data
+            dmg_bar_data[player.handle] = player.DMG_graph_data
+            time_data[player.handle] = player.graph_time
+        overview_table.sort(key=lambda x: x[0])
+        if len(overview_table) > 0:
+            table_cell_data = [list(line[2:]) for line in overview_table]
+            table_index = [line[0] + line[1] for line in overview_table]
+            self.overview_table_model.set_data(table_cell_data, TABLE_HEADER, table_index)
+        self._graphs.plot_overview_data(overview_table, dps_graph_data, dmg_bar_data, time_data)
         self.populate_analysis(combat)
         self._tables.refresh_tables(
             self.damage_out_model.player_index, self.damage_in_model.player_index,
             self.heal_out_model.player_index, self.heal_in_model.player_index)
-        # TODO replace with new methods
 
     def save_combat(self, combat_info: tuple[int, str, str, str, str] | None):
         """

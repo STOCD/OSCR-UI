@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QSlider, QTableView, QTreeView, QVBoxLayout)
 
 from .style import get_style, get_style_class, merge_style, theme_font
+from .theme import AppTheme
 
 CALLABLE = (FunctionType, BuiltinFunctionType, MethodType)
 
@@ -30,6 +31,7 @@ AVCENTER = Qt.AlignmentFlag.AlignVCenter
 AHCENTER = Qt.AlignmentFlag.AlignHCenter
 
 RFIXED = QHeaderView.ResizeMode.Fixed
+RCONTENT = QHeaderView.ResizeMode.ResizeToContents
 
 OVERTICAL = Qt.Orientation.Vertical
 
@@ -37,6 +39,46 @@ SMPIXEL = QAbstractItemView.ScrollMode.ScrollPerPixel
 
 SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+
+
+def create_frame2(
+        theme: AppTheme, style: str = 'frame', style_override: dict = {},
+        size_policy: QSizePolicy | None = None) -> QFrame:
+    """
+    Creates a frame with default styling
+
+    Parameters:
+    - :param style: style dict to override default style (optional)
+    - :param size_policy: size policy of the frame (optional)
+
+    :return: configured QFrame
+    """
+    frame = QFrame()
+    frame.setStyleSheet(theme.get_style(style, style_override))
+    frame.setSizePolicy(size_policy if size_policy is not None else SMAXMAX)
+    return frame
+
+
+def create_label2(theme: AppTheme, text: str, style: str = 'label', style_override={}) -> QLabel:
+    """
+    Creates a label according to style with parent.
+
+    Parameters:
+    - :param text: text to be shown on the label
+    - :param style: name of the style as in self.theme
+    - :param style_override: style dict to override default style (optional)
+
+    :return: configured QLabel
+    """
+    label = QLabel()
+    label.setText(text)
+    label.setStyleSheet(theme.get_style(style, style_override))
+    label.setSizePolicy(SMAXMAX)
+    if 'font' in style_override:
+        label.setFont(theme.get_font(style, style_override['font']))
+    else:
+        label.setFont(theme.get_font(style))
+    return label
 
 
 def create_button(self, text: str, style: str = 'button', style_override={}, toggle=None):
@@ -366,7 +408,7 @@ def style_table(self, table: QTableView, style_override: dict = {}, single_row_s
     table.resizeRowsToContents()
     table.horizontalHeader().setSortIndicatorShown(False)
     table.horizontalHeader().setSectionResizeMode(RFIXED)
-    table.verticalHeader().setSectionResizeMode(RFIXED)
+    table.verticalHeader().setSectionResizeMode(RCONTENT)
     table.setSizePolicy(SMINMIN)
     if single_row_selection:
         table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)

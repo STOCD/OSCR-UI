@@ -791,8 +791,8 @@ class AppTheme:
             # undoes all styling of plot_widget to stop inheritance
             'plot_widget_nullifier': {
                 'border': 'none',
-                'margin': 0,
-                'padding': 0,
+                'margin': 0,  # bugged: positive values clip content instead of shrinking them
+                'padding': 0,  # bugged: positive values clip content instead of shrinking them
             },
             # smaller tick font for live parser graph
             'live_plot_widget': {
