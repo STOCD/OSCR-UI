@@ -9,7 +9,7 @@ license=('GPL-3.0')
 depends=('python')
 makedepends=('python' 'python-virtualenv' 'python-wheel' 'python-setuptools' 'git' 'unzip')
 source=("https://github.com/STOCD/OSCR-UI/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('15e86b0f2792fee055d7aee7a0dd431761a6b0570e28e2b2933d8ed0c3d7ff63')
+sha256sums=('efecb4034ad6bff975d8c4898cec98a3f6e293c7a8d07536a35e09126dbd39d2')
 
 build() {
   cd "$srcdir"
@@ -23,7 +23,8 @@ build() {
 
   # Upgrade pip then install exact packages used in CI
   pip install --upgrade pip
-  pip install pyinstaller==6.10.0 PySide6==6.10.0 pyqtgraph==0.13.7 numpy==2.2.4 STO-OSCR==10.0.0 OSCR-django-client==2025.7.19.0 pydantic==2.12.3
+  pip install -e .
+  pip install pyinstaller==6.19.0
 
   # Run pyinstaller from the venv
   # ensure we run pyinstaller in project root and output to dist/
