@@ -5,10 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "OSCR-UI"
 dependencies = [
-  "PySide6==6.10.0",
+  "PySide6==6.10.2",
   "pyqtgraph==0.13.7",
-  "numpy==2.2.4",
-  "STO-OSCR==10.3.0",
+  "numpy==2.4.2",
+  "STO-OSCR==10.3.1",
   "OSCR-django-client==2025.7.19.0",
   "pydantic==2.12.3",
 ]

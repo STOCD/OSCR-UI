@@ -1,6 +1,6 @@
 # Maintainer: PsychedelicShayna <Eternal0000FF@protonmail.com>
 pkgname=oscr-ui
-pkgver=10.0.0
+pkgver=10.1.0
 pkgrel=1
 pkgdesc="OSCR-UI - Open Source Combat Reader (GUI)"
 arch=('x86_64')
