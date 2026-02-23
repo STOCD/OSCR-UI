@@ -1,3 +1,9 @@
+oscr-ui (10.1.0-1) stable; urgency=low
+
+  * See https://github.com/STOCD/OSCR-UI/releases/v10.1.0
+
+ -- Shinga  <test@example.org>  Mon, 23 Jan 2026 17:14:56 +0100
+
 oscr-ui (10.0.0-1) UNRELEASED; urgency=low
 
   * Initial release.
