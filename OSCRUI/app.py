@@ -160,7 +160,7 @@ class OSCRUI():
         try:
             dir_path.mkdir(exist_ok=True)
             templog_folder_path = dir_path / '_temp'
-            templog_folder_path.mkdir(mode=0o755, exist_ok=True)
+            templog_folder_path.mkdir(exist_ok=True)
         except OSError as e:
             return e
 
@@ -195,7 +195,7 @@ class OSCRUI():
             config_dir = Path(home_dir, '.config', 'OSCR_UI')
             if self.setup_config_dir(config_dir) is None:
                 return config_dir
-            config_dir = home_dir / '.oscr_ui'
+            config_dir = Path(home_dir, '.oscr_ui')
             if self.setup_config_dir(config_dir) is None:
                 return config_dir
 
