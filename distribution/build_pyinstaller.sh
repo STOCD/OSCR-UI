@@ -16,12 +16,9 @@ fi
 echo "[Info]  Activating venv."
 . ".venv/bin/activate"
 
-echo "[Info]  Installing dependencies."
+echo "[Info]  Installing (build) dependencies."
 python3 -m pip install --upgrade pip setuptools wheel
-python3 -m pip install -e .
-
-echo "[Info]  Install PyInstaller build tool."
-python3 -m pip install "pyinstaller==6.19.0"
+python3 -m pip install -e ".[pyinst]"
 
 echo "[Info]  Creating binary app."
 pyinstaller --noconfirm --clean --onedir --name OSCR-UI main.py \

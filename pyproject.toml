@@ -26,8 +26,9 @@ classifiers = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-gui = []
-cli = []
+pyinst = [
+    "pyinstaller==6.19.0"
+]
 
 [project.urls]
 Homepage = "https://github.com/STOCD/OSCR-UI"

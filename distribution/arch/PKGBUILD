@@ -23,8 +23,7 @@ build() {
 
   # Upgrade pip then install exact packages used in CI
   pip install --upgrade pip
-  pip install -e .
-  pip install pyinstaller==6.19.0
+  pip install -e ".[pyinst]"
 
   # Run pyinstaller from the venv
   # ensure we run pyinstaller in project root and output to dist/
