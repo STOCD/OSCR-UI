@@ -1,6 +1,6 @@
 import copy
 
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 
 WEIGHT_CONVERSION = {
     'normal': QFont.Weight.Normal,
@@ -47,6 +47,7 @@ class AppTheme:
         - :param theme_tree: options that affect the UI, but are not directly related to the style
         """
         self.scale = scale
+        self.icons: dict[str, QIcon] = dict()
         self.opt: ThemeOptions = ThemeOptions(theme_options)
         if len(theme_tree) > 0:
             self._theme_data: dict[str, dict] = theme_tree

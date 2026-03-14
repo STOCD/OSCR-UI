@@ -17,6 +17,7 @@ from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
 from .parserbridge import ParserBridge
+from .sidebar import OSCRLeftSidebar
 from .theme import AppTheme
 from .translation import init_translation, tr
 from .widgetbuilder import (
@@ -97,6 +98,8 @@ class OSCRUI():
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.parser: ParserBridge = ParserBridge(self.settings, self.config, self.widgets)
+        self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
+            version, self.parser, self.widgets, self.theme2, self.config, self.settings)
         self.tables: AnalysisTables = AnalysisTables(self.theme2, self.settings)
         self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme2, self.settings)
         self.parser._tables = self.tables
@@ -158,6 +161,7 @@ class OSCRUI():
             'json': 'json.svg'
         }
         self.icons = load_icon_series(icons, self.app_dir)
+        self.theme2.icons = self.icons
 
     def setup_config_dir(self, dir_path: Path) -> None | OSError:
         """
@@ -391,306 +395,12 @@ class OSCRUI():
         main_layout.addWidget(center, 0, 2)
 
         main_frame.setLayout(main_layout)
-        self.setup_left_sidebar_tabber(left)
+        self.sidebar.create_sidebar(left)
         self.setup_main_tabber(center)
         self.setup_overview_frame()
         self.setup_analysis_frame()
         self.setup_league_standings_frame()
         self.setup_settings_frame()
-
-    def setup_left_sidebar_league(self):
-        """
-        Sets up the league table management tab of the left sidebar
-        """
-        frame = self.widgets.sidebar_tab_frames[1]
-        m = self.theme['defaults']['margin']
-        left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(m, m, m, m)
-        left_layout.setSpacing(self.theme['defaults']['csp'])
-        left_layout.setAlignment(ATOP)
-
-        map_layout = QHBoxLayout()
-        map_label = self.create_label(tr('Available Maps:'), 'label_heading')
-        map_layout.addWidget(map_label, alignment=ALEFT | ABOTTOM)
-        fav_add_button = self.create_icon_button(
-                self.icons['star-plus'], tr('Add to Favorites'))
-        fav_add_button.clicked.connect(self.add_favorite_ladder)
-        map_layout.addWidget(fav_add_button, alignment=ARIGHT)
-        left_layout.addLayout(map_layout)
-
-        variant_list = self.create_combo_box()
-        variant_list.currentTextChanged.connect(lambda text: self.update_seasonal_records(text))
-        left_layout.addWidget(variant_list)
-        self.widgets.variant_combo = variant_list
-
-        background_frame = self.create_frame(size_policy=SMINMIN, style_override={
-                'border-radius': self.theme['listbox']['border-radius']})
-        background_layout = QVBoxLayout()
-        background_layout.setContentsMargins(0, 0, 0, 0)
-        background_frame.setLayout(background_layout)
-        ladder_selector = QListWidget(background_frame)
-        ladder_selector.setStyleSheet(self.theme2.get_style_class('QListWidget', 'listbox'))
-        ladder_selector.setFont(self.theme2.get_font('listbox'))
-        ladder_selector.setSizePolicy(SMIXMIN)
-        ladder_selector.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.widgets.ladder_selector = ladder_selector
-        ladder_selector.itemClicked.connect(
-                lambda clicked_item: self.slot_ladder(clicked_item))
-        background_layout.addWidget(ladder_selector)
-        left_layout.addWidget(background_frame, stretch=3)
-
-        fav_layout = QHBoxLayout()
-        favorites_label = self.create_label(tr('Favorites:'), 'label_heading')
-        fav_layout.addWidget(favorites_label, alignment=ALEFT | ABOTTOM)
-        fav_add_button = self.create_icon_button(
-                self.icons['star-minus'], tr('Add to Favorites'))
-        fav_add_button.clicked.connect(self.remove_favorite_ladder)
-        fav_layout.addWidget(fav_add_button, alignment=ARIGHT)
-        left_layout.addLayout(fav_layout)
-
-        background_frame = self.create_frame(size_policy=SMINMIN, style_override={
-                'border-radius': self.theme['listbox']['border-radius']})
-        background_layout = QVBoxLayout()
-        background_layout.setContentsMargins(0, 0, 0, 0)
-        background_frame.setLayout(background_layout)
-        favorite_selector = QListWidget(background_frame)
-        favorite_selector.setStyleSheet(self.theme2.get_style_class('QListWidget', 'listbox'))
-        favorite_selector.setFont(self.theme2.get_font('listbox'))
-        favorite_selector.setSizePolicy(SMIXMIN)
-        favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.widgets.favorite_ladder_selector = favorite_selector
-        for favorite_ladder in self.settings.favorite_ladders:
-            if '|' not in favorite_ladder:
-                self.settings.favorite_ladders = list()
-                break
-            ladder_text, difficulty = favorite_ladder.split('|')
-            if difficulty == 'None':
-                difficulty = None
-            item = QListWidgetItem(ladder_text)
-            item.difficulty = difficulty
-            if difficulty != 'Any' and difficulty is not None:
-                icon = self.icons[f'TFO-{difficulty.lower()}']
-                icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
-                item.setIcon(icon)
-            favorite_selector.addItem(item)
-        favorite_selector.itemClicked.connect(
-                lambda clicked_item: self.slot_ladder(clicked_item))
-        background_layout.addWidget(favorite_selector)
-        left_layout.addWidget(background_frame, stretch=2)
-
-        ladder_selector.itemClicked.connect(favorite_selector.clearSelection)
-        favorite_selector.itemClicked.connect(ladder_selector.clearSelection)
-
-        frame.setLayout(left_layout)
-
-    def setup_left_sidebar_log(self):
-        """
-        Sets up the log management tab of the left sidebar
-        """
-        frame = self.widgets.sidebar_tab_frames[0]
-        margin = self.theme['defaults']['margin']
-        left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(margin, margin, margin, margin)
-        left_layout.setSpacing(0)
-        left_layout.setAlignment(ATOP)
-
-        head_layout = QHBoxLayout()
-        head = self.create_label(tr('STO Combatlog:'), 'label_heading')
-        head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
-        cut_log_button = self.create_icon_button(
-                self.icons['edit'], tr('Manage Logfile'))
-        cut_log_button.clicked.connect(self.split_dialog)
-        head_layout.addWidget(cut_log_button, alignment=ARIGHT)
-        left_layout.addLayout(head_layout)
-
-        self.entry = QLineEdit(self.settings.log_path)
-        self.entry.setStyleSheet(self.theme2.get_style_class('QLineEdit', 'entry'))
-        self.entry.setFont(self.theme2.get_font('entry'))
-        self.entry.setSizePolicy(SMIXMAX)
-        left_layout.addWidget(self.entry)
-
-        entry_button_config = {
-            tr('Browse ...'): {
-                'callback': lambda: self.browse_log(self.entry), 'align': ALEFT,
-                'style': {'margin-left': 0}
-            },
-            tr('Default'): {
-                'callback': lambda: self.entry.setText(self.settings.sto_log_path),
-                'align': AHCENTER
-            },
-            tr('Analyze'): {
-                'callback': lambda: self.parser.analyze_log_file(Path(self.entry.text())),
-                'align': ARIGHT, 'style': {'margin-right': 0}
-            }
-        }
-        entry_buttons = self.create_button_series(entry_button_config, 'button')
-        entry_buttons.setContentsMargins(0, 0, 0, self.theme['defaults']['margin'])
-        left_layout.addLayout(entry_buttons)
-
-        background_frame = self.create_frame(size_policy=SMINMIN, style_override={
-                'border-radius': self.theme['listbox']['border-radius'], 'margin-top': '@csp',
-                'margin-bottom': '@csp'})
-        background_layout = QVBoxLayout()
-        background_layout.setContentsMargins(0, 0, 0, 0)
-        background_frame.setLayout(background_layout)
-        combats_list = QListView(background_frame)
-        combats_list.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
-        combats_list.setStyleSheet(self.theme2.get_style_class('QListView', 'listbox'))
-        combats_list.setFont(self.theme2.get_font('listbox'))
-        combats_list.setAlternatingRowColors(True)
-        combats_list.setSizePolicy(SMIXMIN)
-        combats_list.setModel(self.parser.analyzed_combats)
-        ui_scale = self.config.ui_scale
-        border_width = 1 * ui_scale
-        padding = 4 * ui_scale
-        combats_list.setItemDelegate(CombatDelegate(border_width, padding))
-        combats_list.doubleClicked.connect(
-            lambda: self.parser.show_combat(combats_list.currentIndex().data()[0]))
-        background_layout.addWidget(combats_list)
-        self.widgets.combats_list = combats_list
-        left_layout.addWidget(background_frame, stretch=1)
-
-        combat_button_row = QGridLayout()
-        combat_button_row.setContentsMargins(0, 0, 0, 0)
-        combat_button_row.setSpacing(self.theme['defaults']['csp'])
-        combat_button_row.setColumnStretch(3, 1)
-        export_button = self.create_icon_button(
-                self.icons['export-parse'], tr('Export Combat'), parent=frame)
-        combat_button_row.addWidget(export_button, 0, 0)
-        more_combats_button = self.create_icon_button(
-                self.icons['parser-down'], tr('Parse Older Combats'), parent=frame)
-        combat_button_row.addWidget(more_combats_button, 0, 1)
-        json_export_button = self.create_icon_button(
-                self.icons['json'], tr('Export Combat to JSON File'), parent=frame)
-        combat_button_row.addWidget(json_export_button, 0, 2)
-        left_layout.addLayout(combat_button_row)
-        more_combats_button.clicked.connect(lambda: self.parser.analyze_log_background(
-                self.settings.combats_to_parse))
-        export_button.clicked.connect(
-                lambda: self.parser.save_combat(self.current_combats.currentIndex().data()))
-        json_export_button.clicked.connect(
-                lambda: self.parser.export_combat_json(self.current_combats.currentIndex().data()))
-
-        sep = self.create_frame(style='medium_frame')
-        sep.setFixedHeight(margin)
-        left_layout.addWidget(sep)
-        log_layout = QHBoxLayout()
-        log_layout.setContentsMargins(0, 0, 0, 0)
-        log_layout.setSpacing(margin)
-        log_layout.setAlignment(ALEFT)
-        player_duration_label = self.create_label(tr('Log Duration:'))
-        log_layout.addWidget(player_duration_label)
-        self.widgets.log_duration_value = self.create_label('')
-        log_layout.addWidget(self.widgets.log_duration_value)
-        left_layout.addLayout(log_layout)
-        player_layout = QHBoxLayout()
-        player_layout.setContentsMargins(0, 0, 0, 0)
-        player_layout.setSpacing(margin)
-        player_layout.setAlignment(ALEFT)
-        player_duration_label = self.create_label(tr('Active Player Duration:'))
-        player_layout.addWidget(player_duration_label)
-        self.widgets.player_duration_value = self.create_label('')
-        player_layout.addWidget(self.widgets.player_duration_value)
-        left_layout.addLayout(player_layout)
-        detection_button = self.create_button(tr('Map Detection Details'))
-        detection_button.clicked.connect(
-                lambda: self.show_detection_info(self.current_combats.currentIndex().data()[0]))
-        left_layout.addWidget(detection_button, alignment=AHCENTER)
-
-        frame.setLayout(left_layout)
-
-    def setup_left_sidebar_about(self):
-        """
-        Sets up the about tab of the left sidebar
-        """
-        frame = self.widgets.sidebar_tab_frames[2]
-        m = self.theme['defaults']['margin']
-        left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(m, m, m, m)
-        left_layout.setSpacing(m)
-        left_layout.setAlignment(ATOP)
-
-        head_label = self.create_label(tr('About OSCR:'), 'label_heading')
-        left_layout.addWidget(head_label)
-        about_label = self.create_label(tr(
-                'Open Source Combatlog Reader (OSCR), developed by the STO Community '
-                'Developers in cooperation with the STO Builds Discord.'))
-        about_label.setWordWrap(True)
-        about_label.setMinimumWidth(50)  # to fix the word wrap
-        about_label.setSizePolicy(SMINMAX)
-        left_layout.addWidget(about_label)
-        link_button_style = {
-            'default': {},
-            tr('Website'): {
-                'callback': lambda: open_link(self.config.link_website), 'align': AHCENTER},
-            tr('Github'): {
-                'callback': lambda: open_link(self.config.link_github), 'align': AHCENTER},
-            tr('Downloads'): {
-                'callback': lambda: open_link(self.config.link_downloads), 'align': AHCENTER}
-        }
-        button_layout, buttons = self.create_button_series(
-                link_button_style, 'button', shape='column', ret=True)
-        buttons[0].setToolTip(self.config.link_website)
-        buttons[1].setToolTip(self.config.link_github)
-        buttons[2].setToolTip(self.config.link_downloads)
-        link_button_frame = self.create_frame(style='medium_frame')
-        link_button_frame.setLayout(button_layout)
-        left_layout.addWidget(link_button_frame, alignment=AHCENTER)
-        seperator = self.create_frame(style='light_frame', size_policy=SMINMAX)
-        seperator.setFixedHeight(1)
-        left_layout.addWidget(seperator)
-        version_label = self.create_label(
-                f'{tr("Version")}: {self.version}', 'label_subhead')
-        left_layout.addWidget(version_label)
-        logo_layout = QGridLayout()
-        logo_layout.setContentsMargins(0, 0, 0, 0)
-        logo_layout.setColumnStretch(1, 1)
-        logo_size = [self.theme2.opt.icon_size * 4] * 2
-        stocd_logo = self.create_icon_button(
-                self.icons['stocd'], self.config.link_stocd,
-                style_override={'border-style': 'none'}, icon_size=logo_size)
-        stocd_logo.clicked.connect(lambda: open_link(self.config.link_stocd))
-        logo_layout.addWidget(stocd_logo, 0, 0)
-        stobuilds_logo = self.create_icon_button(
-                self.icons['stobuilds'], self.config.link_stobuilds,
-                style_override={'border-style': 'none'}, icon_size=logo_size)
-        stobuilds_logo.clicked.connect(lambda: open_link(self.config.link_stobuilds))
-        logo_layout.addWidget(stobuilds_logo, 0, 2)
-        logo_frame = self.create_frame(style='medium_frame', size_policy=SMINMAX)
-        logo_frame.setLayout(logo_layout)
-        left_layout.addWidget(logo_frame, stretch=1, alignment=ABOTTOM)
-        frame.setLayout(left_layout)
-
-    def setup_left_sidebar_tabber(self, frame: QFrame):
-        """
-        Sets up the sidebar used to select parses and combats
-
-        Parameters:
-        - :param frame: QFrame -> parent frame of the sidebar
-        """
-        log_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
-        league_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
-        about_frame = self.create_frame(style='medium_frame', size_policy=SMINMIN)
-        sidebar_tabber = QTabWidget(frame)
-        sidebar_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
-        sidebar_tabber.tabBar().hide()
-        sidebar_tabber.setSizePolicy(SMAXMIN)
-        sidebar_tabber.addTab(log_frame, tr('Log'))
-        sidebar_tabber.addTab(league_frame, tr('League'))
-        sidebar_tabber.addTab(about_frame, tr('About'))
-        self.widgets.sidebar_tabber = sidebar_tabber
-        self.widgets.sidebar_tab_frames.append(log_frame)
-        self.widgets.sidebar_tab_frames.append(league_frame)
-        self.widgets.sidebar_tab_frames.append(about_frame)
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(sidebar_tabber)
-        frame.setLayout(layout)
-
-        self.setup_left_sidebar_log()
-        self.setup_left_sidebar_league()
-        self.setup_left_sidebar_about()
 
     def setup_main_tabber(self, frame: QFrame):
         """

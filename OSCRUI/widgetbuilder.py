@@ -41,6 +41,133 @@ SCROLLOFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 SCROLLON = Qt.ScrollBarPolicy.ScrollBarAlwaysOn
 
 
+def create_button2(
+        theme: AppTheme, text: str, style: str = 'button', style_override: dict = {},
+        toggle: bool = None):
+    """
+    Creates a button according to style with parent.
+
+    Parameters:
+    - :param theme: reference to AppTheme
+    - :param text: text to be shown on the button
+    - :param style: name of the style as in self.theme or style dict
+    - :param style_override: style dict to override default style (optional)
+    - :param toggle: True or False when button should be a toggle button, None when it should be a \
+    normal button; the bool value indicates the default state of the button
+
+    :return: configured QPushButton
+    """
+    button = QPushButton(text)
+    button.setStyleSheet(theme.get_style_class('QPushButton', style, style_override))
+    if 'font' in style_override:
+        button.setFont(theme.get_font(style, style_override['font']))
+    else:
+        button.setFont(theme.get_font(style))
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    button.setSizePolicy(SMAXMAX)
+    if isinstance(toggle, bool):
+        button.setCheckable(True)
+        button.setChecked(toggle)
+    return button
+
+
+def create_button_series2(
+        theme: AppTheme, buttons: dict[str, dict], style: str, shape: str = 'row',
+        seperator: str = '', ret: bool = False) -> (
+            QVBoxLayout | QHBoxLayout | tuple[QVBoxLayout | QHBoxLayout, list[QPushButton]]):
+    """
+    Creates a row / column of buttons.
+
+    Parameters:
+    - :param theme: reference to AppTheme
+    - :param buttons: dictionary containing button details
+        - key "default" contains style override for all buttons (optional)
+        - all other keys represent one button, key will be the text on the button; value for the
+        key contains dict with details for the specific button (all optional)
+            - "callback": callable that will be called on button click
+            - "style": individual style override dict
+            - "toggle": True or False when button should be a toggle button, None when it should
+                be a normal button; the bool value indicates the default state of the button
+            - "stretch": stretch value for the button
+            - "align": alignment flag for button
+    - :param style: key for AppTheme -> default style
+    - :param shape: row / column
+    - :param seperator: string seperator displayed between buttons (optional)
+    - :param ret: set to true to return list of created buttons along with layout
+
+    :return: populated QVBoxlayout / QHBoxlayout
+    """
+    if 'default' in buttons:
+        defaults = theme.merge_style(theme[style], buttons.pop('default'))
+    else:
+        defaults = theme[style]
+
+    if shape == 'column':
+        layout = QVBoxLayout()
+    else:
+        shape = 'row'
+        layout = QHBoxLayout()
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(0)
+
+    if seperator != '':
+        sep_style = {
+            'color': defaults['color'], 'margin': 0, 'padding': 0, 'background': '#00000000'}
+
+    button_list = []
+    for i, (name, detail) in enumerate(buttons.items()):
+        if 'style' in detail:
+            button_style = theme.merge_style(defaults, detail['style'])
+        else:
+            button_style = defaults
+        toggle_button = detail['toggle'] if 'toggle' in detail else None
+        bt = create_button2(theme, name, style, button_style, toggle_button)
+        if 'callback' in detail and isinstance(detail['callback'], CALLABLE):
+            if toggle_button:
+                bt.clicked[bool].connect(detail['callback'])
+            else:
+                bt.clicked.connect(detail['callback'])
+        stretch = detail['stretch'] if 'stretch' in detail else 0
+        if 'align' in detail:
+            layout.addWidget(bt, stretch, detail['align'])
+        else:
+            layout.addWidget(bt, stretch)
+        button_list.append(bt)
+        if seperator != '' and i < (len(buttons) - 1):
+            sep_label = create_label2(theme, seperator, 'label', sep_style)
+            sep_label.setSizePolicy(SMAXMIN)
+            layout.addWidget(sep_label, alignment=ACENTER)
+
+    if ret:
+        return layout, button_list
+    else:
+        return layout
+
+
+def create_combo_box2(
+        theme: AppTheme, style: str = 'combobox', style_override: dict = {}) -> QComboBox:
+    """
+    Creates a combobox with given style and returns it.
+
+    Parameters:
+    - :param theme: reference to AppTheme
+    - :param style: key for theme -> default style
+    - :param style_override: style dict to override default style
+
+    :return: styled QCombobox
+    """
+    combo_box = QComboBox()
+    combo_box.setStyleSheet(theme.get_style_class('QComboBox', style, style_override))
+    if 'font' in style_override:
+        combo_box.setFont(theme.get_font(style, style_override['font']))
+    else:
+        combo_box.setFont(theme.get_font(style))
+    combo_box.setSizePolicy(SMINMAX)
+    combo_box.setCursor(Qt.CursorShape.PointingHandCursor)
+    combo_box.view().setCursor(Qt.CursorShape.PointingHandCursor)
+    return combo_box
+
+
 def create_frame2(
         theme: AppTheme, style: str = 'frame', style_override: dict = {},
         size_policy: QSizePolicy | None = None) -> QFrame:
@@ -48,6 +175,7 @@ def create_frame2(
     Creates a frame with default styling
 
     Parameters:
+    - :param theme: reference to AppTheme
     - :param style: style dict to override default style (optional)
     - :param size_policy: size policy of the frame (optional)
 
@@ -64,6 +192,7 @@ def create_label2(theme: AppTheme, text: str, style: str = 'label', style_overri
     Creates a label according to style with parent.
 
     Parameters:
+    - :param theme: reference to AppTheme
     - :param text: text to be shown on the label
     - :param style: name of the style as in self.theme
     - :param style_override: style dict to override default style (optional)
@@ -79,6 +208,35 @@ def create_label2(theme: AppTheme, text: str, style: str = 'label', style_overri
     else:
         label.setFont(theme.get_font(style))
     return label
+
+
+def create_icon_button2(
+        theme: AppTheme, icon_name: str, tooltip: str = '', style: str = 'icon_button',
+        style_override={}, icon_size: tuple = ()) -> QPushButton:
+    """
+    Creates a button showing an icon according to style with parent.
+
+    Parameters:
+    - :param theme: reference to AppTheme
+    - :param icon_name: name of the icon to be shown on the button
+    - :param tooltip: text to show when the mouse pointer is on the button
+    - :param style: name of the style as in self.theme or style dict
+    - :param style_override: style dict to override default style (optional)
+    - :param icon_size: set icon size in case it should be different from the default
+
+    :return: configured QPushButton
+    """
+    button = QPushButton('')
+    button.setIcon(theme.icons[icon_name])
+    if tooltip:
+        button.setToolTip(tooltip)
+    button.setStyleSheet(theme.get_style_class('QPushButton', style, style_override))
+    if len(icon_size) != 2:
+        icon_size = [theme.opt.icon_size] * 2
+    button.setIconSize(QSize(*icon_size))
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    button.setSizePolicy(SMAXMAX)
+    return button
 
 
 def create_button(self, text: str, style: str = 'button', style_override={}, toggle=None):

@@ -104,15 +104,17 @@ class ParserBridge(QObject):
         self._widgets.switch_main_tab(0)
         self._widgets.switch_overview_tab(self._global_settings.first_overview_tab)
 
-    def analyze_log_background(self, amount: int):
+    def analyze_log_background(self, amount: int = -1):
         """
         Analyzes older combats from current combatlog in the background.
 
         Parameters:
-        - :param amount: amount of combats to analyze
+        - :param amount: amount of combats to analyze (optional)
         """
         # TODO what happens if no combat is analyzed already
         if self._thread is not None and not self._thread.is_alive():
+            if amount < 1:
+                amount = self._global_settings.combats_to_parse
             self._thread = Thread(
                 target=self._parser.analyze_log_file_mp, kwargs={'max_combats': amount})
             self._thread.start()
