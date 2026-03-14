@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QVBoxLayout)
 
 from .config import OSCRConfig, OSCRSettings
+from .dialogs import DetectionInfoDialog
 from .iofunctions import browse_path, open_link
 from .parserbridge import ParserBridge
 from .theme import AppTheme
@@ -22,12 +23,13 @@ class OSCRLeftSidebar():
     """Collapsible sidebar of the app"""
 
     def __init__(
-            self, app_version: str, parser: ParserBridge, widgets: WidgetManager, theme: AppTheme,
-            config: OSCRConfig, settings: OSCRSettings):
+            self, app_version: str, parser: ParserBridge, detection_info: DetectionInfoDialog,
+            widgets: WidgetManager, theme: AppTheme, config: OSCRConfig, settings: OSCRSettings):
         """
         Parameters:
         - :param app_version: version of the app for display on the sidebar
         - :param parser: ParserBridge
+        - :param detection_info: DetectionInfoDialog
         - :param widgets: WidgetManager
         - :param theme: AppTheme
         - :param config: OSCRConfig
@@ -35,6 +37,7 @@ class OSCRLeftSidebar():
         """
         self._app_version: str = app_version
         self._parser: ParserBridge = parser
+        self._detection_info: DetectionInfoDialog = detection_info
         self._widgets: WidgetManager = widgets
         self._theme: AppTheme = theme
         self._config: OSCRConfig = config
@@ -192,8 +195,7 @@ class OSCRLeftSidebar():
         player_layout.addWidget(self._widgets.player_duration_value)
         left_layout.addLayout(player_layout)
         detection_button = create_button2(self._theme, tr('Map Detection Details'))
-        # detection_button.clicked.connect(
-        #         lambda: self.show_detection_info(self.current_combats.currentIndex().data()[0]))
+        detection_button.clicked.connect(self.show_detection_info)
         left_layout.addWidget(detection_button, alignment=AHCENTER)
 
         parent_frame.setLayout(left_layout)
@@ -346,3 +348,11 @@ class OSCRLeftSidebar():
         logo_frame.setLayout(logo_layout)
         left_layout.addWidget(logo_frame, stretch=1, alignment=ABOTTOM)
         parent_frame.setLayout(left_layout)
+
+    def show_detection_info(self):
+        """
+        Shows detection info dialog
+        """
+        current_combat_meta = self._parser.current_combat_meta()
+        if current_combat_meta is not None:
+            self._detection_info.show_dialog(current_combat_meta['detection_info'])

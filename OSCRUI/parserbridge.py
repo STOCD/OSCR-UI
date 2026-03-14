@@ -287,3 +287,14 @@ class ParserBridge(QObject):
         self.damage_in_model.init_fonts(header_font, name_font, cell_font)
         self.heal_out_model.init_fonts(header_font, name_font, cell_font)
         self.heal_in_model.init_fonts(header_font, name_font, cell_font)
+
+    def current_combat_meta(self) -> dict[str] | None:
+        """
+        Returns metadata from current combat or `None` if no combat available
+
+        Parameters:
+        - :param combat_id: number of the combat to get meta
+        """
+        if self.current_combat_id >= 0:
+            return self._parser.combats[self.current_combat_id].meta
+        return None

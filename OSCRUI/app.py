@@ -14,6 +14,7 @@ from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
+from .dialogs import DetectionInfoDialog
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
 from .parserbridge import ParserBridge
@@ -47,7 +48,7 @@ class OSCRUI():
             insert_combat, update_shown_columns_dmg, update_shown_columns_heal)
     from .displayer import create_legend_item
     from .style import get_style_class, create_style_sheet, theme_font, get_style
-    from .subwindows import live_parser_toggle, show_detection_info, show_parser_error, split_dialog
+    from .subwindows import live_parser_toggle, show_parser_error, split_dialog
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
     from .widgetbuilder import create_icon_button, create_label, style_table
@@ -98,8 +99,10 @@ class OSCRUI():
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.parser: ParserBridge = ParserBridge(self.settings, self.config, self.widgets)
+        self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme2)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
-            version, self.parser, self.widgets, self.theme2, self.config, self.settings)
+            version, self.parser, self.detection_info, self.widgets, self.theme2, self.config,
+            self.settings)
         self.tables: AnalysisTables = AnalysisTables(self.theme2, self.settings)
         self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme2, self.settings)
         self.parser._tables = self.tables
