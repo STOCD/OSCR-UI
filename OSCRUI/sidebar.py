@@ -3,12 +3,13 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFrame, QGridLayout, QHBoxLayout, QLineEdit, QListView, QListWidget, QListWidgetItem,
-    QTabWidget, QVBoxLayout)
+    QTabWidget, QVBoxLayout, QWidget)
 
 from .config import OSCRConfig, OSCRSettings
-from .dialogs import DetectionInfoDialog
+from .dialogs import DetectionInfoDialog, DialogsWrapper
 from .iofunctions import browse_path, open_link
 from .parserbridge import ParserBridge
+from .splitdialog import SplitDialog
 from .theme import AppTheme
 from .translation import tr
 from .widgetbuilder import (
@@ -23,13 +24,16 @@ class OSCRLeftSidebar():
     """Collapsible sidebar of the app"""
 
     def __init__(
-            self, app_version: str, parser: ParserBridge, detection_info: DetectionInfoDialog,
-            widgets: WidgetManager, theme: AppTheme, config: OSCRConfig, settings: OSCRSettings):
+            self, app_version: str, main_window: QWidget, parser: ParserBridge,
+            detection_info: DetectionInfoDialog, dialogs: DialogsWrapper, widgets: WidgetManager,
+            theme: AppTheme, config: OSCRConfig, settings: OSCRSettings):
         """
         Parameters:
         - :param app_version: version of the app for display on the sidebar
+        - :param main_window: primary window of the app
         - :param parser: ParserBridge
         - :param detection_info: DetectionInfoDialog
+        - :param dialogs: DialogsWrapper
         - :param widgets: WidgetManager
         - :param theme: AppTheme
         - :param config: OSCRConfig
@@ -38,10 +42,12 @@ class OSCRLeftSidebar():
         self._app_version: str = app_version
         self._parser: ParserBridge = parser
         self._detection_info: DetectionInfoDialog = detection_info
+        self._dialogs: DialogsWrapper = dialogs
         self._widgets: WidgetManager = widgets
         self._theme: AppTheme = theme
         self._config: OSCRConfig = config
         self._settings: OSCRSettings = settings
+        self._split_dialog: SplitDialog = SplitDialog(main_window, parser, dialogs, theme)
         self._log_path_widget: QLineEdit
 
     def create_sidebar(self, parent_frame: QFrame):
@@ -103,7 +109,8 @@ class OSCRLeftSidebar():
         head = create_label2(self._theme, tr('STO Combatlog:'), 'label_heading')
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         split_log_button = create_icon_button2(self._theme, 'edit', tr('Manage Logfile'))
-        # split_log_button.clicked.connect(self.split_dialog)
+        split_log_button.clicked.connect(
+            lambda: self._split_dialog.show_dialog(self._log_path_widget.text()))
         head_layout.addWidget(split_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
 

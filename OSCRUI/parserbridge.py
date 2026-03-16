@@ -1,17 +1,19 @@
 from pathlib import Path
 from threading import Thread
 
-from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtCore import QModelIndex, QObject, Signal
 from PySide6.QtGui import QFont
 
-from OSCR import OSCR, extract_bytes, TABLE_HEADER
+from OSCR import (
+    compose_logfile as oscr__compose_logfile, OSCR, extract_bytes as oscr__extract_bytes,
+    repair_logfile as oscr__repair_logfile, TABLE_HEADER)
 from OSCR.combat import Combat
 
 from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import CombatModel, DamageTreeModel, HealTreeModel, OverviewTableModel
-from .dialogs import show_message
+from .dialogs import DialogsWrapper
 from .iofunctions import browse_path, save_to_json
 from .translation import tr
 from .widgetmanager import WidgetManager
@@ -24,12 +26,16 @@ class ParserBridge(QObject):
     parser_error = Signal(object)
 
     def __init__(
-            self, global_settings: OSCRSettings, global_config: OSCRConfig, widgets: WidgetManager):
+            self, global_settings: OSCRSettings, global_config: OSCRConfig, widgets: WidgetManager,
+            dialogs: DialogsWrapper):
         """
         Interface that connects with the OSCR parser
 
         Parameters:
-        - :param parser_settings: dictionary containing settings for the parser
+        - :param global_settings: settings of the app
+        - :param global_config: config of the app
+        - :param widgets: stores widgets
+        - :param dialogs: used to access dialogs
         """
         super().__init__()
         self._global_settings: OSCRSettings = global_settings
@@ -48,6 +54,7 @@ class ParserBridge(QObject):
         self.heal_out_model: HealTreeModel = HealTreeModel()
         self.heal_in_model: HealTreeModel = HealTreeModel()
         self._widgets: WidgetManager = widgets
+        self._dialogs: DialogsWrapper = dialogs
         self._tables: AnalysisTables
         self._graphs: AnalysisGraphs
 
@@ -250,7 +257,7 @@ class ParserBridge(QObject):
             if len(combats) < 1:
                 return False
             combat = combats[0]
-            extract_bytes(path, path, combat[5], combat[6])
+            oscr__extract_bytes(path, path, combat[5], combat[6])
         return True
 
     def populate_split_combats_list(
@@ -298,3 +305,52 @@ class ParserBridge(QObject):
         if self.current_combat_id >= 0:
             return self._parser.combats[self.current_combat_id].meta
         return None
+
+    def repair_logfile(self, path: Path):
+        """
+        Repairs given logfile.
+        """
+        if path.is_file():
+            res = oscr__repair_logfile(str(path), str(self._global_config.templog_folder_path))
+            if res == '':
+                self._dialogs.show_message(
+                    tr('Repair Logfile'), tr('The Logfile has been repaired.'))
+            elif res == 'PermissionError':
+                error_message = ('The Logfile could not be repaired due to a permission error. '
+                                 'Make sure the selected logfile can be overwritten without '
+                                 'elevated permissions.')
+                self._dialogs.show_message(tr('Permission Error'), tr(error_message), 'error')
+        else:
+            self._dialogs.show_message(
+                tr('Repair Logfile'), tr('The Logfile you are trying to open does not exist.'),
+                'warning')
+
+    def isolate_combats(self, path: Path) -> list[tuple]:
+        """
+        Isolates combats of logfile at given path and returns them.
+
+        Parameters:
+        - :param path: path to logfile
+        """
+        return self._parser.isolate_combats(str(path))
+
+    def extract_combats(self, selected_indices: list[QModelIndex], source_path: Path):
+        """
+        Extracts combats in `selected_indices` from current logfile and prompts the user to select a
+        file to write them to.
+
+        Parameters:
+        - :param selected_indices: list of model indices refering to the selected combats
+        - :param source_path: path of logfile that combats are extracted from
+        """
+        combat_intervals = list()
+        for index in selected_indices:
+            data = index.data()
+            combat_intervals.append((data[5], data[6]))
+        combat_intervals.sort(key=lambda element: element[0])
+        target_path = browse_path(source_path.parent, 'Logfile (*.log);;Any File (*.*)', save=True)
+        if target_path is not None:
+            oscr__compose_logfile(
+                str(source_path), str(target_path), combat_intervals,
+                str(self._global_config.templog_folder_path))
+            self._dialogs.show_message(tr('Split Logfile'), tr('Logfile has been saved.'))

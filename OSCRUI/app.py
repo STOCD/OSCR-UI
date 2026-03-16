@@ -14,7 +14,7 @@ from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
-from .dialogs import DetectionInfoDialog
+from .dialogs import DetectionInfoDialog, DialogsWrapper
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .leagueconnector import OSCRClient
 from .parserbridge import ParserBridge
@@ -98,11 +98,13 @@ class OSCRUI():
         self.app, self.window = self.create_main_window()
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
-        self.parser: ParserBridge = ParserBridge(self.settings, self.config, self.widgets)
+        self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme2)
+        self.parser: ParserBridge = ParserBridge(
+            self.settings, self.config, self.widgets, self.dialogs)
         self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme2)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
-            version, self.parser, self.detection_info, self.widgets, self.theme2, self.config,
-            self.settings)
+            version, self.window, self.parser, self.detection_info, self.dialogs, self.widgets,
+            self.theme2, self.config, self.settings)
         self.tables: AnalysisTables = AnalysisTables(self.theme2, self.settings)
         self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme2, self.settings)
         self.parser._tables = self.tables
