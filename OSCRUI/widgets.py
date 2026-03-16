@@ -451,6 +451,8 @@ class LegendPlot(QFrame):
 
     def clear(self):
         self._plot.clear()
+        QWidget().setLayout(self._legend.layout())
+        self._plot.hide()
 
     def show_plot(self):
         self._plot.show()

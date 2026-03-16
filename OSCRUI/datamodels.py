@@ -52,6 +52,16 @@ class TableModel(QAbstractTableModel):
         self._index = index
         self.endResetModel()
 
+    def clear(self):
+        """
+        Removes all data from model.
+        """
+        self.beginResetModel()
+        self._data = list()
+        self._header = list()
+        self._index = list()
+        self.endResetModel()
+
     def rowCount(self, index: QModelIndex):
         super().headerData
         return len(self._data)

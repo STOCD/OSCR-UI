@@ -30,6 +30,14 @@ class AnalysisGraphs():
         self.dps_graph_plot = LegendPlot(self._theme, x_unit='s')
         self.dmg_bar_plot = LegendPlot(self._theme, x_unit='s')
 
+    def clear_overview_plots(self):
+        """
+        Resets plots on overview tab.
+        """
+        self.dps_bar_plot.clear()
+        self.dps_graph_plot.clear()
+        self.dmg_bar_plot.clear()
+
     def plot_overview_data(
             self, overview_table: list[list], dps_graph_data: dict[str, tuple],
             dmg_bar_data: dict[str, tuple], time_data: dict[str, tuple]):

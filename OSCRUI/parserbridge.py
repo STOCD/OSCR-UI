@@ -195,7 +195,10 @@ class ParserBridge(QObject):
             table_cell_data = [list(line[2:]) for line in overview_table]
             table_index = [line[0] + line[1] for line in overview_table]
             self.overview_table_model.set_data(table_cell_data, TABLE_HEADER, table_index)
-        self._graphs.plot_overview_data(overview_table, dps_graph_data, dmg_bar_data, time_data)
+            self._graphs.plot_overview_data(overview_table, dps_graph_data, dmg_bar_data, time_data)
+        else:
+            self.overview_table_model.clear()
+            self._graphs.clear_overview_plots()
         self.populate_analysis(combat)
         self._tables.refresh_tables(
             self.damage_out_model.player_index, self.damage_in_model.player_index,
