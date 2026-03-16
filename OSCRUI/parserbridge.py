@@ -141,6 +141,7 @@ class ParserBridge(QObject):
         self.analyzed_combats.insert_item((combat.id, combat.map, date, time, difficulty))
         if combat.id == 0:
             self.current_combat_id = 0
+            self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
             self.show_combat(combat=combat)
             self.analyze_log_background(self._global_settings.combats_to_parse - 1)
 
