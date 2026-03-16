@@ -10,7 +10,7 @@ from OSCR.combat import Combat
 
 from .datamodels import OverviewTableModel, SortingProxy
 from .widgetbuilder import ACENTER, AVCENTER, SMINMIN, SMIXMAX
-from .widgetbuilder import create_frame, create_label, style_table
+from .widgetbuilder import create_frame, create_label
 from .widgets import CustomPlotAxis
 from .style import get_style, theme_font
 
@@ -293,7 +293,7 @@ def create_overview_table(self, table_data: Iterable[Sequence]) -> QTableView:
     sort.setSourceModel(model)
     table = QTableView(self.widgets.overview_tab_frames[0])
     table.setModel(sort)
-    style_table(self, table)
+    # style_table(self, table)
     if self.settings.overview_sort_order == 'Descending':
         sort_order = Qt.SortOrder.AscendingOrder
     else:

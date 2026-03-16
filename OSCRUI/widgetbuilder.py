@@ -541,33 +541,3 @@ def create_analysis_table(self, widget) -> QTreeView:
     table.expanded.connect(lambda: resize_tree_table(table))
     table.collapsed.connect(lambda: resize_tree_table(table))
     return table
-
-
-def style_table(self, table: QTableView, style_override: dict = {}, single_row_selection=False):
-    """
-    Styles the given table.
-
-    Parameters:
-    - :param table: table to be styled
-    - :param style_override: style override for table
-    - :param single_row_selection: True when only one row should be selectable at once
-    """
-    table.setAlternatingRowColors(self.theme['s.c']['table_alternate'])
-    table.setShowGrid(self.theme['s.c']['table_gridline'])
-    table.setSortingEnabled(True)
-    table.setStyleSheet(get_style_class(self, 'QTableView', 'table', style_override))
-    table.setHorizontalScrollMode(SMPIXEL)
-    table.setVerticalScrollMode(SMPIXEL)
-    table.horizontalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_header'))
-    table.verticalHeader().setStyleSheet(get_style_class(self, 'QHeaderView', 'table_index'))
-    table.verticalHeader().setMinimumHeight(1)
-    table.verticalHeader().setDefaultSectionSize(1)
-    table.resizeColumnsToContents()
-    table.resizeRowsToContents()
-    table.horizontalHeader().setSortIndicatorShown(False)
-    table.horizontalHeader().setSectionResizeMode(RFIXED)
-    table.verticalHeader().setSectionResizeMode(RCONTENT)
-    table.setSizePolicy(SMINMIN)
-    if single_row_selection:
-        table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)

@@ -1,8 +1,9 @@
 from PySide6.QtCore import QModelIndex, Qt
-from PySide6.QtWidgets import QFrame, QTableView, QTreeView
+from PySide6.QtWidgets import QAbstractItemView, QFrame, QTableView, QTreeView
 
 from .config import OSCRSettings
 from .theme import AppTheme
+from .widgetbuilder import RCONTENT, RFIXED, SMINMIN, SMPIXEL
 
 
 class AnalysisTables():
@@ -75,3 +76,34 @@ class AnalysisTables():
             else:
                 self.heal_out_table.hideColumn(i + 1)
                 self.heal_in_table.hideColumn(i + 1)
+
+    def style_table(self, table: QTableView, style_override: dict = {}, single_row_selection=False):
+        """
+        Styles the given table.
+
+        Parameters:
+        - :param table: table to be styled
+        - :param style_override: style override for table
+        - :param single_row_selection: True when only one row should be selectable at once
+        """
+        table.setAlternatingRowColors(self._theme.opt.table_alternate)
+        table.setShowGrid(self._theme.opt.table_gridline)
+        table.setSortingEnabled(True)
+        table.setStyleSheet(self._theme.get_style_class('QTableView', 'table', style_override))
+        table.setHorizontalScrollMode(SMPIXEL)
+        table.setVerticalScrollMode(SMPIXEL)
+        table.horizontalHeader().setStyleSheet(
+            self._theme.get_style_class('QHeaderView', 'table_header'))
+        table.verticalHeader().setStyleSheet(
+            self._theme.get_style_class('QHeaderView', 'table_index'))
+        table.verticalHeader().setMinimumHeight(1)
+        table.verticalHeader().setDefaultSectionSize(1)
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()
+        table.horizontalHeader().setSortIndicatorShown(False)
+        table.horizontalHeader().setSectionResizeMode(RFIXED)
+        table.verticalHeader().setSectionResizeMode(RCONTENT)
+        table.setSizePolicy(SMINMIN)
+        if single_row_selection:
+            table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+            table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)

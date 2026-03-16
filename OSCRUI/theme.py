@@ -261,7 +261,7 @@ class AppTheme:
                 'mbg': '#242424',  # medium background
                 'lbg': '#404040',  # light background
                 'oscr': '#c82934',  # accent
-                'loscr': '#20c82934',  # light accent (12.5% opacity)
+                'loscr': '#401c1e',  # subtile accent
                 'font': ('Overpass', 11, 'normal'),
                 'heading': ('Overpass', 14, 'bold'),
                 'subhead': ('Overpass', 12, 'medium'),
@@ -617,7 +617,10 @@ class AppTheme:
                 },
                 '::item:hover': {
                     'background-color': '@loscr',
-                    'padding': (0, 5, 0, 5)
+                    'padding': (0, 5, 0, 5),
+                    'border-top-color': '@loscr',
+                    'border-left-color': '@loscr',
+                    'border-bottom-color': '@loscr',
                 },
                 '::item:focus': {
                     'background-color': '@bg',
@@ -626,7 +629,7 @@ class AppTheme:
                 '::item:selected': {
                     'background-color': '@bg',
                     'color': '@fg',
-                    'border': '1px solid #c82934',
+                    'border-color': '@oscr',
                 },
                 # selected but not the last click of the user
                 '::item:alternate:focus': {

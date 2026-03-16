@@ -51,7 +51,7 @@ class OSCRUI():
     from .subwindows import live_parser_toggle, show_parser_error, split_dialog
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
-    from .widgetbuilder import create_icon_button, create_label, style_table
+    from .widgetbuilder import create_icon_button, create_label
     from .leagueconnector import apply_league_table_filter, download_and_view_combat
     from .leagueconnector import (
             establish_league_connection, extend_ladder, slot_ladder,
@@ -513,7 +513,7 @@ class OSCRUI():
         table = QTableView()
         table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         table.setModel(sorting_proxy)
-        self.style_table(table)
+        self.tables.style_table(table)
         table_layout.addWidget(table)
         self.tables.overview_table = table
         table_frame.setLayout(table_layout)
@@ -731,7 +731,7 @@ class OSCRUI():
         table_style = {
                 'border-style': 'solid', 'border-width': '@bw',
                 'border-color': '@bc'}
-        self.style_table(ladder_table, table_style, single_row_selection=True)
+        self.tables.style_table(ladder_table, table_style, single_row_selection=True)
         self.widgets.ladder_table = ladder_table
         layout.addWidget(ladder_table, stretch=1)
 
