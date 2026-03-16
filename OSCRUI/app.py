@@ -231,7 +231,7 @@ class OSCRUI():
         self.current_combat_id = -1
         self.config.ui_scale = self.settings.ui_scale
         self.config.live_parser_scale = self.settings.liveparser__window_scale
-        self.config.icon_size = round(self.config.ui_scale * 24)  # TODO replace with new theme.opt
+        self.config.icon_size = round(self.config.ui_scale * 24)  # TODO remove
         self.config.templog_folder_path = self.config.config_dir / self.config.templog_folder_name
         if os.name == 'nt':
             self.config.home_dir = os.getenv('USERPROFILE') + '/'

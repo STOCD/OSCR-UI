@@ -49,6 +49,7 @@ class AppTheme:
         self.scale = scale
         self.icons: dict[str, QIcon] = dict()
         self.opt: ThemeOptions = ThemeOptions(theme_options)
+        self.opt.icon_size = round(self.opt.default_icon_size * self.scale)
         if len(theme_tree) > 0:
             self._theme_data: dict[str, dict] = theme_tree
         else:

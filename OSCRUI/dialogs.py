@@ -1,9 +1,13 @@
 from typing import Iterable
 
-from PySide6.QtWidgets import QDialog, QFrame, QLabel, QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtCore import QSize
+from PySide6.QtWidgets import (
+    QDialog, QFrame, QGridLayout, QLabel, QHBoxLayout, QPushButton, QVBoxLayout, QWidget)
 
+from OSCR_django_client import CombatLogUploadV2Response
 from OSCR import DetectionInfo
 
+from .iofunctions import open_link
 from .style import get_style
 from .theme import AppTheme
 from .translation import tr
@@ -115,6 +119,114 @@ class DetectionInfoDialog(QDialog):
             info_layout.addWidget(info_label)
 
         self._info_frame.setLayout(info_layout)
+        self.open()
+
+
+class UploadresultDialog(QDialog):
+    """Shows feedback from upload"""
+
+    def __init__(self, parent_window: QWidget, theme: AppTheme):
+        """
+        Parameters:
+        - :param parent_window: window to center dialog on
+        - :param theme: AppTheme
+        """
+        super().__init__(parent_window, modal=True)
+        self._theme: AppTheme = theme
+        self.setWindowTitle(tr('OSCR - Upload Results'))
+        self._log_id: int = -1
+        self._result_frame: QFrame
+        self._title_label: QLabel
+        self._view_button: QPushButton
+        self.build_dialog()
+
+    def build_dialog(self):
+        """
+        Creates layout of dialog
+        """
+        main_layout = QVBoxLayout()
+        thick = self._theme['app']['frame_thickness']
+        main_layout.setContentsMargins(thick, thick, thick, thick)
+        content_frame = create_frame(self)
+        content_layout = QGridLayout()
+        content_layout.setContentsMargins(thick, thick, thick, thick)
+        content_layout.setSpacing(0)
+        margin = {'margin-bottom': self._theme['defaults']['isp']}
+        self._title_label = create_label2(self._theme, '', 'label_heading', style_override=margin)
+        content_layout.addWidget(self._title_label, 0, 0, alignment=ALEFT)
+        self._view_button = create_button2(self._theme, 'View Online', style_override=margin)
+        self._view_button.clicked.connect(self.view_online)
+        content_layout.addWidget(self._view_button, 0, 0, alignment=ARIGHT)
+        self._view_button.hide()
+        self._result_frame = create_frame2(self._theme)
+        self._result_frame.setLayout(QGridLayout())
+        content_layout.addWidget(self._result_frame, 1, 0)
+        close_button = create_button2(
+            self._theme, 'Close', style_override={'margin-top': self._theme['defaults']['isp']})
+        close_button.clicked.connect(self.accept)
+        content_layout.addWidget(close_button, 2, 0, alignment=AHCENTER)
+        content_frame.setLayout(content_layout)
+        main_layout.addWidget(content_frame)
+
+        self.setStyleSheet(get_style(self, 'dialog_window'))
+        self.setSizePolicy(SMAXMAX)
+        self.setFixedSize(self.sizeHint())
+        self.setLayout(main_layout)
+
+    def view_online(self):
+        """
+        Opens webbrowser to show the uploaded combatlog on the DPS League tables.
+        """
+        if self._log_id != -1:
+            open_link(f"https://oscr.stobuilds.com/ui/combatlog/{self._log_id}/")
+
+    def show_dialog(self, result: CombatLogUploadV2Response):
+        """
+        Shows a dialog that informs about the result of the triggered upload.
+
+        Paramters:
+        - :param result: response of upload
+        """
+        QWidget().setLayout(self._result_frame.layout())
+        self._title_label.setText(result.detail)
+        if result.combatlog is None:
+            self._view_button.hide()
+        else:
+            self._log_id = result.combatlog
+            self._view_button.show()
+        result_layout = QGridLayout()
+        result_layout.setContentsMargins(0, 0, 0, 0)
+        result_layout.setSpacing(0)
+        icon_size = QSize(self._theme.opt.icon_size / 1.5, self._theme.opt.icon_size / 1.5)
+        row = 0
+        if result.results:
+            for row, line in enumerate(result.results, 1):
+                if row % 2 == 1:
+                    table_style = {'background-color': '@mbg', 'padding': (5, 3, 3, 3), 'margin': 0}
+                    icon_table_style = {'background-color': '@mbg', 'padding': 3, 'margin': 0}
+                else:
+                    table_style = {'background-color': '@bg', 'padding': (5, 3, 3, 3), 'margin': 0}
+                    icon_table_style = {'background-color': '@bg', 'padding': 3, 'margin': 0}
+                if line.updated:
+                    icon = self._theme.icons['check'].pixmap(icon_size)
+                else:
+                    icon = self._theme.icons['dash'].pixmap(icon_size)
+                status_label = create_label2(self._theme, '', style_override=icon_table_style)
+                status_label.setPixmap(icon)
+                status_label.setSizePolicy(SMINMIN)
+                result_layout.addWidget(status_label, row, 0)
+                name_label = create_label2(self._theme, line.name, style_override=table_style)
+                name_label.setSizePolicy(SMINMAX)
+                result_layout.addWidget(name_label, row, 1)
+                value_label = create_label2(
+                    self._theme, str(line.value), style_override=table_style)
+                value_label.setSizePolicy(SMINMAX)
+                value_label.setAlignment(ARIGHT)
+                result_layout.addWidget(value_label, row, 2)
+                detail_label = create_label2(self._theme, line.detail, style_override=table_style)
+                detail_label.setSizePolicy(SMINMAX)
+                result_layout.addWidget(detail_label, row, 3)
+        self._result_frame.setLayout(result_layout)
         self.open()
 
 
