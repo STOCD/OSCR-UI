@@ -1,5 +1,6 @@
 from pathlib import Path
 from threading import Thread
+from traceback import format_exception
 
 from PySide6.QtCore import QModelIndex, QObject, Signal
 from PySide6.QtGui import QFont
@@ -166,7 +167,17 @@ class ParserBridge(QObject):
         Parameters:
         - :param error: captured error with optionally additional data in the error.args attribute
         """
-        pass
+        default_message, *additional_messages = error.args
+        error.args = (default_message,)
+        error_text = ''.join(format_exception(error))
+        if len(additional_messages) > 0:
+            error_text += '\n\n++++++++++++++++++++++++++++++++++++++++++++++++++\n\n'
+            error_text += '\n'.join(additional_messages)
+        error_message = tr(
+            'An error occurred while parsing the selected combatlog. You can try repairing the '
+            'log file using the repair functionality in the "Manage Logfile" dialog. If the error '
+            'persists, please report it to the #oscr-support channel in the STOBuilds Discord.')
+        self._dialogs.show_error(tr('Parser Error'), error_message, error_text)
 
     def show_combat(self, index: int = -1, combat: Combat | None = None):
         """

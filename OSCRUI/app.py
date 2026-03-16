@@ -96,6 +96,7 @@ class OSCRUI():
         self.league_api = None
 
         self.app, self.window = self.create_main_window()
+        self.cache_assets()
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme2)
@@ -109,7 +110,6 @@ class OSCRUI():
         self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme2, self.settings)
         self.parser._tables = self.tables
         self.parser._graphs = self.graphs
-        self.cache_assets()
         self.setup_main_layout()
 
         self.window.show()

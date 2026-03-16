@@ -1,8 +1,9 @@
 from typing import Iterable
 
 from PySide6.QtCore import QSize
+from PySide6.QtGui import QTextOption
 from PySide6.QtWidgets import (
-    QDialog, QFrame, QGridLayout, QLabel, QHBoxLayout, QPushButton, QVBoxLayout, QWidget)
+    QDialog, QFrame, QGridLayout, QLabel, QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget)
 
 from OSCR_django_client import CombatLogUploadV2Response
 from OSCR import DetectionInfo
@@ -16,6 +17,7 @@ from .widgetbuilder import (
         create_button2, create_frame2, create_label2,
         create_button, create_frame, create_label,
         SMAXMAX, SMINMAX, SMINMIN, SFIXED)
+from .widgets import FlipButton
 
 
 class DetectionInfoDialog(QDialog):
@@ -248,6 +250,10 @@ class DialogsWrapper():
         self._icon_label_c: QLabel
         self._message_label_c: QLabel
         self.build_confirmation_dialog()
+        self._error_dialog: QDialog = QDialog(parent_window, modal=True)
+        self._message_label_e: QLabel
+        self._error_label_e: QTextEdit
+        self.build_error_dialog()
 
     def build_message_dialog(self):
         """Creates layout for message dialog"""
@@ -373,6 +379,81 @@ class DialogsWrapper():
         icon_size = self._theme.opt.default_big_icon_size * self._theme.scale
         self._icon_label_c.setPixmap(self._theme.icons[icon].pixmap(icon_size))
         return self._confirm_dialog.exec()
+
+    def build_error_dialog(self):
+        """
+        Creates layout of error dialog
+        """
+        thick = self._theme['app']['frame_thickness']
+        item_spacing = self._theme['defaults']['isp']
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(thick, thick, thick, thick)
+        dialog_frame = create_frame2(self._theme, size_policy=SMINMIN)
+        main_layout.addWidget(dialog_frame)
+        dialog_layout = QVBoxLayout()
+        dialog_layout.setContentsMargins(thick, thick, thick, thick)
+        dialog_layout.setSpacing(thick)
+        content_frame = create_frame2(self._theme, size_policy=SMINMIN)
+        content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(item_spacing)
+        content_layout.setAlignment(ATOP)
+
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(2 * thick)
+        icon_label = create_label2(self._theme, '')
+        icon_size = self._theme.opt.default_big_icon_size * self._theme.scale
+        icon_label.setPixmap(self._theme.icons['error'].pixmap(icon_size))
+        top_layout.addWidget(icon_label, alignment=ALEFT | AVCENTER)
+        self._message_label_e = create_label2(self._theme, '')
+        self._message_label_e.setWordWrap(True)
+        self._message_label_e.setSizePolicy(SMINMAX)
+        top_layout.addWidget(self._message_label_e, stretch=1)
+        content_layout.addLayout(top_layout)
+        self._error_label_e = QTextEdit()
+        self._error_label_e.setSizePolicy(SMINMIN)
+        self._error_label_e.setReadOnly(True)
+        self._error_label_e.setWordWrapMode(QTextOption.WrapMode.NoWrap)
+        self._error_label_e.setFont(self._theme.get_font('textedit'))
+        self._error_label_e.setStyleSheet(self._theme.get_style_class('QTextEdit', 'textedit'))
+        expand_button = FlipButton(tr('Show Error'), tr('Hide Error'))
+        expand_button.set_icon_r(self._theme.icons['chevron-right'])
+        expand_button.set_icon_l(self._theme.icons['chevron-down'])
+        expand_button.r_function = self._error_label_e.show
+        expand_button.l_function = self._error_label_e.hide
+        expand_button.setStyleSheet(self._theme.get_style_class('FlipButton', 'button'))
+        expand_button.setFont(self._theme.get_font('button'))
+        content_layout.addWidget(expand_button, alignment=ALEFT)
+        content_layout.addWidget(self._error_label_e, stretch=1)
+        self._error_label_e.hide()
+        content_frame.setLayout(content_layout)
+        dialog_layout.addWidget(content_frame, stretch=1)
+
+        seperator = create_frame2(self._theme, style='light_frame', size_policy=SMINMAX)
+        seperator.setFixedHeight(1)
+        dialog_layout.addWidget(seperator)
+        ok_button = create_button2(self._theme, tr('OK'))
+        ok_button.clicked.connect(self._error_dialog.accept)
+        dialog_layout.addWidget(ok_button, alignment=AHCENTER)
+        dialog_frame.setLayout(dialog_layout)
+
+        self._error_dialog.setStyleSheet(self._theme.get_style('dialog_window'))
+        self._error_dialog.setLayout(main_layout)
+
+    def show_error(self, error_title: str, error_message: str, error_details: str):
+        """
+        Shows error message with expandable field for error details like a traceback.
+
+        Parameters:
+        - :param error_title: very short decription of the error for the dialog window title
+        - :param error_message: message decribing the error
+        - :param error_details: advanced information about the error
+        """
+        self._error_dialog.setWindowTitle(f'OSCR - {error_title}')
+        self._message_label_e.setText(error_message)
+        self._error_label_e.setText(error_details)
+        self._error_dialog.open()
 
 
 def show_message(self, title: str, message: str, icon: str = 'info'):
