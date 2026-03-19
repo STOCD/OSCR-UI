@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Sequence
 import sys
 
 from PySide6.QtCore import (
@@ -63,7 +63,6 @@ class TableModel(QAbstractTableModel):
         self.endResetModel()
 
     def rowCount(self, index: QModelIndex):
-        super().headerData
         return len(self._data)
 
     def columnCount(self, index: QModelIndex):
@@ -171,10 +170,11 @@ class LiveParserTableModel(TableModel):
     """
     Model for LiveParser Table
     """
-    def __init__(self, *args, legend_col=None, colors=None, name_index=1, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._legend_column = legend_col
-        self._name_index = name_index
+    def __init__(self, header: Sequence[str], colors=None):
+        super().__init__()
+        self._header = header
+        self.legend_column: int = 0
+        self.name_index: int = 1
         if colors is not None:
             self._colors = [QColor.fromString(color) for color in colors]
         else:
@@ -203,7 +203,7 @@ class LiveParserTableModel(TableModel):
             return AVCENTER + ARIGHT
 
         if role == Qt.ItemDataRole.ForegroundRole:
-            if self._legend_column is not None and index.column() == self._legend_column:
+            if self.legend_column is not None and index.column() == self.legend_column:
                 row = index.row()
                 if row < len(self._colors):
                     return self._colors[self._data[row][8]]
@@ -217,7 +217,7 @@ class LiveParserTableModel(TableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 try:
-                    return self._data[section][0][self._name_index]
+                    return self._data[section][0][self.name_index]
                 except IndexError:
                     sys.stdout.write(f'Section:{section}|Data{self._data}|Index{self._index}\n')
 
@@ -242,9 +242,9 @@ class LiveParserTableModel(TableModel):
         self.layoutChanged.emit()
 
     def columnCount(self, index):
-        try:
-            return 7  # all columns must have the same length
-        except IndexError:
+        if len(self._data) > 0:
+            return 7  # has 7 possible columns, the eighth entry contains internal data id
+        else:
             return 0
 
 

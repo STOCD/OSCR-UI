@@ -16,6 +16,7 @@ from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
 from .dialogs import DetectionInfoDialog, DialogsWrapper
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
+from .liveparser import LiveParserWindow
 from .leagueconnector import OSCRClient
 from .parserbridge import ParserBridge
 from .sidebar import OSCRLeftSidebar
@@ -77,8 +78,6 @@ class OSCRUI():
         self.theme = theme
         self.args = args
         self.app_dir = path
-        self.live_parser_window = None
-        self.live_parser = None
         self.config = OSCRConfig()
         self.config.config_dir = self.get_config_dir_path(self.args.config_dir)
         if self.config.config_dir is None:
@@ -102,6 +101,8 @@ class OSCRUI():
         self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme2)
         self.parser: ParserBridge = ParserBridge(
             self.settings, self.config, self.widgets, self.dialogs)
+        self.live_parser: LiveParserWindow = LiveParserWindow(
+            self.settings, self.theme2, self.dialogs, self.widgets)
         self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme2)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
             version, self.window, self.parser, self.detection_info, self.dialogs, self.widgets,
@@ -287,6 +288,7 @@ class OSCRUI():
         """
         Executed when application is closed.
         """
+        self.live_parser.toggle_window(False)
         self.settings.state__geometry = self.window.saveGeometry()
         self.settings.state__overview_splitter = self.widgets.overview_splitter.saveState()
         self.settings.state__analysis_splitter = self.widgets.analysis_splitter.saveState()
@@ -802,7 +804,7 @@ class OSCRUI():
         live_parser_button = self.create_icon_button(
                 self.icons['live-parser'], tr('Live Parser'), 'live_icon_button', icon_size=size)
         live_parser_button.setCheckable(True)
-        live_parser_button.clicked[bool].connect(lambda checked: self.live_parser_toggle(checked))
+        live_parser_button.clicked[bool].connect(self.live_parser.toggle_window)
         menu_layout.addWidget(live_parser_button, 0, 2)
         self.widgets.live_parser_button = live_parser_button
         menu_frame.setLayout(menu_layout)
@@ -1123,6 +1125,13 @@ class OSCRUI():
             bt.clicked[bool].connect(
                     lambda state, i=i: self.settings.liveparser__columns.__setitem__(i, state))
             live_hider_layout.addWidget(bt, stretch=1)
+        live_separator = self.create_frame(
+            'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
+        live_separator.setFixedHeight(self.theme['defaults']['bw'])
+        live_hider_layout.addWidget(live_separator)
+        apply_button_3 = self.create_button(tr('Apply'), 'button')
+        apply_button_3.clicked.connect(self.live_parser.update_shown_columns)
+        live_hider_layout.addWidget(apply_button_3, alignment=ARIGHT | ATOP)
         live_hider_frame.setLayout(live_hider_layout)
         sec_2.addWidget(live_hider_frame, alignment=ATOP)
 
