@@ -102,7 +102,11 @@ class OSCRSettings():
                     else:
                         list_element_type = str
                     item_list = self._settings.value(setting_id, type=list)
-                    setattr(self, setting, [list_element_type(el) for el in item_list])
+                    if list_element_type is bool:
+                        items = [True if el == 'true' else False for el in item_list]
+                        setattr(self, setting, items)
+                    else:
+                        setattr(self, setting, [list_element_type(el) for el in item_list])
                 else:
                     setattr(self, setting, self._settings.value(setting_id, type=item_type))
 
