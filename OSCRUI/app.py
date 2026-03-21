@@ -39,7 +39,6 @@ from .widgets import (
 
 
 class OSCRUI():
-    from .displayer import create_legend_item
     from .style import get_style_class, create_style_sheet, theme_font, get_style
 
     app_dir = None
