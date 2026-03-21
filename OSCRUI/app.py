@@ -31,7 +31,7 @@ from .widgetbuilder import (
         create_entry, create_frame, create_icon_button, create_label)
 from .widgetmanager import WidgetManager
 from .widgets import (
-        AnalysisPlot, BannerLabel, CombatDelegate, FlipButton, ParserSignals)
+        AnalysisPlot, BannerLabel, FlipButton)
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 # from signal import signal, SIGINT, SIG_DFL
@@ -225,7 +225,7 @@ class OSCRUI():
         Initializes Parser.
         """
         self.parser = OSCR(settings=self.parser_settings)
-        self.parser_signals = ParserSignals()
+        # self.parser_signals = ParserSignals()
         self.parser_signals.analyzed_combat.connect(self.insert_combat)
         self.parser_signals.parser_error.connect(self.show_parser_error)
         self.parser.combat_analyzed_callback = lambda c: self.parser_signals.analyzed_combat.emit(c)
