@@ -265,7 +265,8 @@ class OSCRUI():
         """
         Executed when application is closed.
         """
-        self.live_parser.toggle_window(False)
+        if self.live_parser.isVisible():
+            self.live_parser.toggle_window(False)
         self.settings.state__geometry = self.window.saveGeometry()
         self.settings.state__overview_splitter = self.widgets.overview_splitter.saveState()
         self.settings.state__analysis_splitter = self.widgets.analysis_splitter.saveState()
