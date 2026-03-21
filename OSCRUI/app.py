@@ -39,9 +39,6 @@ from .widgets import (
 
 
 class OSCRUI():
-    from .style import get_style_class, create_style_sheet, theme_font, get_style
-
-    app_dir = None
 
     def __init__(self, theme, args, path, config, version) -> None:
         """

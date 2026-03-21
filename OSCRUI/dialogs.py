@@ -9,13 +9,12 @@ from OSCR_django_client import CombatLogUploadV2Response
 from OSCR import DetectionInfo
 
 from .iofunctions import open_link
-from .style import get_style
 from .theme import AppTheme
 from .translation import tr
 from .widgetbuilder import (
         AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER,
         create_button, create_frame, create_label,
-        SMAXMAX, SMINMAX, SMINMIN, SFIXED)
+        SMAXMAX, SMINMAX, SMINMIN)
 from .widgets import FlipButton
 
 
