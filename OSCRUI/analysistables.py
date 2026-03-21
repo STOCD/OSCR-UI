@@ -89,6 +89,7 @@ class AnalysisTables():
         table.setAlternatingRowColors(self._theme.opt.table_alternate)
         table.setShowGrid(self._theme.opt.table_gridline)
         table.setSortingEnabled(True)
+        table.setWordWrap(False)
         table.setStyleSheet(self._theme.get_style_class('QTableView', 'table', style_override))
         table.setHorizontalScrollMode(SMPIXEL)
         table.setVerticalScrollMode(SMPIXEL)
