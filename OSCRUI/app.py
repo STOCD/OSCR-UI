@@ -543,9 +543,7 @@ class OSCRUI():
         plot_legend_layout.setContentsMargins(0, 0, 0, 0)
         plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
         plot_legend_frame.setLayout(plot_legend_layout)
-        plot_widget = AnalysisPlot(
-                self.theme['plot']['color_cycler'], self.theme['defaults']['fg'],
-                self.theme2.get_font('plot_widget'), plot_legend_layout)
+        plot_widget = AnalysisPlot(self.theme2, self.theme2['plot']['color_cycler'])
         plot_widget.setStyleSheet(self.theme2.get_style('plot_widget_nullifier'))
         plot_widget.setSizePolicy(SMINMAX)
         plot_bundle_layout.addWidget(plot_widget)
@@ -564,7 +562,7 @@ class OSCRUI():
         freeze_button.clicked.connect(plot_widget.toggle_freeze)
         plot_button_layout.addWidget(freeze_button, alignment=ABOTTOM)
         clear_button = self.create_icon_button(self.icons['clear-plot'], tr('Clear Graph'))
-        clear_button.clicked.connect(plot_widget.clear_plot)
+        clear_button.clicked.connect(plot_widget.clear)
         plot_button_layout.addWidget(clear_button, alignment=ATOP)
         plot_button_frame.setLayout(plot_button_layout)
         graph_layout.addWidget(plot_button_frame, stretch=0)
@@ -583,7 +581,7 @@ class OSCRUI():
             self.theme2.get_font('tree_table_cells'))
         tree.setModel(tree_model)
         tree.setSelectionModel(TreeSelectionModel(tree_model))
-        tree.clicked.connect(lambda index, pw=plot_widget: self.slot_analysis_graph(index, pw))
+        tree.clicked.connect(lambda index, pw=plot_widget: pw.add_bar(index.internalPointer()))
         tree_layout.addWidget(tree)
         tree_frame.setLayout(tree_layout)
         return tree, plot_widget
@@ -721,17 +719,6 @@ class OSCRUI():
         copy_mode = self.widgets.analysis_copy_combobox.currentText()
         current_tab = self.widgets.analysis_tree_tabber.currentIndex()
         self.tables.copy_analysis_data(current_tab, copy_mode)
-
-    def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):  # TODO
-        item = index.internalPointer()
-        color = plot_widget.add_bar(item)
-        if color is None:
-            return
-        name = item.data[0]
-        if isinstance(name, tuple):
-            name = name[0] + name[1]
-        legend_item = self.create_legend_item(color, name)
-        plot_widget.add_legend_item(legend_item)
 
     def setup_league_standings_frame(self):
         """

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QComboBox, QFrame, QHBoxLayout, QLabel, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle,
     QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QVBoxLayout, QWidget)
 
+from .datamodels import TreeItem
 from .widgetbuilder import ACENTER, AVCENTER, SMAXMAX, SMINMIN, create_frame2, create_label2
 from .theme import AppTheme
 
@@ -323,93 +324,6 @@ class CustomPlotAxis(AxisItem):
         return levels
 
 
-class AnalysisPlot(PlotWidget):
-    """
-    PlotWidget for plotting the analysis plot.
-    """
-    def __init__(self, colors: tuple, tick_color: str, tick_font: QFont, legend_layout):
-        """
-        Parameters:
-        - :param colors: tuple with at least 5 different colors that are used to paint the bars
-        - :param tick_color: color for the tick annotations
-        - :param tick_font: font for the tick annotations
-        """
-        super().__init__()
-        self._bar_queue = list()
-        self._legend_queue = list()
-        self._bar_item_queue = list()
-        self._bar_position = 0
-        self._colors = colors
-        self._frozen = True
-        self._legend_layout = legend_layout
-        left_axis = CustomPlotAxis('left', tick_font, tick_color)
-        bottom_axis = CustomPlotAxis('bottom', tick_font, tick_color, unit='s')
-        self.setAxisItems({'left': left_axis, 'bottom': bottom_axis})
-        self.setBackground(None)
-        self.setMouseEnabled(False, False)
-        self.setMenuEnabled(False)
-        self.hideButtons()
-        self.setDefaultPadding(padding=0)
-
-    def add_bar(self, item):
-        """
-        Adds plot item to plot widget and removes plot item if there are more than 5 currently
-        displayed.
-
-        Parameters:
-        - :param item: object with property ".graph_data", containing the height of the bars
-
-        :return: returns the color that the graph was created with for the legend
-        """
-        if self._frozen or item in self._bar_item_queue:
-            return
-        data = item.graph_data
-        time_reference = np.arange(len(data))
-        group_width = 0.9
-        bar_width = group_width / 5
-        bar_offset = - (group_width / 2) + 0.5 * bar_width + self._bar_position * bar_width
-        time_data = np.subtract(time_reference, bar_offset)
-        brush_color = self._colors[self._bar_position]
-        bars = BarGraphItem(x=time_data, width=bar_width, height=data, brush=brush_color, pen=None)
-        if len(self._bar_queue) >= 5:
-            self.removeItem(self._bar_queue.pop(0))
-            self._bar_item_queue.pop(0)
-            legend_item_to_remove = self._legend_queue.pop(0)
-            self._legend_layout.removeWidget(legend_item_to_remove)
-            legend_item_to_remove.setParent(None)
-        self._bar_queue.append(bars)
-        self._bar_item_queue.append(item)
-        self.addItem(bars)
-        self._bar_position += 1
-        if self._bar_position >= 5:
-            self._bar_position = 0
-        return brush_color
-
-    def add_legend_item(self, legend_item: QFrame):
-        self._legend_queue.append(legend_item)
-        self._legend_layout.addWidget(legend_item)
-
-    def clear_plot(self):
-        """
-        Removes all bars from the plot
-        """
-        for bar in self._bar_queue:
-            self.removeItem(bar)
-        self._bar_queue = list()
-        for legend_item in self._legend_queue:
-            self._legend_layout.removeWidget(legend_item)
-            legend_item.setParent(None)
-        self._legend_queue = list()
-        self._bar_item_queue = list()
-        self._bar_position = 0
-
-    def toggle_freeze(self, state):
-        """
-        Freezes when unfrozen, unfreezes when frozen
-        """
-        self._frozen = not self._frozen
-
-
 class LegendPlot(QFrame):
     """Represents a plot widget with legend below the plot area."""
 
@@ -529,6 +443,92 @@ class LegendPlot(QFrame):
         layout.addWidget(label)
         frame.setLayout(layout)
         return frame
+
+
+class AnalysisPlot(LegendPlot):
+    """
+    PlotWidget for plotting the analysis plot.
+    """
+    def __init__(self, theme: AppTheme, colors: tuple[str]):
+        """
+        Parameters:
+        - :param theme: reference to AppTheme for styling
+        - :param colors: tuple with at least 5 different colors that are used to paint the bars
+        """
+        super().__init__(theme, x_unit='s')
+        self._theme: AppTheme = theme
+        self._bar_queue: list[BarGraphItem] = list()
+        self._legend_queue: list[QFrame] = list()
+        self._bar_item_queue: list[TreeItem] = list()
+        self._bar_position: int = 0
+        self._colors: tuple[str] = colors
+        self._frozen: bool = True
+        self._legend_layout: QHBoxLayout = QHBoxLayout()
+        margin = self._theme['defaults']['margin']
+        self._legend_layout.setContentsMargins(0, 0, 0, 0)
+        self._legend_layout.setSpacing(margin)
+        self._legend.setLayout(self._legend_layout)
+        self._plot.show()
+
+    def add_bar(self, item: TreeItem):
+        """
+        Adds plot item to plot widget and removes plot item if there are more than 5 currently
+        displayed.
+
+        Parameters:
+        - :param item: object with property ".graph_data", containing the height of the bars
+
+        :return: returns the color that the graph was created with for the legend
+        """
+        if self._frozen or item in self._bar_item_queue:
+            return
+        data = item.graph_data
+        time_reference = np.arange(len(data))
+        group_width = 0.9
+        bar_width = group_width / 5
+        bar_offset = - (group_width / 2) + 0.5 * bar_width + self._bar_position * bar_width
+        time_data = np.subtract(time_reference, bar_offset)
+        brush_color = self._colors[self._bar_position]
+        bars = BarGraphItem(x=time_data, width=bar_width, height=data, brush=brush_color, pen=None)
+        annotation = item.get_data(0)
+        if isinstance(annotation, tuple):
+            annotation = annotation[0] + annotation[1]
+        legend_item = self.create_legend_item(brush_color, annotation)
+        if len(self._bar_queue) >= 5:
+            self._plot.removeItem(self._bar_queue.pop(0))
+            self._bar_item_queue.pop(0)
+            legend_item_to_remove = self._legend_queue.pop(0)
+            self._legend_layout.removeWidget(legend_item_to_remove)
+            legend_item_to_remove.setParent(None)
+        self._bar_queue.append(bars)
+        self._bar_item_queue.append(item)
+        self._plot.addItem(bars)
+        self._legend_queue.append(legend_item)
+        self._legend_layout.addWidget(legend_item)
+        self._bar_position += 1
+        if self._bar_position >= 5:
+            self._bar_position = 0
+        return brush_color
+
+    def clear(self):
+        """
+        Removes all bars from the plot
+        """
+        for bar in self._bar_queue:
+            self._plot.removeItem(bar)
+        self._bar_queue = list()
+        for legend_item in self._legend_queue:
+            self._legend_layout.removeWidget(legend_item)
+            legend_item.setParent(None)
+        self._legend_queue = list()
+        self._bar_item_queue = list()
+        self._bar_position = 0
+
+    def toggle_freeze(self, state):
+        """
+        Freezes when unfrozen, unfreezes when frozen
+        """
+        self._frozen = not self._frozen
 
 
 class SizeGrip(QSizeGrip):
