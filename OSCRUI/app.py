@@ -40,7 +40,7 @@ from .widgets import (
 
 class OSCRUI():
 
-    def __init__(self, args, path, config, version) -> None:
+    def __init__(self, args, path, version) -> None:
         """
         Creates new Instance of OSCR.
 
