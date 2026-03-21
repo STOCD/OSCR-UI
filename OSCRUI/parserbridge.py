@@ -4,6 +4,7 @@ from traceback import format_exception
 
 from PySide6.QtCore import QModelIndex, QObject, Signal
 from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QApplication
 
 from OSCR import (
     compose_logfile as oscr__compose_logfile, OSCR, extract_bytes as oscr__extract_bytes,
@@ -16,6 +17,7 @@ from .config import OSCRConfig, OSCRSettings
 from .datamodels import CombatModel, DamageTreeModel, HealTreeModel, OverviewTableModel
 from .dialogs import DialogsWrapper
 from .iofunctions import browse_path, save_to_json
+from .textedit import format_damage_number
 from .translation import tr
 from .widgetmanager import WidgetManager
 
@@ -369,3 +371,51 @@ class ParserBridge(QObject):
                 str(source_path), str(target_path), combat_intervals,
                 str(self._global_config.templog_folder_path))
             self._dialogs.show_message(tr('Split Logfile'), tr('Logfile has been saved.'))
+
+    def copy_summary_data(self):
+        """
+        Callback to copy the combat summary of the active combat to the user's clipboard.
+        """
+        if self.current_combat_id < 0:
+            return
+        current_combat = self.current_combat
+        duration = current_combat.duration.total_seconds()
+        combat_time = f'{int(duration / 60):02}:{duration % 60:02.0f}'
+
+        if self._global_settings.copy_format == 'Compact':
+            parts = ['OSCR (DPS)', current_combat.map]
+            difficulty = current_combat.difficulty
+            if difficulty != 'Any' and difficulty is not None:
+                parts.append(difficulty)
+            parts.append(combat_time)
+            players = sorted(
+                current_combat.players.values(), reverse=True, key=lambda player: player.DPS)
+            for player in players:
+                parts.append(f'{player.handle} - {player.DPS:,.0f}')
+            QApplication.clipboard().setText(' | '.join(parts))
+        elif self._global_settings.copy_format == 'Verbose':
+            summary = f'{{ OSCR }} {current_combat.map}'
+            difficulty = current_combat.difficulty
+            if difficulty is not None and difficulty != 'Any':
+                summary += f' ({difficulty}) - DPS / DMG [{combat_time}]: '
+            else:
+                summary += f' - DPS / DMG [{combat_time}]: '
+            players = sorted(
+                current_combat.players.values(), reverse=True, key=lambda player: player.DPS)
+            parts = list()
+            for player in players:
+                parts.append(
+                    f'`{player.handle}` {player.DPS:,.0f} / '
+                    + format_damage_number(player.total_damage))
+            QApplication.clipboard().setText(summary + ' | '.join(parts))
+        elif self._global_settings.copy_format == 'CSV':
+            difficulty = self.current_combat.difficulty
+            if difficulty is None:
+                difficulty = 'Unknown'
+            parts = ['OSCR', 'DPS', current_combat.map, difficulty, combat_time]
+            players = sorted(
+                current_combat.players.values(), reverse=True, key=lambda player: player.DPS)
+            for player in players:
+                parts.append(player.handle)
+                parts.append(f'{player.DPS:.0f}')
+            QApplication.clipboard().setText(', '.join(parts))

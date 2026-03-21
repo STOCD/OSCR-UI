@@ -495,7 +495,7 @@ class OSCRUI():
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
         copy_button = self.create_icon_button(self.icons['copy'], tr('Copy Result'))
-        copy_button.clicked.connect(self.copy_summary_callback)
+        copy_button.clicked.connect(self.parser.copy_summary_data)
         icon_layout.addWidget(copy_button)
         ladder_button = self.create_icon_button(self.icons['ladder'], tr('Upload Result'))
         ladder_button.clicked.connect(self.league.upload_callback)
@@ -716,6 +716,23 @@ class OSCRUI():
         formatted_path = format_path(logpath_entry.text())
         self.settings.sto_log_path = formatted_path
         logpath_entry.setText(formatted_path)
+
+    def copy_analysis_table_callback(self):
+        """
+        Copies the current selection of analysis table as tab-delimited table.
+        """
+        if self.widgets.main_tabber.currentIndex() != 1:
+            return
+        current_tab = self.widgets.analysis_tree_tabber.currentIndex()
+        self.tables.copy_analysis_table(current_tab)
+
+    def copy_analysis_callback(self):
+        """
+        Copies data from current analysis table in user-specified format.
+        """
+        copy_mode = self.widgets.analysis_copy_combobox.currentText()
+        current_tab = self.widgets.analysis_tree_tabber.currentIndex()
+        self.tables.copy_analysis_data(current_tab, copy_mode)
 
     def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):  # TODO
         item = index.internalPointer()
