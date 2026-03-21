@@ -52,7 +52,7 @@ class OSCRLeftSidebar():
         self._config: OSCRConfig = config
         self._settings: OSCRSettings = settings
         self._split_dialog: SplitDialog = SplitDialog(main_window, parser, dialogs, theme)
-        self._log_path_widget: QLineEdit
+        self.log_path_widget: QLineEdit
 
     def create_sidebar(self, parent_frame: QFrame):
         """
@@ -89,10 +89,10 @@ class OSCRLeftSidebar():
         """
         Callback for browse button.
         """
-        current_path = Path(self._log_path_widget.text()).absolute().parent
+        current_path = Path(self.log_path_widget.text()).absolute().parent
         path = browse_path(current_path, 'Logfile (*.log);;Any File (*.*)')
         if path is not None:
-            self._log_path_widget.setText(str(path))
+            self.log_path_widget.setText(str(path))
             if self._settings.auto_scan:
                 self._parser.analyze_log_file(str(path))
 
@@ -114,15 +114,15 @@ class OSCRLeftSidebar():
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
         split_log_button = create_icon_button(self._theme, 'edit', tr('Manage Logfile'))
         split_log_button.clicked.connect(
-            lambda: self._split_dialog.show_dialog(self._log_path_widget.text()))
+            lambda: self._split_dialog.show_dialog(self.log_path_widget.text()))
         head_layout.addWidget(split_log_button, alignment=ARIGHT)
         left_layout.addLayout(head_layout)
 
-        self._log_path_widget = QLineEdit(self._settings.log_path)
-        self._log_path_widget.setStyleSheet(self._theme.get_style_class('QLineEdit', 'entry'))
-        self._log_path_widget.setFont(self._theme.get_font('entry'))
-        self._log_path_widget.setSizePolicy(SMIXMAX)
-        left_layout.addWidget(self._log_path_widget)
+        self.log_path_widget = QLineEdit(self._settings.log_path)
+        self.log_path_widget.setStyleSheet(self._theme.get_style_class('QLineEdit', 'entry'))
+        self.log_path_widget.setFont(self._theme.get_font('entry'))
+        self.log_path_widget.setSizePolicy(SMIXMAX)
+        left_layout.addWidget(self.log_path_widget)
 
         entry_button_config = {
             tr('Browse ...'): {
@@ -130,12 +130,12 @@ class OSCRLeftSidebar():
                 'style': {'margin-left': 0}
             },
             tr('Default'): {
-                'callback': lambda: self._log_path_widget.setText(self._settings.sto_log_path),
+                'callback': lambda: self.log_path_widget.setText(self._settings.sto_log_path),
                 'align': AHCENTER
             },
             tr('Analyze'): {
                 'callback': lambda: self._parser.analyze_log_file(
-                    Path(self._log_path_widget.text())),
+                    Path(self.log_path_widget.text())),
                 'align': ARIGHT, 'style': {'margin-right': 0}
             }
         }

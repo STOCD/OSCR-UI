@@ -93,8 +93,8 @@ class OSCRUI():
         self.window.show()
         if self.settings.auto_scan:
             QTimer.singleShot(
-                    100,
-                    lambda: self.parser.analyze_log_file(Path(self.entry.text())))
+                100,
+                lambda: self.parser.analyze_log_file(Path(self.sidebar.log_path_widget.text())))
 
     def run(self) -> int:
         """
