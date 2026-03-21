@@ -7,6 +7,7 @@ from json import JSONDecodeError, loads as json__loads
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile as TempFile
+from threading import Thread
 
 from OSCR_django_client import (
     ApiClient, CombatlogApi, CombatLogUploadV2Response, Ladder, LadderApi, LadderEntriesApi,
@@ -16,12 +17,10 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QListWidgetItem, QMessageBox
 
 from .config import OSCRConfig
-from .datafunctions import CustomThread
 from .datamodels import LeagueTableModel, SortingProxy
 from .dialogs import DialogsWrapper, UploadresultDialog
 from .parserbridge import ParserBridge
 from .theme import AppTheme
-from .subwindows import uploadresult_dialog
 from .textedit import format_datetime_str
 from .translation import tr
 from .widgetmanager import WidgetManager
@@ -50,7 +49,7 @@ class OSCRLeagueConnector():
         self._api_ladder: LadderApi
         self._api_ladder_entries: LadderEntriesApi
         self._api_combatlog: CombatlogApi
-        self._thread: CustomThread | None = None
+        self._thread: Thread | None = None
         self.ladder_meta: dict[str, Ladder] = dict()
         self.current_ladder_id: int | None = None
         self.entire_ladder_loaded: bool = False
@@ -73,7 +72,7 @@ class OSCRLeagueConnector():
             self._api_ladder = LadderApi(api_client=self._api)
             self._api_ladder_entries = LadderEntriesApi(api_client=self._api)
             self._api_combatlog = CombatlogApi(api_client=self._api)
-            self._thread = CustomThread(None, self.fetch_and_insert_maps)
+            self._thread = Thread(target=self.fetch_and_insert_maps)
             self._thread.start()
 
     def handle_fetch_error(self, error: BaseException):

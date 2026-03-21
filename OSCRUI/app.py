@@ -37,20 +37,8 @@ from .widgets import (
 
 
 class OSCRUI():
-
-    from .callbacks import (
-            add_favorite_ladder, browse_log, browse_sto_logpath, collapse_analysis_graph,
-            collapse_overview_table, expand_analysis_graph, expand_overview_table,
-            export_combat_json, remove_favorite_ladder, save_combat, set_live_scale_setting,
-            set_parser_opacity_setting, set_graph_resolution_setting, set_sto_logpath_setting,
-            set_ui_scale_setting, switch_analysis_tab, switch_main_tab, switch_overview_tab)
-    from .datafunctions import (
-            analysis_data_slot, analyze_log_background, analyze_log_callback,
-            copy_analysis_callback, copy_analysis_table_callback, copy_summary_callback,
-            insert_combat, update_shown_columns_dmg, update_shown_columns_heal)
     from .displayer import create_legend_item
     from .style import get_style_class, create_style_sheet, theme_font, get_style
-    from .subwindows import live_parser_toggle, show_parser_error, split_dialog
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
     from .widgetbuilder import create_icon_button, create_label
