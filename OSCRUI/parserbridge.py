@@ -212,6 +212,8 @@ class ParserBridge(QObject):
         else:
             self.overview_table_model.clear()
             self._graphs.clear_overview_plots()
+        self._widgets.log_duration_value.setText(f'{combat.meta['log_duration']:.1f}s')
+        self._widgets.player_duration_value.setText(f'{combat.meta['player_duration']:.1f}s')
         self.populate_analysis(combat)
         self._tables.refresh_tables(
             self.damage_out_model.player_index, self.damage_in_model.player_index,
