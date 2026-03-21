@@ -1,8 +1,6 @@
 """Backend interface to the OSCR web server"""
 
-import gzip
 from gzip import compress as gzip__compress, decompress as gzip__decompress
-import json
 from json import JSONDecodeError, loads as json__loads
 import os
 from pathlib import Path
@@ -12,16 +10,15 @@ from threading import Thread
 from OSCR_django_client import (
     ApiClient, CombatlogApi, CombatLogUploadV2Response, Ladder, LadderApi, LadderEntriesApi,
     LadderEntriesList200Response, Variant, VariantApi)
-from OSCR_django_client.exceptions import ServiceException
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QListWidgetItem, QMessageBox
+from PySide6.QtWidgets import QListWidgetItem
 
 from .config import OSCRConfig
 from .datamodels import LeagueTableModel, SortingProxy
 from .dialogs import DialogsWrapper, UploadresultDialog
 from .parserbridge import ParserBridge
-from .theme import AppTheme
 from .textedit import format_datetime_str
+from .theme import AppTheme
 from .translation import tr
 from .widgetmanager import WidgetManager
 
@@ -304,116 +301,3 @@ class OSCRLeagueConnector():
         if res is not None:
             self._upload_dialog.show_dialog(res)
         os.remove(temp.name)
-
-
-class OSCRClient:
-    def __init__(self):
-        """Initialize an instance of the OSCR backlend client"""
-
-        self.address = OSCR_SERVER_BACKEND
-        self.api_client = ApiClient()
-        self.api_client.configuration.host = self.address
-        self.api_combatlog = CombatlogApi(api_client=self.api_client)
-        self.api_ladder = LadderApi(api_client=self.api_client)
-        self.api_ladder_entries = LadderEntriesApi(api_client=self.api_client)
-        self.api_variant = VariantApi(api_client=self.api_client)
-        self.ladder_dict: dict = dict()
-        self.ladder_dict_season: dict = dict()
-        self.current_ladder_id = None
-        self.pages_loaded: int = -1
-        self.entire_ladder_loaded: bool = True
-
-    def upload(self, filename):
-        """Upload a combat log located at path for analysis"""
-
-        try:
-            return self.api_combatlog.combatlog_uploadv2(file=filename)
-        except ServiceException as e:
-            reply = QMessageBox()
-            reply.setWindowTitle("Open Source Combatlog Reader")
-            try:
-                data = json.loads(e.body)
-                reply.setText(
-                    data.get("detail", tr("Failed to parse error from server"))
-                )
-            except Exception:
-                reply.setText(tr("Failed to parse error from server"))
-            reply.exec()
-
-    def download(self, id):
-        """Download a combat log"""
-        try:
-            return self.api_combatlog.combatlog_download(id=id)
-        except ServiceException as e:
-            reply = QMessageBox()
-            reply.setWindowTitle("Open Source Combatlog Reader")
-            try:
-                data = json.loads(e.body)
-                reply.setText(
-                    data.get("detail", tr("Failed to parse error from server"))
-                )
-            except Exception:
-                reply.setText(tr("Failed to parse error from server"))
-            reply.exec()
-
-        return None
-
-    def ladders(self, **kwargs):
-        """Fetch the list of ladders"""
-        try:
-            return self.api_ladder.ladder_list(**kwargs)
-        except ServiceException as e:
-            reply = QMessageBox()
-            reply.setWindowTitle("Open Source Combatlog Reader")
-            try:
-                data = json.loads(e.body)
-                reply.setText(
-                    data.get("detail", tr("Failed to parse error from server"))
-                )
-            except Exception:
-                reply.setText(tr("Failed to parse error from server"))
-            reply.exec()
-
-        return None
-
-    def ladder_entries(self, id, page=1):
-        """Fetch the nth page of ladder entries"""
-        try:
-            return self.api_ladder_entries.ladder_entries_list(
-                ladder=str(id),
-                page=page,
-                ordering="-data__DPS",
-                page_size=50,
-            )
-        except ServiceException as e:
-            reply = QMessageBox()
-            reply.setWindowTitle("Open Source Combatlog Reader")
-            try:
-                data = json.loads(e.body)
-                reply.setText(
-                    data.get("detail", tr("Failed to parse error from server"))
-                )
-            except Exception:
-                reply.setText(tr("Failed to parse error from server"))
-            reply.exec()
-
-        return None
-
-    def variants(self, **kwargs):
-        """Return a list of Variants"""
-
-        try:
-            return self.api_variant.variant_list(**kwargs)
-        except ServiceException as e:
-            reply = QMessageBox()
-            reply.setWindowTitle("Open Source Combatlog Reader")
-            try:
-                data = json.loads(e.body)
-                reply.setText(
-                    data.get("detail", tr("Failed to parse error from server"))
-                )
-            except Exception:
-                reply.setText(tr("Failed to parse error from server"))
-            reply.exec()
-
-        return None
