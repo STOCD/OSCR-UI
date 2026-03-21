@@ -14,8 +14,8 @@ from .splitdialog import SplitDialog
 from .theme import AppTheme
 from .translation import tr
 from .widgetbuilder import (
-    create_button2, create_button_series2, create_combo_box2, create_frame2, create_icon_button2,
-    create_label2,
+    create_button, create_button_series, create_combo_box, create_frame, create_icon_button,
+    create_label,
     ABOTTOM, AHCENTER, ALEFT, ARIGHT, ATOP, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN)
 from .widgetmanager import WidgetManager
 from .widgets import CombatDelegate
@@ -61,9 +61,9 @@ class OSCRLeftSidebar():
         Parameters:
         - :param parent_frame: frame that contains sidebar
         """
-        log_frame = create_frame2(self._theme, style='medium_frame', size_policy=SMINMIN)
-        league_frame = create_frame2(self._theme, style='medium_frame', size_policy=SMINMIN)
-        about_frame = create_frame2(self._theme, style='medium_frame', size_policy=SMINMIN)
+        log_frame = create_frame(self._theme, style='medium_frame', size_policy=SMINMIN)
+        league_frame = create_frame(self._theme, style='medium_frame', size_policy=SMINMIN)
+        about_frame = create_frame(self._theme, style='medium_frame', size_policy=SMINMIN)
         sidebar_tabber = QTabWidget(parent_frame)
         sidebar_tabber.setStyleSheet(self._theme.get_style_class('QTabWidget', 'tabber'))
         sidebar_tabber.tabBar().hide()
@@ -110,9 +110,9 @@ class OSCRLeftSidebar():
         left_layout.setAlignment(ATOP)
 
         head_layout = QHBoxLayout()
-        head = create_label2(self._theme, tr('STO Combatlog:'), 'label_heading')
+        head = create_label(self._theme, tr('STO Combatlog:'), 'label_heading')
         head_layout.addWidget(head, alignment=ALEFT | ABOTTOM)
-        split_log_button = create_icon_button2(self._theme, 'edit', tr('Manage Logfile'))
+        split_log_button = create_icon_button(self._theme, 'edit', tr('Manage Logfile'))
         split_log_button.clicked.connect(
             lambda: self._split_dialog.show_dialog(self._log_path_widget.text()))
         head_layout.addWidget(split_log_button, alignment=ARIGHT)
@@ -139,11 +139,11 @@ class OSCRLeftSidebar():
                 'align': ARIGHT, 'style': {'margin-right': 0}
             }
         }
-        entry_buttons = create_button_series2(self._theme, entry_button_config, 'button')
+        entry_buttons = create_button_series(self._theme, entry_button_config, 'button')
         entry_buttons.setContentsMargins(0, 0, 0, margin)
         left_layout.addLayout(entry_buttons)
 
-        background_frame = create_frame2(self._theme, size_policy=SMINMIN, style_override={
+        background_frame = create_frame(self._theme, size_policy=SMINMIN, style_override={
                 'border-radius': self._theme['listbox']['border-radius'], 'margin-top': '@csp',
                 'margin-bottom': '@csp'})
         background_layout = QVBoxLayout()
@@ -169,12 +169,12 @@ class OSCRLeftSidebar():
         combat_button_row.setContentsMargins(0, 0, 0, 0)
         combat_button_row.setSpacing(self._theme['defaults']['csp'])
         combat_button_row.setColumnStretch(3, 1)
-        export_button = create_icon_button2(self._theme, 'export-parse', tr('Export Combat'))
+        export_button = create_icon_button(self._theme, 'export-parse', tr('Export Combat'))
         combat_button_row.addWidget(export_button, 0, 0)
-        more_combats_button = create_icon_button2(
+        more_combats_button = create_icon_button(
             self._theme, 'parser-down', tr('Parse Older Combats'))
         combat_button_row.addWidget(more_combats_button, 0, 1)
-        json_export_button = create_icon_button2(
+        json_export_button = create_icon_button(
             self._theme, 'json', tr('Export Combat to JSON File'))
         combat_button_row.addWidget(json_export_button, 0, 2)
         left_layout.addLayout(combat_button_row)
@@ -184,28 +184,28 @@ class OSCRLeftSidebar():
         json_export_button.clicked.connect(
                 lambda: self._parser.export_combat_json(combats_list.currentIndex().data()))
 
-        sep = create_frame2(self._theme, 'medium_frame')
+        sep = create_frame(self._theme, 'medium_frame')
         sep.setFixedHeight(margin)
         left_layout.addWidget(sep)
         log_layout = QHBoxLayout()
         log_layout.setContentsMargins(0, 0, 0, 0)
         log_layout.setSpacing(margin)
         log_layout.setAlignment(ALEFT)
-        player_duration_label = create_label2(self._theme, tr('Log Duration:'))
+        player_duration_label = create_label(self._theme, tr('Log Duration:'))
         log_layout.addWidget(player_duration_label)
-        self._widgets.log_duration_value = create_label2(self._theme, '')
+        self._widgets.log_duration_value = create_label(self._theme, '')
         log_layout.addWidget(self._widgets.log_duration_value)
         left_layout.addLayout(log_layout)
         player_layout = QHBoxLayout()
         player_layout.setContentsMargins(0, 0, 0, 0)
         player_layout.setSpacing(margin)
         player_layout.setAlignment(ALEFT)
-        player_duration_label = create_label2(self._theme, tr('Active Player Duration:'))
+        player_duration_label = create_label(self._theme, tr('Active Player Duration:'))
         player_layout.addWidget(player_duration_label)
-        self._widgets.player_duration_value = create_label2(self._theme, '')
+        self._widgets.player_duration_value = create_label(self._theme, '')
         player_layout.addWidget(self._widgets.player_duration_value)
         left_layout.addLayout(player_layout)
-        detection_button = create_button2(self._theme, tr('Map Detection Details'))
+        detection_button = create_button(self._theme, tr('Map Detection Details'))
         detection_button.clicked.connect(self.show_detection_info)
         left_layout.addWidget(detection_button, alignment=AHCENTER)
 
@@ -225,19 +225,19 @@ class OSCRLeftSidebar():
         left_layout.setAlignment(ATOP)
 
         map_layout = QHBoxLayout()
-        map_label = create_label2(self._theme, tr('Available Maps:'), 'label_heading')
+        map_label = create_label(self._theme, tr('Available Maps:'), 'label_heading')
         map_layout.addWidget(map_label, alignment=ALEFT | ABOTTOM)
-        fav_add_button = create_icon_button2(self._theme, 'star-plus', tr('Add to Favorites'))
+        fav_add_button = create_icon_button(self._theme, 'star-plus', tr('Add to Favorites'))
         # fav_add_button.clicked.connect()
         map_layout.addWidget(fav_add_button, alignment=ARIGHT)
         left_layout.addLayout(map_layout)
 
-        variant_list = create_combo_box2(self._theme)
+        variant_list = create_combo_box(self._theme)
         variant_list.currentTextChanged.connect(self._league.update_seasonal_records)
         left_layout.addWidget(variant_list)
         self._widgets.variant_combo = variant_list
 
-        background_frame = create_frame2(self._theme, size_policy=SMINMIN, style_override={
+        background_frame = create_frame(self._theme, size_policy=SMINMIN, style_override={
                 'border-radius': self._theme['listbox']['border-radius']})
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
@@ -253,14 +253,14 @@ class OSCRLeftSidebar():
         left_layout.addWidget(background_frame, stretch=3)
 
         fav_layout = QHBoxLayout()
-        favorites_label = create_label2(self._theme, tr('Favorites:'), 'label_heading')
+        favorites_label = create_label(self._theme, tr('Favorites:'), 'label_heading')
         fav_layout.addWidget(favorites_label, alignment=ALEFT | ABOTTOM)
-        fav_remove_button = create_icon_button2(self._theme, 'star-minus', tr('Add to Favorites'))
+        fav_remove_button = create_icon_button(self._theme, 'star-minus', tr('Add to Favorites'))
         # fav_remove_button.clicked.connect()
         fav_layout.addWidget(fav_remove_button, alignment=ARIGHT)
         left_layout.addLayout(fav_layout)
 
-        background_frame = create_frame2(self._theme, size_policy=SMINMIN, style_override={
+        background_frame = create_frame(self._theme, size_policy=SMINMIN, style_override={
                 'border-radius': self._theme['listbox']['border-radius']})
         background_layout = QVBoxLayout()
         background_layout.setContentsMargins(0, 0, 0, 0)
@@ -307,9 +307,9 @@ class OSCRLeftSidebar():
         left_layout.setSpacing(m)
         left_layout.setAlignment(ATOP)
 
-        head_label = create_label2(self._theme, tr('About OSCR:'), 'label_heading')
+        head_label = create_label(self._theme, tr('About OSCR:'), 'label_heading')
         left_layout.addWidget(head_label)
-        about_label = create_label2(self._theme, tr(
+        about_label = create_label(self._theme, tr(
             'Open Source Combatlog Reader (OSCR), developed by the STO Community Developers in '
             'cooperation with the STO Builds Discord.'))
         about_label.setWordWrap(True)
@@ -325,35 +325,35 @@ class OSCRLeftSidebar():
             tr('Downloads'): {
                 'callback': lambda: open_link(self._config.link_downloads), 'align': AHCENTER}
         }
-        button_layout, buttons = create_button_series2(
+        button_layout, buttons = create_button_series(
                 self._theme, link_button_style, 'button', shape='column', ret=True)
         buttons[0].setToolTip(self._config.link_website)
         buttons[1].setToolTip(self._config.link_github)
         buttons[2].setToolTip(self._config.link_downloads)
-        link_button_frame = create_frame2(self._theme, 'medium_frame')
+        link_button_frame = create_frame(self._theme, 'medium_frame')
         link_button_frame.setLayout(button_layout)
         left_layout.addWidget(link_button_frame, alignment=AHCENTER)
-        seperator = create_frame2(self._theme, 'light_frame', size_policy=SMINMAX)
+        seperator = create_frame(self._theme, 'light_frame', size_policy=SMINMAX)
         seperator.setFixedHeight(1)
         left_layout.addWidget(seperator)
-        version_label = create_label2(
+        version_label = create_label(
             self._theme, f"{tr('Version')}: {self._app_version}", 'label_subhead')
         left_layout.addWidget(version_label)
         logo_layout = QGridLayout()
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setColumnStretch(1, 1)
         logo_size = [self._theme.opt.icon_size * 4] * 2
-        stocd_logo = create_icon_button2(
+        stocd_logo = create_icon_button(
             self._theme, 'stocd', self._config.link_stocd,
             style_override={'border-style': 'none'}, icon_size=logo_size)
         stocd_logo.clicked.connect(lambda: open_link(self._config.link_stocd))
         logo_layout.addWidget(stocd_logo, 0, 0)
-        stobuilds_logo = create_icon_button2(
+        stobuilds_logo = create_icon_button(
             self._theme, 'stobuilds', self._config.link_stobuilds,
             style_override={'border-style': 'none'}, icon_size=logo_size)
         stobuilds_logo.clicked.connect(lambda: open_link(self._config.link_stobuilds))
         logo_layout.addWidget(stobuilds_logo, 0, 2)
-        logo_frame = create_frame2(self._theme, 'medium_frame', size_policy=SMINMAX)
+        logo_frame = create_frame(self._theme, 'medium_frame', size_policy=SMINMAX)
         logo_frame.setLayout(logo_layout)
         left_layout.addWidget(logo_frame, stretch=1, alignment=ABOTTOM)
         parent_frame.setLayout(left_layout)

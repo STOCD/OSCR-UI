@@ -8,7 +8,7 @@ from .parserbridge import ParserBridge
 from .theme import AppTheme
 from .translation import tr
 from .widgetbuilder import (
-    create_button2, create_button_series2, create_frame2, create_label2,
+    create_button, create_button_series, create_frame, create_label,
     ABOTTOM, AHCENTER, ALEFT, ARIGHT, SMAXMAX, SMINMAX, SMINMIN, SMIXMIN)
 from .widgets import CombatDelegate
 
@@ -43,7 +43,7 @@ class SplitDialog(QDialog):
         main_layout = QVBoxLayout()
         thick = self._theme['app']['frame_thickness']
         main_layout.setContentsMargins(thick, thick, thick, thick)
-        content_frame = create_frame2(self._theme)
+        content_frame = create_frame(self._theme)
         main_layout.addWidget(content_frame)
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(thick, thick, thick, thick)
@@ -52,51 +52,51 @@ class SplitDialog(QDialog):
         log_layout.setContentsMargins(0, 0, 0, 0)
         log_layout.setSpacing(thick)
         log_layout.setAlignment(ALEFT)
-        current_log_heading = create_label2(self._theme, tr('Selected Logfile:'), 'label_light')
+        current_log_heading = create_label(self._theme, tr('Selected Logfile:'), 'label_light')
         log_layout.addWidget(current_log_heading)
-        self._current_log_label = create_label2(
+        self._current_log_label = create_label(
             self._theme, '', 'label_subhead', {'margin-bottom': 0})
         log_layout.addWidget(self._current_log_label)
         content_layout.addLayout(log_layout)
-        seperator = create_frame2(self._theme, style='hr', size_policy=SMINMAX)
+        seperator = create_frame(self._theme, style='hr', size_policy=SMINMAX)
         seperator.setFixedHeight(self._theme['hr']['height'])
         content_layout.addWidget(seperator)
         trim_layout = QGridLayout()
         trim_layout.setContentsMargins(0, 0, 0, 0)
         trim_layout.setSpacing(thick)
         trim_layout.setColumnStretch(0, 1)
-        trim_heading = create_label2(self._theme, tr('Trim Logfile:'), 'label_heading')
+        trim_heading = create_label(self._theme, tr('Trim Logfile:'), 'label_heading')
         trim_layout.addWidget(trim_heading, 0, 0, alignment=ALEFT)
         label_text = tr(
             'Removes all combats except for the most recent one from the selected logfile. '
             'All previous combats will be lost!')
-        trim_text = create_label2(self._theme, label_text)
+        trim_text = create_label(self._theme, label_text)
         trim_text.setSizePolicy(SMINMAX)
         trim_text.setWordWrap(True)
         trim_layout.addWidget(trim_text, 1, 0)
-        trim_button = create_button2(self._theme, tr('Trim'))
+        trim_button = create_button(self._theme, tr('Trim'))
         trim_button.clicked.connect(self.confirm_trim_logfile)
         trim_layout.addWidget(trim_button, 0, 1, alignment=ARIGHT | ABOTTOM)
         content_layout.addLayout(trim_layout)
-        seperator = create_frame2(self._theme, style='hr', size_policy=SMINMAX)
+        seperator = create_frame(self._theme, style='hr', size_policy=SMINMAX)
         seperator.setFixedHeight(self._theme['hr']['height'])
         content_layout.addWidget(seperator)
         repair_layout = QGridLayout()
         repair_layout.setContentsMargins(0, 0, 0, 0)
         repair_layout.setSpacing(thick)
         repair_layout.setColumnStretch(0, 1)
-        repair_log_heading = create_label2(self._theme, tr('Repair Logfile:'), 'label_heading')
+        repair_log_heading = create_label(self._theme, tr('Repair Logfile:'), 'label_heading')
         repair_layout.addWidget(repair_log_heading, 0, 0, alignment=ALEFT)
         label_text = tr(
             'Attempts to repair the logfile by replacing sections known to break parsing.')
-        repair_label = create_label2(self._theme, label_text)
+        repair_label = create_label(self._theme, label_text)
         repair_layout.addWidget(repair_label, 1, 0)
-        repair_log_button = create_button2(self._theme, tr('Repair'))
+        repair_log_button = create_button(self._theme, tr('Repair'))
         repair_log_button.clicked.connect(
             lambda: self._parser.repair_logfile(self._current_log_path))
         repair_layout.addWidget(repair_log_button, 0, 1, alignment=ARIGHT | ABOTTOM)
         content_layout.addLayout(repair_layout)
-        seperator = create_frame2(self._theme, style='hr', size_policy=SMINMAX)
+        seperator = create_frame(self._theme, style='hr', size_policy=SMINMAX)
         seperator.setFixedHeight(self._theme['hr']['height'])
         content_layout.addWidget(seperator)
 
@@ -104,22 +104,22 @@ class SplitDialog(QDialog):
         split_heading_layout = QHBoxLayout()
         split_heading_layout.setContentsMargins(0, 0, 0, 0)
         split_heading_layout.setSpacing(thick)
-        split_heading = create_label2(self._theme, tr('Split Logfile:'), 'label_heading')
+        split_heading = create_label(self._theme, tr('Split Logfile:'), 'label_heading')
         split_heading_layout.addWidget(split_heading, alignment=ALEFT, stretch=1)
         split_button_style = {
             tr('Load Combats'): {'callback': self.populate_split_combats},
             tr('Split'): {'callback': lambda: self._parser.extract_combats(
                 combat_list.selectionModel().selectedIndexes(), self._current_log_path)},
         }
-        buttons_layout = create_button_series2(
+        buttons_layout = create_button_series(
             self._theme, split_button_style, 'button', seperator='•')
         split_heading_layout.addLayout(buttons_layout)
         content_layout.addLayout(split_heading_layout)
         label_text = tr(
             'Extracts (multiple) combats from selected file and saves them to new file.')
-        split_label = create_label2(self._theme, label_text)
+        split_label = create_label(self._theme, label_text)
         content_layout.addWidget(split_label)
-        background_frame = create_frame2(self._theme, style='frame', style_override={
+        background_frame = create_frame(self._theme, style='frame', style_override={
                 'border-radius': self._theme['listbox']['border-radius'], 'margin-top': '@csp',
                 'margin-bottom': '@csp'}, size_policy=SMINMIN)
         background_layout = QVBoxLayout()

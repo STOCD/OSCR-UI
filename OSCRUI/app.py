@@ -25,8 +25,10 @@ from .theme import AppTheme
 from .translation import init_translation, tr
 from .widgetbuilder import (
         ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL,
-        SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX, SMIXMIN,
-        SCROLLOFF, SCROLLON)
+        SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX,
+        SCROLLOFF, SCROLLON,
+        create_annotated_slider, create_button, create_button_series, create_combo_box,
+        create_entry, create_frame, create_icon_button, create_label)
 from .widgetmanager import WidgetManager
 from .widgets import (
         AnalysisPlot, BannerLabel, CombatDelegate, FlipButton, ParserSignals)
@@ -39,9 +41,6 @@ from .widgets import (
 class OSCRUI():
     from .displayer import create_legend_item
     from .style import get_style_class, create_style_sheet, theme_font, get_style
-    from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
-    from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
-    from .widgetbuilder import create_icon_button, create_label
 
     app_dir = None
 
@@ -328,7 +327,7 @@ class OSCRUI():
         main_layout.setContentsMargins(0, 0, margin, 0)
         main_layout.setSpacing(0)
 
-        left = self.create_frame()
+        left = create_frame(self.theme2)
         left.setSizePolicy(SMAXMIN)
         main_layout.addWidget(left, 0, 0)
 
@@ -380,7 +379,7 @@ class OSCRUI():
         button_column.addWidget(table_button, 3, 0)
         self.widgets.overview_table_button = table_button
 
-        center = self.create_frame()
+        center = create_frame(self.theme2)
         center.setSizePolicy(SMINMIN)
         main_layout.addWidget(center, 0, 2)
 
@@ -399,10 +398,10 @@ class OSCRUI():
         Parameters:
         - :param frame: QFrame -> parent frame of the sidebar
         """
-        o_frame = self.create_frame()
-        a_frame = self.create_frame()
-        l_frame = self.create_frame()
-        s_frame = self.create_frame()
+        o_frame = create_frame(self.theme2)
+        a_frame = create_frame(self.theme2)
+        l_frame = create_frame(self.theme2)
+        s_frame = create_frame(self.theme2)
 
         main_tabber = QTabWidget(frame)
         main_tabber.setStyleSheet(self.theme2.get_style_class('QTabWidget', 'tabber'))
@@ -458,7 +457,7 @@ class OSCRUI():
         splitter.setStretchFactor(0, self.theme2.opt.overview_graph_stretch)
 
         switch_layout.setColumnStretch(0, 1)
-        switch_frame = self.create_frame()
+        switch_frame = create_frame(self.theme2)
         switch_layout.addWidget(switch_frame, 0, 1, alignment=ACENTER)
         switch_layout.setColumnStretch(1, 2)
 
@@ -474,23 +473,22 @@ class OSCRUI():
                 'callback': lambda: self.widgets.switch_overview_tab(2), 'align': ACENTER,
                 'toggle': False}
         }
-        switcher, buttons = self.create_button_series(
-                switch_style, 'tab_button', ret=True)
+        switcher, buttons = create_button_series(self.theme2, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
         self.widgets.overview_menu_buttons = buttons
         icon_layout = QHBoxLayout()
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setSpacing(self.theme['defaults']['csp'])
-        copy_button = self.create_icon_button(self.icons['copy'], tr('Copy Result'))
+        copy_button = create_icon_button(self.theme2, 'copy', tr('Copy Result'))
         copy_button.clicked.connect(self.parser.copy_summary_data)
         icon_layout.addWidget(copy_button)
-        ladder_button = self.create_icon_button(self.icons['ladder'], tr('Upload Result'))
+        ladder_button = create_icon_button(self.theme2, 'ladder', tr('Upload Result'))
         ladder_button.clicked.connect(self.league.upload_callback)
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
-        table_frame = self.create_frame(size_policy=SMINMIN)
+        table_frame = create_frame(self.theme2, size_policy=SMINMIN)
         table_frame.setMinimumHeight(self.sidebar_item_width * 0.4)
         table_layout = QVBoxLayout()
         table_layout.setContentsMargins(0, 0, 0, 0)
@@ -533,12 +531,12 @@ class OSCRUI():
         graph_layout.setContentsMargins(csp, csp, csp, 0)
         graph_layout.setSpacing(csp)
 
-        plot_bundle_frame = self.create_frame(size_policy=SMINMAX)
+        plot_bundle_frame = create_frame(self.theme2, size_policy=SMINMAX)
         plot_bundle_layout = QVBoxLayout()
         plot_bundle_layout.setContentsMargins(0, 0, 0, 0)
         plot_bundle_layout.setSpacing(0)
         plot_bundle_layout.setSizeConstraint(QLayout.SizeConstraint.SetMaximumSize)
-        plot_legend_frame = self.create_frame()
+        plot_legend_frame = create_frame(self.theme2)
         plot_legend_layout = QHBoxLayout()
         plot_legend_layout.setContentsMargins(0, 0, 0, 0)
         plot_legend_layout.setSpacing(2 * self.theme['defaults']['margin'])
@@ -551,17 +549,17 @@ class OSCRUI():
         plot_bundle_frame.setLayout(plot_bundle_layout)
         graph_layout.addWidget(plot_bundle_frame, stretch=1)
 
-        plot_button_frame = self.create_frame(size_policy=SMAXMIN)
+        plot_button_frame = create_frame(self.theme2, size_policy=SMAXMIN)
         plot_button_layout = QVBoxLayout()
         plot_button_layout.setContentsMargins(0, 0, 0, 0)
         plot_button_layout.setSpacing(0)
         plot_button_layout.setAlignment(AVCENTER)
-        freeze_button = self.create_icon_button(self.icons['freeze'], tr('Freeze Graph'))
+        freeze_button = create_icon_button(self.theme2, 'freeze', tr('Freeze Graph'))
         freeze_button.setCheckable(True)
         freeze_button.setChecked(True)
         freeze_button.clicked.connect(plot_widget.toggle_freeze)
         plot_button_layout.addWidget(freeze_button, alignment=ABOTTOM)
-        clear_button = self.create_icon_button(self.icons['clear-plot'], tr('Clear Graph'))
+        clear_button = create_icon_button(self.theme2, 'clear-plot', tr('Clear Graph'))
         clear_button.clicked.connect(plot_widget.clear)
         plot_button_layout.addWidget(clear_button, alignment=ATOP)
         plot_button_frame.setLayout(plot_button_layout)
@@ -571,7 +569,7 @@ class OSCRUI():
         tree_layout = QVBoxLayout()
         tree_layout.setContentsMargins(0, 0, 0, 0)
         tree_layout.setSpacing(0)
-        tree = self.create_analysis_table('tree_table')
+        tree = self.tables.create_analysis_table('tree_table')
         if is_heal_table:
             tree_model.header_data = tr(HEAL_TREE_HEADER)
         else:
@@ -591,16 +589,16 @@ class OSCRUI():
         Sets up the frame housing the detailed analysis table and graph
         """
         a_frame = self.widgets.main_tab_frames[1]
-        dout_graph_frame = self.create_frame()
-        dtaken_graph_frame = self.create_frame()
-        hout_graph_frame = self.create_frame()
-        hin_graph_frame = self.create_frame()
+        dout_graph_frame = create_frame(self.theme2)
+        dtaken_graph_frame = create_frame(self.theme2)
+        hout_graph_frame = create_frame(self.theme2)
+        hin_graph_frame = create_frame(self.theme2)
         self.widgets.analysis_graph_frames.extend(
                 (dout_graph_frame, dtaken_graph_frame, hout_graph_frame, hin_graph_frame))
-        dout_tree_frame = self.create_frame()
-        dtaken_tree_frame = self.create_frame()
-        hout_tree_frame = self.create_frame()
-        hin_tree_frame = self.create_frame()
+        dout_tree_frame = create_frame(self.theme2)
+        dtaken_tree_frame = create_frame(self.theme2)
+        hout_tree_frame = create_frame(self.theme2)
+        hin_tree_frame = create_frame(self.theme2)
         self.widgets.analysis_tree_frames.extend(
                 (dout_tree_frame, dtaken_tree_frame, hout_tree_frame, hin_tree_frame))
         layout = QVBoxLayout()
@@ -637,7 +635,7 @@ class OSCRUI():
         splitter.addWidget(a_tree_tabber)
 
         switch_layout.setColumnStretch(0, 1)
-        switch_frame = self.create_frame()
+        switch_frame = create_frame(self.theme2)
         switch_layout.addWidget(switch_frame, 0, 1, alignment=ACENTER)
         switch_layout.setColumnStretch(1, 1)
 
@@ -656,21 +654,20 @@ class OSCRUI():
                 'callback': lambda _: self.widgets.switch_analysis_tab(3), 'align': ACENTER,
                 'toggle': False}
         }
-        switcher, buttons = self.create_button_series(
-                switch_style, 'tab_button', ret=True)
+        switcher, buttons = create_button_series(self.theme2, switch_style, 'tab_button', ret=True)
         switcher.setContentsMargins(0, self.theme['defaults']['margin'], 0, 0)
         switch_frame.setLayout(switcher)
         self.widgets.analysis_menu_buttons = buttons
         copy_layout = QHBoxLayout()
         copy_layout.setContentsMargins(0, 0, 0, 0)
         copy_layout.setSpacing(self.theme['defaults']['csp'])
-        copy_combobox = self.create_combo_box()
+        copy_combobox = create_combo_box(self.theme2)
         copy_combobox.addItems((
                 tr('Selection'), tr('Global Max One Hit'), tr('Max One Hit'), tr('Magnitude'),
                 tr('Magnitude / s')))
         copy_layout.addWidget(copy_combobox)
         self.widgets.analysis_copy_combobox = copy_combobox
-        copy_button = self.create_icon_button(self.icons['copy'], 'Copy Data')
+        copy_button = create_icon_button(self.theme2, 'copy', 'Copy Data')
         copy_button.clicked.connect(self.copy_analysis_callback)
         copy_layout.addWidget(copy_button)
         switch_layout.addLayout(copy_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
@@ -745,20 +742,20 @@ class OSCRUI():
         control_layout.setContentsMargins(0, 0, 0, 0)
         control_layout.setSpacing(0)
         control_layout.setColumnStretch(2, 1)
-        search_label = self.create_label(
-                tr('Search:'), 'label_subhead', style_override={'margin-bottom': 0})
+        search_label = create_label(
+            self.theme2, tr('Search:'), 'label_subhead', style_override={'margin-bottom': 0})
         control_layout.addWidget(search_label, 0, 0, alignment=AVCENTER)
-        search_bar = self.create_entry(
-                placeholder=tr('name@handle'),
-                style_override={'margin-left': '@isp', 'margin-top': 0})
+        search_bar = create_entry(
+            self.theme2, placeholder=tr('name@handle'),
+            style_override={'margin-left': '@isp', 'margin-top': 0})
         search_bar.textChanged.connect(self.league.apply_league_table_filter)
         control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
         control_button_style = {
             tr('View Parse'): {'callback': self.league.download_and_view_combat},
             tr('More'): {'callback': self.league.extend_ladder, 'style': {'margin-right': 0}}
         }
-        control_button_layout = self.create_button_series(
-                control_button_style, 'button', seperator='•')
+        control_button_layout = create_button_series(
+            self.theme2, control_button_style, 'button', seperator='•')
         control_layout.addLayout(control_button_layout, 0, 3, alignment=AVCENTER)
         layout.addLayout(control_layout)
 
@@ -775,7 +772,7 @@ class OSCRUI():
         """
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        bg_frame = self.create_frame(style_override={'background-color': '@oscr'})
+        bg_frame = create_frame(self.theme2, style_override={'background-color': '@oscr'})
         bg_frame.setSizePolicy(SMINMIN)
         layout.addWidget(bg_frame)
 
@@ -785,7 +782,7 @@ class OSCRUI():
         lbl = BannerLabel(get_asset_path('oscrbanner-slim-dark-label.png', self.app_dir), bg_frame)
         main_layout.addWidget(lbl)
 
-        menu_frame = self.create_frame(style_override={'background-color': '@oscr'})
+        menu_frame = create_frame(self.theme2, style_override={'background-color': '@oscr'})
         menu_frame.setSizePolicy(SMINMAX)
         menu_frame.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(menu_frame)
@@ -799,14 +796,14 @@ class OSCRUI():
             tr('League Standings'): {},
             tr('Settings'): {},
         }
-        bt_lay, buttons = self.create_button_series(
-                menu_button_style, style='menu_button', seperator='•', ret=True)
+        bt_lay, buttons = create_button_series(
+            self.theme2, menu_button_style, style='menu_button', seperator='•', ret=True)
         menu_layout.addLayout(bt_lay, 0, 0)
         self.widgets.main_menu_buttons = buttons
 
         size = [self.theme2.opt.icon_size * 1.3] * 2
-        live_parser_button = self.create_icon_button(
-                self.icons['live-parser'], tr('Live Parser'), 'live_icon_button', icon_size=size)
+        live_parser_button = create_icon_button(
+            self.theme2, 'live-parser', tr('Live Parser'), 'live_icon_button', icon_size=size)
         live_parser_button.setCheckable(True)
         live_parser_button.clicked[bool].connect(self.live_parser.toggle_window)
         menu_layout.addWidget(live_parser_button, 0, 2)
@@ -814,7 +811,7 @@ class OSCRUI():
         menu_frame.setLayout(menu_layout)
 
         w = self.theme['app']['frame_thickness']
-        main_frame = self.create_frame(style_override={'margin': (0, w, w, w)})
+        main_frame = create_frame(self.theme2, style_override={'margin': (0, w, w, w)})
         main_frame.setSizePolicy(SMINMIN)
         main_layout.addWidget(main_frame)
         bg_frame.setLayout(main_layout)
@@ -833,7 +830,7 @@ class OSCRUI():
         scroll_layout = QVBoxLayout()
         scroll_layout.setContentsMargins(0, 0, 0, 0)
         scroll_layout.setSpacing(isp)
-        scroll_frame = self.create_frame()
+        scroll_frame = create_frame(self.theme2)
         scroll_area = QScrollArea()
         scroll_area.setSizePolicy(SMINMIN)
         scroll_area.setHorizontalScrollBarPolicy(SCROLLOFF)
@@ -848,72 +845,75 @@ class OSCRUI():
         sec_1.setVerticalSpacing(self.theme['defaults']['isp'])
         sec_1.setHorizontalSpacing(self.theme['defaults']['csp'])
 
-        combat_delta_label = self.create_label(tr('Seconds Between Combats:'), 'label_subhead')
+        combat_delta_label = create_label(
+            self.theme2, tr('Seconds Between Combats:'), 'label_subhead')
         sec_1.addWidget(combat_delta_label, 0, 0, alignment=ARIGHT)
         combat_delta_validator = QIntValidator()
         combat_delta_validator.setBottom(1)
-        combat_delta_entry = self.create_entry(
-                str(self.settings.seconds_between_combats),
-                combat_delta_validator, style_override={'margin-top': 0})
+        combat_delta_entry = create_entry(
+            self.theme2, str(self.settings.seconds_between_combats),
+            combat_delta_validator, style_override={'margin-top': 0})
         combat_delta_entry.setSizePolicy(SMIXMAX)
         combat_delta_entry.editingFinished.connect(
             lambda: self.settings.set('seconds_between_combats', int(combat_delta_entry.text())))
         sec_1.addWidget(combat_delta_entry, 0, 1, alignment=AVCENTER)
 
-        combat_num_label = self.create_label(tr('Number of combats to isolate:'), 'label_subhead')
+        combat_num_label = create_label(
+            self.theme2, tr('Number of combats to isolate:'), 'label_subhead')
         sec_1.addWidget(combat_num_label, 1, 0, alignment=ARIGHT)
         combat_num_validator = QIntValidator()
         combat_num_validator.setBottom(1)
-        combat_num_entry = self.create_entry(
-                str(self.settings.combats_to_parse), combat_num_validator,
-                style_override={'margin-top': 0})
+        combat_num_entry = create_entry(
+            self.theme2, str(self.settings.combats_to_parse), combat_num_validator,
+            style_override={'margin-top': 0})
         combat_num_entry.setSizePolicy(SMIXMAX)
         combat_num_entry.editingFinished.connect(
             lambda: self.settings.set('combats_to_parse', int(combat_num_entry.text())))
         sec_1.addWidget(combat_num_entry, 1, 1, alignment=AVCENTER)
 
-        combat_lines_label = self.create_label(
-                tr('Minimum number of lines per combat:'), 'label_subhead')
+        combat_lines_label = create_label(
+            self.theme2, tr('Minimum number of lines per combat:'), 'label_subhead')
         sec_1.addWidget(combat_lines_label, 2, 0, alignment=ARIGHT)
         combat_lines_validator = QIntValidator()
         combat_lines_validator.setBottom(1)
-        combat_lines_entry = self.create_entry(
-                str(self.settings.combat_min_lines), combat_lines_validator,
-                style_override={'margin-top': 0})
+        combat_lines_entry = create_entry(
+            self.theme2, str(self.settings.combat_min_lines), combat_lines_validator,
+            style_override={'margin-top': 0})
         combat_lines_entry.setSizePolicy(SMIXMAX)
         combat_lines_entry.editingFinished.connect(
             lambda: self.settings.set('combat_min_lines', int(combat_lines_entry.text())))
         sec_1.addWidget(combat_lines_entry, 2, 1, alignment=AVCENTER)
 
-        graph_resolution_label = self.create_label(
-                tr('Graph resolution (interval in seconds):'), 'label_subhead')
+        graph_resolution_label = create_label(
+            self.theme2, tr('Graph resolution (interval in seconds):'), 'label_subhead')
         sec_1.addWidget(graph_resolution_label, 3, 0, alignment=ARIGHT)
-        graph_resolution_layout = self.create_annotated_slider(
-                self.settings.graph_resolution * 10, 1, 20,
-                callback=self.settings.set_graph_resolution)
+        graph_resolution_layout = create_annotated_slider(
+            self.theme2, self.settings.graph_resolution * 10, 1, 20,
+            callback=self.settings.set_graph_resolution)
         sec_1.addLayout(graph_resolution_layout, 3, 1, alignment=ALEFT)
 
-        overview_sort_label = self.create_label(
-                tr('Sort overview table by column:'), 'label_subhead')
+        overview_sort_label = create_label(
+            self.theme2, tr('Sort overview table by column:'), 'label_subhead')
         sec_1.addWidget(overview_sort_label, 4, 0, alignment=ARIGHT)
-        overview_sort_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        overview_sort_combo = create_combo_box(self.theme2, style_override={'font': '@small_text'})
         overview_sort_combo.addItems(TABLE_HEADER)
         overview_sort_combo.setCurrentIndex(self.settings.overview_sort_column)
         overview_sort_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.set('overview_sort_column', new_index))
         sec_1.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
 
-        overview_sort_order_label = self.create_label(
-                tr('Overview table sort order:'), 'label_subhead')
+        overview_sort_order_label = create_label(
+            self.theme2, tr('Overview table sort order:'), 'label_subhead')
         sec_1.addWidget(overview_sort_order_label, 5, 0, alignment=ARIGHT)
-        overview_sort_order_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        overview_sort_order_combo = create_combo_box(
+            self.theme2, style_override={'font': '@small_text'})
         overview_sort_order_combo.addItems((tr('Descending'), tr('Ascending')))
         overview_sort_order_combo.setCurrentText(self.settings.overview_sort_order)
         overview_sort_order_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.set('overview_sort_order', new_text))
         sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
 
-        auto_scan_label = self.create_label(tr('Scan log automatically:'), 'label_subhead')
+        auto_scan_label = create_label(self.theme2, tr('Scan log automatically:'), 'label_subhead')
         sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
         auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         auto_scan_button.setStyleSheet(self.theme2.get_style_class(
@@ -924,28 +924,28 @@ class OSCRUI():
         if self.settings.auto_scan:
             auto_scan_button.flip()
         sec_1.addWidget(auto_scan_button, 6, 1, alignment=ALEFT | AVCENTER)
-        sto_log_path_button = self.create_button(tr('STO Logfile:'), style_override={
-                'margin': 0, 'font': ('Overpass', 11, 'medium'), 'border-color': '@bc',
-                'border-style': 'solid', 'border-width': '@bw', 'padding-bottom': 1})
+        sto_log_path_button = create_button(self.theme2, tr('STO Logfile:'), style_override={
+            'margin': 0, 'font': ('Overpass', 11, 'medium'), 'border-color': '@bc',
+            'border-style': 'solid', 'border-width': '@bw', 'padding-bottom': 1})
         sec_1.addWidget(sto_log_path_button, 7, 0, alignment=ARIGHT | AVCENTER)
-        sto_log_path_entry = self.create_entry(
-                self.settings.sto_log_path, style_override={'margin-top': 0})
+        sto_log_path_entry = create_entry(
+            self.theme2, self.settings.sto_log_path, style_override={'margin-top': 0})
         sto_log_path_entry.setSizePolicy(SMIXMAX)
         sto_log_path_entry.editingFinished.connect(
                 lambda: self.set_sto_logpath_callback(sto_log_path_entry))
         sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
         sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
 
-        opacity_label = self.create_label(tr('Live Parser Opacity:'), 'label_subhead')
+        opacity_label = create_label(self.theme2, tr('Live Parser Opacity:'), 'label_subhead')
         sec_1.addWidget(opacity_label, 8, 0, alignment=ARIGHT)
-        opacity_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.liveparser__window_opacity * 20, 0),
-                min=1, max=20,
-                style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
-                callback=self.settings.set_liveparser_opacity)
+        opacity_slider_layout = create_annotated_slider(
+            self.theme2, default_value=round(self.settings.liveparser__window_opacity * 20, 0),
+            min=1, max=20, callback=self.settings.set_liveparser_opacity,
+            style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}})
         sec_1.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
 
-        live_graph_active_label = self.create_label(tr('LiveParser Graph:'), 'label_subhead')
+        live_graph_active_label = create_label(
+            self.theme2, tr('LiveParser Graph:'), 'label_subhead')
         sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
         live_graph_active_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_graph_active_button.setStyleSheet(self.theme2.get_style_class(
@@ -959,49 +959,52 @@ class OSCRUI():
             live_graph_active_button.flip()
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
 
-        live_graph_field_label = self.create_label(tr('LiveParser Graph Field:'), 'label_subhead')
+        live_graph_field_label = create_label(
+            self.theme2, tr('LiveParser Graph Field:'), 'label_subhead')
         sec_1.addWidget(live_graph_field_label, 10, 0, alignment=ARIGHT)
-        live_graph_field_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        live_graph_field_combo = create_combo_box(
+            self.theme2, style_override={'font': '@small_text'})
         live_graph_field_combo.addItems(self.config.live_graph_fields)
         live_graph_field_combo.setCurrentIndex(self.settings.liveparser__graph_field)
         live_graph_field_combo.currentIndexChanged.connect(
                 lambda new_index: self.settings.set('liveparser__graph_field', new_index))
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
 
-        live_name_label = self.create_label(tr('LiveParser Player:'), 'label_subhead')
+        live_name_label = create_label(self.theme2, tr('LiveParser Player:'), 'label_subhead')
         sec_1.addWidget(live_name_label, 11, 0, alignment=ARIGHT)
-        live_player_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        live_player_combo = create_combo_box(self.theme2, style_override={'font': '@small_text'})
         live_player_combo.addItems(('Name', 'Handle'))
         live_player_combo.setCurrentText(self.settings.liveparser__player_display)
         live_player_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.set('liveparser__player_display', new_text))
         sec_1.addWidget(live_player_combo, 11, 1, alignment=ALEFT)
 
-        overview_tab_label = self.create_label(tr('Default Overview Tab:'), 'label_subhead')
+        overview_tab_label = create_label(self.theme2, tr('Default Overview Tab:'), 'label_subhead')
         sec_1.addWidget(overview_tab_label, 12, 0, alignment=ARIGHT)
-        overview_tab_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        overview_tab_combo = create_combo_box(self.theme2, style_override={'font': '@small_text'})
         overview_tab_combo.addItems((tr('DPS Bar'), tr('DPS Graph'), tr('Damage Graph')))
         overview_tab_combo.setCurrentIndex(self.settings.first_overview_tab)
         overview_tab_combo.currentIndexChanged.connect(
             lambda new_index: self.settings.set('first_overview_tab', new_index))
         sec_1.addWidget(overview_tab_combo, 12, 1, alignment=ALEFT)
 
-        ui_scale_label = self.create_label(tr('UI Scale:'), 'label_subhead')
+        ui_scale_label = create_label(self.theme2, tr('UI Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
-        ui_scale_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.ui_scale * 50, 0),
-                min=25, max=75, callback=self.settings.set_ui_scale)
+        ui_scale_slider_layout = create_annotated_slider(
+            self.theme2, default_value=round(self.settings.ui_scale * 50, 0), min=25, max=75,
+            callback=self.settings.set_ui_scale)
         sec_1.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
 
-        ui_scale_label = self.create_label(tr('LiveParser Scale:'), 'label_subhead')
+        ui_scale_label = create_label(self.theme2, tr('LiveParser Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 14, 0, alignment=ARIGHT)
-        live_scale_slider_layout = self.create_annotated_slider(
-                default_value=round(self.settings.liveparser__window_scale * 50, 0),
-                min=25, max=75, callback=self.settings.set_liveparser_scale)
+        live_scale_slider_layout = create_annotated_slider(
+            self.theme2, default_value=round(self.settings.liveparser__window_scale * 50, 0),
+            min=25, max=75, callback=self.settings.set_liveparser_scale)
         sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
         sec_1.setAlignment(AHCENTER)
 
-        live_enabled_label = self.create_label(tr('LiveParser default state:'), 'label_subhead')
+        live_enabled_label = create_label(
+            self.theme2, tr('LiveParser default state:'), 'label_subhead')
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
         live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_enabled_button.setStyleSheet(self.theme2.get_style_class(
@@ -1015,16 +1018,18 @@ class OSCRUI():
             live_enabled_button.flip()
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
 
-        result_format_label = self.create_label(tr('Result Clipboard Format:'), 'label_subhead')
+        result_format_label = create_label(
+            self.theme2, tr('Result Clipboard Format:'), 'label_subhead')
         sec_1.addWidget(result_format_label, 16, 0, alignment=ARIGHT)
-        result_format_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        result_format_combo = create_combo_box(self.theme2, style_override={'font': '@small_text'})
         result_format_combo.addItems(('Compact', 'Verbose', 'CSV'))
         result_format_combo.setCurrentText(self.settings.copy_format)
         result_format_combo.currentTextChanged.connect(
                 lambda new_text: self.settings.set('copy_format', new_text))
         sec_1.addWidget(result_format_combo, 16, 1, alignment=ALEFT)
 
-        live_copy_label = self.create_label(tr('Show kills in LiveParser Copy:'), 'label_subhead')
+        live_copy_label = create_label(
+            self.theme2, tr('Show kills in LiveParser Copy:'), 'label_subhead')
         sec_1.addWidget(live_copy_label, 17, 0, alignment=ARIGHT)
         live_copy_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_copy_button.setStyleSheet(self.theme2.get_style_class(
@@ -1040,9 +1045,9 @@ class OSCRUI():
 
         languages = ('English',)  # 'Chinese', 'German')
         language_codes = ('en',)  # 'zh', 'de')
-        language_label = self.create_label(tr('Language:'), 'label_subhead')
+        language_label = create_label(self.theme2, tr('Language:'), 'label_subhead')
         sec_1.addWidget(language_label, 18, 0, alignment=ARIGHT)
-        language_combo = self.create_combo_box(style_override={'font': '@small_text'})
+        language_combo = create_combo_box(self.theme2, style_override={'font': '@small_text'})
         language_combo.addItems(languages)
         current_language_code = self.settings.language
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
@@ -1052,8 +1057,8 @@ class OSCRUI():
         scroll_layout.addLayout(sec_1)
 
         # seperator
-        section_seperator = self.create_frame(
-            'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
+        section_seperator = create_frame(
+            self.theme2, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         section_seperator.setFixedHeight(self.theme['defaults']['bw'])
         scroll_layout.addWidget(section_seperator)
 
@@ -1066,74 +1071,71 @@ class OSCRUI():
         sec_2.setContentsMargins(0, isp, 0, 0)
         sec_2.setSpacing(isp)
         sec_2.setAlignment(AHCENTER)
-        dmg_hider_label = self.create_label(
-            tr('Damage table columns:'), 'label_subhead')
+        dmg_hider_label = create_label(
+            self.theme2, tr('Damage table columns:'), 'label_subhead')
         sec_2.addWidget(dmg_hider_label)
         dmg_hider_layout = QVBoxLayout()
-        dmg_hider_frame = self.create_frame(
-                size_policy=SMINMAX, style_override=hider_frame_style_override)
+        dmg_hider_frame = create_frame(
+            self.theme2, size_policy=SMINMAX, style_override=hider_frame_style_override)
         dmg_hider_frame.setMinimumWidth(self.sidebar_item_width)
         for i, head in enumerate(tr(TREE_HEADER)[1:]):
-            bt = self.create_button(
-                    head, 'toggle_button',
-                    toggle=self.settings.dmg_columns[i])
+            bt = create_button(
+                self.theme2, head, 'toggle_button', toggle=self.settings.dmg_columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
                     lambda state, i=i: self.settings.dmg_columns.__setitem__(i, state))
             dmg_hider_layout.addWidget(bt, stretch=1)
-        dmg_seperator = self.create_frame(
-                'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
+        dmg_seperator = create_frame(
+            self.theme2, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)
-        apply_button = self.create_button(tr('Apply'), 'button')
+        apply_button = create_button(self.theme2, tr('Apply'), 'button')
         apply_button.clicked.connect(self.tables.update_shown_damage_columns)
         dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT | ATOP)
         dmg_hider_frame.setLayout(dmg_hider_layout)
         sec_2.addWidget(dmg_hider_frame, alignment=ATOP)
 
-        heal_hider_label = self.create_label(
-                tr('Heal table columns:'), 'label_subhead')
+        heal_hider_label = create_label(
+            self.theme2, tr('Heal table columns:'), 'label_subhead')
         sec_2.addWidget(heal_hider_label)
         heal_hider_layout = QVBoxLayout()
-        heal_hider_frame = self.create_frame(
-                size_policy=SMINMAX, style_override=hider_frame_style_override)
+        heal_hider_frame = create_frame(
+            self.theme2, size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(tr(HEAL_TREE_HEADER)[1:]):
-            bt = self.create_button(
-                    head, 'toggle_button',
-                    toggle=self.settings.heal_columns[i])
+            bt = create_button(
+                self.theme2, head, 'toggle_button', toggle=self.settings.heal_columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
                     lambda state, i=i: self.settings.heal_columns.__setitem__(i, state))
             heal_hider_layout.addWidget(bt, stretch=1)
-        heal_seperator = self.create_frame(
-            'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
+        heal_seperator = create_frame(
+            self.theme2, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
-        apply_button_2 = self.create_button(tr('Apply'), 'button')
+        apply_button_2 = create_button(self.theme2, tr('Apply'), 'button')
         apply_button_2.clicked.connect(self.tables.update_shown_heal_columns)
         heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
 
         sec_2.addWidget(heal_hider_frame, alignment=ATOP)
-        live_hider_label = self.create_label(
-                tr('Live Parser columns:'), 'label_subhead')
+        live_hider_label = create_label(
+            self.theme2, tr('Live Parser columns:'), 'label_subhead')
         sec_2.addWidget(live_hider_label)
         live_hider_layout = QVBoxLayout()
-        live_hider_frame = self.create_frame(
-                size_policy=SMINMAX, style_override=hider_frame_style_override)
+        live_hider_frame = create_frame(
+            self.theme2, size_policy=SMINMAX, style_override=hider_frame_style_override)
         for i, head in enumerate(tr(LIVE_TABLE_HEADER)):
-            bt = self.create_button(
-                    head, 'toggle_button',
-                    toggle=self.settings.liveparser__columns[i])
+            bt = create_button(
+                self.theme2, head, 'toggle_button', toggle=self.settings.liveparser__columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
                     lambda state, i=i: self.settings.liveparser__columns.__setitem__(i, state))
             live_hider_layout.addWidget(bt, stretch=1)
-        live_separator = self.create_frame(
-            'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
+        live_separator = create_frame(
+            self.theme2, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
         live_separator.setFixedHeight(self.theme['defaults']['bw'])
         live_hider_layout.addWidget(live_separator)
-        apply_button_3 = self.create_button(tr('Apply'), 'button')
+        apply_button_3 = create_button(self.theme2, tr('Apply'), 'button')
         apply_button_3.clicked.connect(self.live_parser.update_shown_columns)
         live_hider_layout.addWidget(apply_button_3, alignment=ARIGHT | ATOP)
         live_hider_frame.setLayout(live_hider_layout)

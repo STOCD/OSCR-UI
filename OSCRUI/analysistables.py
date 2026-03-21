@@ -99,6 +99,48 @@ class AnalysisTables():
                 self.heal_out_table.hideColumn(i + 1)
                 self.heal_in_table.hideColumn(i + 1)
 
+    def resize_tree_table(self, tree: QTreeView):
+        """
+        Resizes the columns of the given tree table to fit its contents
+
+        Parameters:
+        - :param tree: QTreeView -> tree to be resized
+        """
+        for col in range(tree.header().count()):
+            width = max(tree.sizeHintForColumn(col), tree.header().sectionSizeHint(col)) + 5
+            tree.header().resizeSection(col, width)
+
+    def create_analysis_table(self, widget) -> QTreeView:
+        """
+        Creates and returns a QTreeView, styled according to widget.
+
+        Parameters:
+        - :param parent: parent of the table
+        - :param widget: style key for the table
+
+        :return: configured QTreeView
+        """
+        table = QTreeView()
+        table.setStyleSheet(self._theme.get_style_class('QTreeView', widget))
+        table.setSizePolicy(SMINMIN)
+        table.setAlternatingRowColors(True)
+        table.setHorizontalScrollMode(SMPIXEL)
+        table.setVerticalScrollMode(SMPIXEL)
+        table.setSortingEnabled(True)
+        table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        table.header().setStyleSheet(
+            self._theme.get_style_class('QHeaderView', 'tree_table_header'))
+        table.header().setSectionResizeMode(RFIXED)
+        table.header().setMinimumSectionSize(1)
+        table.header().setSectionsClickable(True)
+        table.header().setStretchLastSection(False)
+        table.header().setSortIndicatorShown(False)
+        table.expanded.connect(lambda: self.resize_tree_table(table))
+        table.collapsed.connect(lambda: self.resize_tree_table(table))
+        return table
+
     def style_table(self, table: QTableView, style_override: dict = {}, single_row_selection=False):
         """
         Styles the given table.

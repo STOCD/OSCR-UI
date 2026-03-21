@@ -12,7 +12,7 @@ from .config import OSCRSettings
 from .theme import AppTheme
 from .translation import tr
 from .widgetbuilder import (
-    create_frame2, create_icon_button2, create_label2,
+    create_frame, create_icon_button, create_label,
     ABOTTOM, ALEFT, ARIGHT, AVCENTER, SMAXMAX, SMINMIN, SMIXMAX, RFIXED)
 from .widgetmanager import WidgetManager
 from .widgets import CustomPlotAxis, FlipButton, SizeGrip
@@ -144,17 +144,17 @@ class LiveParserWindow(QFrame):
         self._activate_button.l_function = self._liveparser.stop
         bottom_layout.addWidget(self._activate_button, 0, 0, alignment=ALEFT | AVCENTER)
         icon_size = [self._theme.opt.default_icon_size * self._window_scale * 0.8] * 2
-        copy_button = create_icon_button2(
+        copy_button = create_icon_button(
                 self._theme, 'copy', tr('Copy Result'),
                 style_override={'margin': (0, 0, 3, 0)}, icon_size=icon_size)
         copy_button.clicked.connect(self.copy_live_data_callback)
         bottom_layout.addWidget(copy_button, 0, 1, alignment=ALEFT | AVCENTER)
-        close_button = create_icon_button2(
+        close_button = create_icon_button(
                 self._theme, 'close', tr('Close Live Parser'),
                 style_override={'margin': (0, 0, 3, 0)}, icon_size=icon_size)
         close_button.clicked.connect(lambda: self.toggle_window(False))
         bottom_layout.addWidget(close_button, 0, 2, alignment=ALEFT | AVCENTER)
-        time_label = create_label2(self._theme, 'Duration: 0s')
+        time_label = create_label(self._theme, 'Duration: 0s')
         bottom_layout.addWidget(time_label, 0, 3, alignment=ALEFT | AVCENTER)
         self._duration_label = time_label
 
@@ -196,7 +196,7 @@ class LiveParserWindow(QFrame):
             color = self._theme['plot']['color_cycler'][color_index]
             curves.append(plot_widget.plot([0], [0], pen=mkPen(color, width=1)))
 
-        frame = create_frame2(self._theme, 'plot_widget', size_policy=SMIXMAX, style_override={
+        frame = create_frame(self._theme, 'plot_widget', size_policy=SMIXMAX, style_override={
                 'margin': 4, 'padding': 2, 'border': 'none'})
         frame.setMinimumWidth(self._window_scale * 200)
         frame.setMinimumHeight(self._window_scale * 200)

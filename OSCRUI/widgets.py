@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QVBoxLayout, QWidget)
 
 from .datamodels import TreeItem
-from .widgetbuilder import ACENTER, AVCENTER, SMAXMAX, SMINMIN, create_frame2, create_label2
+from .widgetbuilder import ACENTER, AVCENTER, SMAXMAX, SMINMIN, create_frame, create_label
 from .theme import AppTheme
 
 
@@ -349,7 +349,7 @@ class LegendPlot(QFrame):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(self._theme['defaults']['isp'])
         self._layout.addWidget(self._plot)
-        self._legend: QFrame = create_frame2(self._theme, style='plot_legend')
+        self._legend: QFrame = create_frame(self._theme, style='plot_legend')
         self._layout.addWidget(self._legend, alignment=ACENTER)
         self.setLayout(self._layout)
         self._plot.hide()
@@ -390,8 +390,8 @@ class LegendPlot(QFrame):
 
         :return: frame containing the legend
         """
-        upper_frame = create_frame2(self._theme, style='plot_legend')
-        lower_frame = create_frame2(self._theme, style='plot_legend')
+        upper_frame = create_frame(self._theme, style='plot_legend')
+        lower_frame = create_frame(self._theme, style='plot_legend')
         frame_layout = QVBoxLayout()
         upper_layout = QHBoxLayout()
         lower_layout = QHBoxLayout()
@@ -428,7 +428,7 @@ class LegendPlot(QFrame):
 
         :return: frame containing the legend item
         """
-        frame = create_frame2(self._theme, style='plot_legend')
+        frame = create_frame(self._theme, style='plot_legend')
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._theme['defaults']['margin'])
@@ -438,7 +438,7 @@ class LegendPlot(QFrame):
         patch_height = self._theme['app']['frame_thickness']
         colored_patch.setFixedSize(2 * patch_height, patch_height)
         layout.addWidget(colored_patch, alignment=AVCENTER)
-        label = create_label2(
+        label = create_label(
                 self._theme, name, 'label', {'font': self._theme['plot_legend']['font']})
         layout.addWidget(label)
         frame.setLayout(layout)
