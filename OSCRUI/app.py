@@ -365,9 +365,9 @@ class OSCRUI():
 
         graph_flip_config = {
             'icon_r': self.icons['collapse-top'], 'tooltip_r': tr('Collapse Graph'),
-            'func_r': self.collapse_analysis_graph,
+            'func_r': self.widgets.collapse_analysis_graph,
             'icon_l': self.icons['expand-top'], 'tooltip_l': tr('Expand Graph'),
-            'func_l': self.expand_analysis_graph
+            'func_l': self.widgets.expand_analysis_graph
         }
         graph_button = FlipButton('', '')
         graph_button.configure(graph_flip_config)
@@ -380,9 +380,9 @@ class OSCRUI():
 
         table_flip_config = {
             'icon_r': self.icons['collapse-bottom'], 'tooltip_r': tr('Collapse Table'),
-            'func_r': self.collapse_overview_table,
+            'func_r': self.widgets.collapse_overview_table,
             'icon_l': self.icons['expand-bottom'], 'tooltip_l': tr('Expand Table'),
-            'func_l': self.expand_overview_table
+            'func_l': self.widgets.expand_overview_table
         }
         table_button = FlipButton('', '')
         table_button.configure(table_flip_config)
@@ -430,11 +430,11 @@ class OSCRUI():
         layout.addWidget(main_tabber)
         frame.setLayout(layout)
 
-        self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
-        self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
-        self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
+        self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.widgets.switch_main_tab(0))
+        self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.widgets.switch_main_tab(1))
+        self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.widgets.switch_main_tab(2))
         self.widgets.main_menu_buttons[2].clicked.connect(self.league.establish_league_connection)
-        self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
+        self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.widgets.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
         self.widgets.main_tab_frames.append(l_frame)
@@ -477,11 +477,14 @@ class OSCRUI():
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
             tr('DPS Bar'): {
-                'callback': lambda: self.switch_overview_tab(0), 'align': ACENTER, 'toggle': True},
+                'callback': lambda: self.widgets.switch_overview_tab(0), 'align': ACENTER,
+                'toggle': True},
             tr('DPS Graph'): {
-                'callback': lambda: self.switch_overview_tab(1), 'align': ACENTER, 'toggle': False},
+                'callback': lambda: self.widgets.switch_overview_tab(1), 'align': ACENTER,
+                'toggle': False},
             tr('Damage Graph'): {
-                'callback': lambda: self.switch_overview_tab(2), 'align': ACENTER, 'toggle': False}
+                'callback': lambda: self.widgets.switch_overview_tab(2), 'align': ACENTER,
+                'toggle': False}
         }
         switcher, buttons = self.create_button_series(
                 switch_style, 'tab_button', ret=True)
@@ -655,16 +658,16 @@ class OSCRUI():
         switch_style = {
             'default': {'margin-left': '@margin', 'margin-right': '@margin'},
             tr('Damage Out'): {
-                'callback': lambda state: self.switch_analysis_tab(0), 'align': ACENTER,
+                'callback': lambda _: self.widgets.switch_analysis_tab(0), 'align': ACENTER,
                 'toggle': True},
             tr('Damage Taken'): {
-                'callback': lambda state: self.switch_analysis_tab(1), 'align': ACENTER,
+                'callback': lambda _: self.widgets.switch_analysis_tab(1), 'align': ACENTER,
                 'toggle': False},
             tr('Heals Out'): {
-                'callback': lambda state: self.switch_analysis_tab(2), 'align': ACENTER,
+                'callback': lambda _: self.widgets.switch_analysis_tab(2), 'align': ACENTER,
                 'toggle': False},
             tr('Heals In'): {
-                'callback': lambda state: self.switch_analysis_tab(3), 'align': ACENTER,
+                'callback': lambda _: self.widgets.switch_analysis_tab(3), 'align': ACENTER,
                 'toggle': False}
         }
         switcher, buttons = self.create_button_series(
@@ -1091,7 +1094,7 @@ class OSCRUI():
         dmg_seperator.setFixedHeight(self.theme['defaults']['bw'])
         dmg_hider_layout.addWidget(dmg_seperator)
         apply_button = self.create_button(tr('Apply'), 'button')
-        apply_button.clicked.connect(self.update_shown_columns_dmg)
+        apply_button.clicked.connect(self.tables.update_shown_damage_columns)
         dmg_hider_layout.addWidget(apply_button, alignment=ARIGHT | ATOP)
         dmg_hider_frame.setLayout(dmg_hider_layout)
         sec_2.addWidget(dmg_hider_frame, alignment=ATOP)
@@ -1115,7 +1118,7 @@ class OSCRUI():
         heal_seperator.setFixedHeight(self.theme['defaults']['bw'])
         heal_hider_layout.addWidget(heal_seperator)
         apply_button_2 = self.create_button(tr('Apply'), 'button')
-        apply_button_2.clicked.connect(self.update_shown_columns_heal)
+        apply_button_2.clicked.connect(self.tables.update_shown_heal_columns)
         heal_hider_layout.addWidget(apply_button_2, alignment=ARIGHT | ATOP)
         heal_hider_frame.setLayout(heal_hider_layout)
 
