@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QObject, QSize, Signal
 from PySide6.QtGui import QTextOption
 from PySide6.QtWidgets import (
     QDialog, QFrame, QGridLayout, QLabel, QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget)
@@ -149,7 +149,7 @@ class UploadresultDialog(QDialog):
         main_layout = QVBoxLayout()
         thick = self._theme['app']['frame_thickness']
         main_layout.setContentsMargins(thick, thick, thick, thick)
-        content_frame = create_frame(self)
+        content_frame = create_frame2(self._theme)
         content_layout = QGridLayout()
         content_layout.setContentsMargins(thick, thick, thick, thick)
         content_layout.setSpacing(0)
@@ -170,9 +170,8 @@ class UploadresultDialog(QDialog):
         content_frame.setLayout(content_layout)
         main_layout.addWidget(content_frame)
 
-        self.setStyleSheet(get_style(self, 'dialog_window'))
+        self.setStyleSheet(self._theme.get_style('dialog_window'))
         self.setSizePolicy(SMAXMAX)
-        self.setFixedSize(self.sizeHint())
         self.setLayout(main_layout)
 
     def view_online(self):
@@ -232,8 +231,11 @@ class UploadresultDialog(QDialog):
         self.open()
 
 
-class DialogsWrapper():
+class DialogsWrapper(QObject):
     """Contains simple, multi-purpose dialogs"""
+
+    _message_signal = Signal(str, str, str)
+    _error_signal = Signal(str, str, str)
 
     def __init__(self, parent_window: QWidget, theme: AppTheme):
         """
@@ -241,11 +243,13 @@ class DialogsWrapper():
         - :param parent_window: window to center dialog on
         - :param theme: AppTheme
         """
+        super().__init__()
         self._theme: AppTheme = theme
         self._message_dialog: QDialog = QDialog(parent_window, modal=True)
         self._icon_label_m: QLabel
         self._message_label_m: QLabel
         self.build_message_dialog()
+        self._message_signal.connect(self._show_message)
         self._confirm_dialog: QDialog = QDialog(parent_window, modal=True)
         self._icon_label_c: QLabel
         self._message_label_c: QLabel
@@ -254,6 +258,7 @@ class DialogsWrapper():
         self._message_label_e: QLabel
         self._error_label_e: QTextEdit
         self.build_error_dialog()
+        self._error_signal.connect(self._show_error)
 
     def build_message_dialog(self):
         """Creates layout for message dialog"""
@@ -299,6 +304,17 @@ class DialogsWrapper():
         self._message_dialog.setLayout(main_layout)
 
     def show_message(self, title: str, message: str, icon: str = 'info'):
+        """
+        Displays a message in a dialog. Passed through signal to ensure multi-thread compatability.
+
+        Parameters:
+        - :param title: title of the message window
+        - :param message: message to be displayed
+        - :param icon: "warning" or "info" or "error"
+        """
+        self._message_signal.emit(title, message, icon)
+
+    def _show_message(self, title: str, message: str, icon: str = 'info'):
         """
         Displays a message in a dialog
 
@@ -442,6 +458,18 @@ class DialogsWrapper():
         self._error_dialog.setLayout(main_layout)
 
     def show_error(self, error_title: str, error_message: str, error_details: str):
+        """
+        Shows error message with expandable field for error details like a traceback. Passed
+        through signal to ensure multi-thread compatability.
+
+        Parameters:
+        - :param error_title: very short decription of the error for the dialog window title
+        - :param error_message: message decribing the error
+        - :param error_details: advanced information about the error
+        """
+        self._error_signal.emit(error_title, error_message, error_details)
+
+    def _show_error(self, error_title: str, error_message: str, error_details: str):
         """
         Shows error message with expandable field for error details like a traceback.
 

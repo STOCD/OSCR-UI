@@ -125,9 +125,10 @@ class LeagueTableModel(TableModel):
     """
     Model for league table
     """
-    def __init__(self, *ar, combatlog_id_list: list = [], **kw):
-        super().__init__(*ar, **kw)
-        self._combatlog_id_list = combatlog_id_list
+    def __init__(self, header_data: list[str]):
+        super().__init__()
+        self._header: list[str] = header_data
+        self.combatlog_id_list: list[int] = list()
 
     def data(self, index: QModelIndex, role: int):
         if role == Qt.ItemDataRole.DisplayRole:
@@ -158,12 +159,35 @@ class LeagueTableModel(TableModel):
         return super().headerData(section, orientation, role)
 
     def extend_data(self, index: list, rows: list, combatlog_ids: list):
+        """
+        Append data to the existing data.
+
+        Parameters:
+        - :param index: data for the index of the table
+        - :param rows: row data to be displayed
+        - :param combatlog_ids: list of ids referencing the combatlog behind the individual rows
+        """
         current_row_count = len(self._index)
         self.beginInsertRows(QModelIndex(), current_row_count, current_row_count + len(index) - 1)
         self._index.extend(index)
         self._data.extend(rows)
-        self._combatlog_id_list.extend(combatlog_ids)
+        self.combatlog_id_list.extend(combatlog_ids)
         self.endInsertRows()
+
+    def replace_data(self, index: list, rows: list, combatlog_ids: list):
+        """
+        Replaces existing data with new data.
+
+        Parameters:
+        - :param index: data for the index of the table
+        - :param rows: row data to be displayed
+        - :param combatlog_ids: list of ids referencing the combatlog behind the individual rows
+        """
+        self.beginResetModel()
+        self._index = index
+        self._data = rows
+        self.combatlog_id_list = combatlog_ids
+        self.endResetModel()
 
 
 class LiveParserTableModel(TableModel):

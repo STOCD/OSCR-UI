@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 from .config import OSCRConfig, OSCRSettings
 from .dialogs import DetectionInfoDialog, DialogsWrapper
 from .iofunctions import browse_path, open_link
+from .leagueconnector import OSCRLeagueConnector
 from .parserbridge import ParserBridge
 from .splitdialog import SplitDialog
 from .theme import AppTheme
@@ -26,7 +27,8 @@ class OSCRLeftSidebar():
     def __init__(
             self, app_version: str, main_window: QWidget, parser: ParserBridge,
             detection_info: DetectionInfoDialog, dialogs: DialogsWrapper, widgets: WidgetManager,
-            theme: AppTheme, config: OSCRConfig, settings: OSCRSettings):
+            league: OSCRLeagueConnector, theme: AppTheme, config: OSCRConfig,
+            settings: OSCRSettings):
         """
         Parameters:
         - :param app_version: version of the app for display on the sidebar
@@ -35,6 +37,7 @@ class OSCRLeftSidebar():
         - :param detection_info: DetectionInfoDialog
         - :param dialogs: DialogsWrapper
         - :param widgets: WidgetManager
+        - :param league: OSCRLeagueConnector
         - :param theme: AppTheme
         - :param config: OSCRConfig
         - :param settings: OSCRSettings
@@ -44,6 +47,7 @@ class OSCRLeftSidebar():
         self._detection_info: DetectionInfoDialog = detection_info
         self._dialogs: DialogsWrapper = dialogs
         self._widgets: WidgetManager = widgets
+        self._league: OSCRLeagueConnector = league
         self._theme: AppTheme = theme
         self._config: OSCRConfig = config
         self._settings: OSCRSettings = settings
@@ -224,12 +228,12 @@ class OSCRLeftSidebar():
         map_label = create_label2(self._theme, tr('Available Maps:'), 'label_heading')
         map_layout.addWidget(map_label, alignment=ALEFT | ABOTTOM)
         fav_add_button = create_icon_button2(self._theme, 'star-plus', tr('Add to Favorites'))
-        # fav_add_button.clicked.connect(self.add_favorite_ladder)
+        # fav_add_button.clicked.connect()
         map_layout.addWidget(fav_add_button, alignment=ARIGHT)
         left_layout.addLayout(map_layout)
 
         variant_list = create_combo_box2(self._theme)
-        # variant_list.currentTextChanged.connect(lambda text: self.update_seasonal_records(text))
+        variant_list.currentTextChanged.connect(self._league.update_seasonal_records)
         left_layout.addWidget(variant_list)
         self._widgets.variant_combo = variant_list
 
@@ -244,17 +248,16 @@ class OSCRLeftSidebar():
         ladder_selector.setSizePolicy(SMIXMIN)
         ladder_selector.setCursor(Qt.CursorShape.PointingHandCursor)
         self._widgets.ladder_selector = ladder_selector
-        # ladder_selector.itemClicked.connect(
-        #         lambda clicked_item: self.slot_ladder(clicked_item))
+        ladder_selector.itemClicked.connect(self._league.slot_ladder)
         background_layout.addWidget(ladder_selector)
         left_layout.addWidget(background_frame, stretch=3)
 
         fav_layout = QHBoxLayout()
         favorites_label = create_label2(self._theme, tr('Favorites:'), 'label_heading')
         fav_layout.addWidget(favorites_label, alignment=ALEFT | ABOTTOM)
-        fav_add_button = create_icon_button2(self._theme, 'star-minus', tr('Add to Favorites'))
-        # fav_add_button.clicked.connect(self.remove_favorite_ladder)
-        fav_layout.addWidget(fav_add_button, alignment=ARIGHT)
+        fav_remove_button = create_icon_button2(self._theme, 'star-minus', tr('Add to Favorites'))
+        # fav_remove_button.clicked.connect()
+        fav_layout.addWidget(fav_remove_button, alignment=ARIGHT)
         left_layout.addLayout(fav_layout)
 
         background_frame = create_frame2(self._theme, size_policy=SMINMIN, style_override={
@@ -282,8 +285,7 @@ class OSCRLeftSidebar():
                 icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
                 item.setIcon(icon)
             favorite_selector.addItem(item)
-        # favorite_selector.itemClicked.connect(
-        #         lambda clicked_item: self.slot_ladder(clicked_item))
+        favorite_selector.itemClicked.connect(self._league.slot_ladder)
         background_layout.addWidget(favorite_selector)
         left_layout.addWidget(background_frame, stretch=2)
 

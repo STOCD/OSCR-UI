@@ -14,10 +14,10 @@ from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
-from .dialogs import DetectionInfoDialog, DialogsWrapper
+from .dialogs import DetectionInfoDialog, DialogsWrapper, UploadresultDialog
 from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
 from .liveparser import LiveParserWindow
-from .leagueconnector import OSCRClient
+from .leagueconnector import OSCRLeagueConnector
 from .parserbridge import ParserBridge
 from .sidebar import OSCRLeftSidebar
 from .theme import AppTheme
@@ -53,15 +53,8 @@ class OSCRUI():
     from .widgetbuilder import create_analysis_table, create_annotated_slider, create_button
     from .widgetbuilder import create_button_series, create_combo_box, create_entry, create_frame
     from .widgetbuilder import create_icon_button, create_label
-    from .leagueconnector import apply_league_table_filter, download_and_view_combat
-    from .leagueconnector import (
-            establish_league_connection, extend_ladder, slot_ladder,
-            update_seasonal_records)
-    from .leagueconnector import upload_callback
 
     app_dir = None
-
-    league_api: OSCRClient
 
     def __init__(self, theme, args, path, config, version) -> None:
         """
@@ -90,23 +83,24 @@ class OSCRUI():
         QDir.addSearchPath('assets_folder', os.path.join(path, 'assets'))
         self.theme2: AppTheme = AppTheme(self.config.ui_scale)
         self.widgets: WidgetManager = WidgetManager(self.settings)
-
         init_translation(self.settings.language)
-        self.league_api = None
 
         self.app, self.window = self.create_main_window()
         self.cache_assets()
+        self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme2)
         self.copy_shortcut = QShortcut(
                 QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
-        self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme2)
         self.parser: ParserBridge = ParserBridge(
             self.settings, self.config, self.widgets, self.dialogs)
+        self.upload_dialog: UploadresultDialog = UploadresultDialog(self.window, self.theme2)
+        self.league: OSCRLeagueConnector = OSCRLeagueConnector(
+            self.widgets, self.dialogs, self.theme2, self.config, self.parser, self.upload_dialog)
         self.live_parser: LiveParserWindow = LiveParserWindow(
             self.settings, self.theme2, self.dialogs, self.widgets)
         self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme2)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
             version, self.window, self.parser, self.detection_info, self.dialogs, self.widgets,
-            self.theme2, self.config, self.settings)
+            self.league, self.theme2, self.config, self.settings)
         self.tables: AnalysisTables = AnalysisTables(self.theme2, self.settings)
         self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme2, self.settings)
         self.parser._tables = self.tables
@@ -438,7 +432,7 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.switch_main_tab(2))
-        self.widgets.main_menu_buttons[2].clicked.connect(self.establish_league_connection)
+        self.widgets.main_menu_buttons[2].clicked.connect(self.league.establish_league_connection)
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)
@@ -500,7 +494,7 @@ class OSCRUI():
         copy_button.clicked.connect(self.copy_summary_callback)
         icon_layout.addWidget(copy_button)
         ladder_button = self.create_icon_button(self.icons['ladder'], tr('Upload Result'))
-        ladder_button.clicked.connect(self.upload_callback)
+        ladder_button.clicked.connect(self.league.upload_callback)
         icon_layout.addWidget(ladder_button)
         switch_layout.addLayout(icon_layout, 0, 2, alignment=ARIGHT | ABOTTOM)
         switch_layout.setColumnStretch(2, 1)
@@ -729,11 +723,14 @@ class OSCRUI():
         layout.setContentsMargins(0, m, 0, m)
         layout.setSpacing(m)
 
-        ladder_table = QTableView(l_frame)
+        ladder_table = QTableView()
         table_style = {
                 'border-style': 'solid', 'border-width': '@bw',
                 'border-color': '@bc'}
         self.tables.style_table(ladder_table, table_style, single_row_selection=True)
+        self.league.ladder_table_model.init_fonts(
+            self.theme2.get_font('table_header'), self.theme2.get_font('table'))
+        ladder_table.setModel(self.league.ladder_table_sort)
         self.widgets.ladder_table = ladder_table
         layout.addWidget(ladder_table, stretch=1)
 
@@ -747,11 +744,11 @@ class OSCRUI():
         search_bar = self.create_entry(
                 placeholder=tr('name@handle'),
                 style_override={'margin-left': '@isp', 'margin-top': 0})
-        search_bar.textChanged.connect(lambda text: self.apply_league_table_filter(text))
+        search_bar.textChanged.connect(self.league.apply_league_table_filter)
         control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
         control_button_style = {
-            tr('View Parse'): {'callback': self.download_and_view_combat},
-            tr('More'): {'callback': self.extend_ladder, 'style': {'margin-right': 0}}
+            tr('View Parse'): {'callback': self.league.download_and_view_combat},
+            tr('More'): {'callback': self.league.extend_ladder, 'style': {'margin-right': 0}}
         }
         control_button_layout = self.create_button_series(
                 control_button_style, 'button', seperator='•')
