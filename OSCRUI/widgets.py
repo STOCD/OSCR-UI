@@ -2,7 +2,7 @@ from math import sqrt, frexp
 from typing import Iterable
 
 import numpy as np
-from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
+from pyqtgraph import AxisItem, BarGraphItem, PlotWidget, setConfigOptions as pyqtgraph__configure
 from PySide6.QtCore import QRect, QSize, Qt, Slot
 from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
@@ -12,6 +12,9 @@ from PySide6.QtWidgets import (
 from .datamodels import TreeItem
 from .widgetbuilder import ACENTER, AVCENTER, SMAXMAX, SMINMIN, create_frame, create_label
 from .theme import AppTheme
+
+
+pyqtgraph__configure(antialias=True)
 
 
 ATOPLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
