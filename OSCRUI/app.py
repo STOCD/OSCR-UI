@@ -20,6 +20,7 @@ from .liveparser import LiveParserWindow
 from .leagueconnector import OSCRLeagueConnector
 from .parserbridge import ParserBridge
 from .sidebar import OSCRLeftSidebar
+from .textedit import format_path
 from .theme import AppTheme
 from .translation import init_translation, tr
 from .widgetbuilder import (
@@ -702,7 +703,18 @@ class OSCRUI():
             h = splitter.height()
             splitter.setSizes((h * 0.5, h * 0.5))
 
-    def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):
+    def set_sto_logpath_callback(self, logpath_entry: QLineEdit):
+        """
+        Formats and stores new logpath to `sto_log_path`.
+
+        Parameters:
+        - :param logpath_entry: the entry that holds the path
+        """
+        formatted_path = format_path(logpath_entry.text())
+        self.settings.sto_log_path = formatted_path
+        logpath_entry.setText(formatted_path)
+
+    def slot_analysis_graph(self, index, plot_widget: AnalysisPlot):  # TODO
         item = index.internalPointer()
         color = plot_widget.add_bar(item)
         if color is None:
@@ -883,7 +895,7 @@ class OSCRUI():
         sec_1.addWidget(graph_resolution_label, 3, 0, alignment=ARIGHT)
         graph_resolution_layout = self.create_annotated_slider(
                 self.settings.graph_resolution * 10, 1, 20,
-                callback=self.set_graph_resolution_setting)
+                callback=self.settings.set_graph_resolution)
         sec_1.addLayout(graph_resolution_layout, 3, 1, alignment=ALEFT)
 
         overview_sort_label = self.create_label(
@@ -925,7 +937,7 @@ class OSCRUI():
                 self.settings.sto_log_path, style_override={'margin-top': 0})
         sto_log_path_entry.setSizePolicy(SMIXMAX)
         sto_log_path_entry.editingFinished.connect(
-                lambda: self.set_sto_logpath_setting(sto_log_path_entry))
+                lambda: self.set_sto_logpath_callback(sto_log_path_entry))
         sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
         sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
 
@@ -935,7 +947,7 @@ class OSCRUI():
                 default_value=round(self.settings.liveparser__window_opacity * 20, 0),
                 min=1, max=20,
                 style_override_slider={'::sub-page:horizontal': {'background-color': '@bc'}},
-                callback=self.set_parser_opacity_setting)
+                callback=self.settings.set_liveparser_opacity)
         sec_1.addLayout(opacity_slider_layout, 8, 1, alignment=AVCENTER)
 
         live_graph_active_label = self.create_label(tr('LiveParser Graph:'), 'label_subhead')
@@ -983,14 +995,14 @@ class OSCRUI():
         sec_1.addWidget(ui_scale_label, 13, 0, alignment=ARIGHT)
         ui_scale_slider_layout = self.create_annotated_slider(
                 default_value=round(self.settings.ui_scale * 50, 0),
-                min=25, max=75, callback=self.set_ui_scale_setting)
+                min=25, max=75, callback=self.settings.set_ui_scale)
         sec_1.addLayout(ui_scale_slider_layout, 13, 1, alignment=ALEFT)
 
         ui_scale_label = self.create_label(tr('LiveParser Scale:'), 'label_subhead')
         sec_1.addWidget(ui_scale_label, 14, 0, alignment=ARIGHT)
         live_scale_slider_layout = self.create_annotated_slider(
                 default_value=round(self.settings.liveparser__window_scale * 50, 0),
-                min=25, max=75, callback=self.set_live_scale_setting)
+                min=25, max=75, callback=self.settings.set_liveparser_scale)
         sec_1.addLayout(live_scale_slider_layout, 14, 1, alignment=ALEFT)
         sec_1.setAlignment(AHCENTER)
 

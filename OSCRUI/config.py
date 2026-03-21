@@ -125,3 +125,53 @@ class OSCRSettings():
         (e.g. inside a lambda function).
         """
         setattr(self, setting_name, value)
+
+    def set_graph_resolution(self, new_value: int) -> float:
+        """
+        Calculates `new_value` / 10 and stores it to `graph_resolution`. Returns the calculated
+        value.
+
+        Parameters:
+        - :param new_value: data points per second
+        """
+        try:
+            setting_value = round(new_value / 10, 1)
+            self.graph_resolution = setting_value
+            return setting_value
+        except (ValueError, ZeroDivisionError):
+            return
+
+    def set_liveparser_opacity(self, new_value: int) -> str:
+        """
+        Calculates `new_value` / 10 and stores it to `liveparser__window_opacity`. Returns the
+        calculated value.
+
+        Parameters:
+        - :param new_value: 20 times the opacity percentage
+        """
+        setting_value = round(new_value / 20, 2)
+        self.liveparser__window_opacity = setting_value
+        return f'{setting_value:.2f}'
+
+    def set_ui_scale(self, new_value: int) -> str:
+        """
+        Calculates `new_value` / 50 and stores it to `ui_scale`. Returns the calculated value.
+
+        Parameters:
+        - :param new_value: 50 times the ui scale percentage
+        """
+        setting_value = round(new_value / 50, 2)
+        self.ui_scale = setting_value
+        return f'{setting_value:.2f}'
+
+    def set_liveparser_scale(self, new_value: int):
+        """
+        Calculates new_value / 50 and stores it to `liveparser__window_scale`. Returns the
+        calculated value.
+
+        Parameters:
+        - :param new_value: 50 times the live scale percentage
+        """
+        setting_value = round(new_value / 50, 2)
+        self.liveparser__window_scale = setting_value
+        return f'{setting_value:.2f}'
