@@ -27,8 +27,6 @@ class WidgetManager():
         self.overview_menu_buttons: list[QPushButton] = list()
         self.overview_tabber: QTabWidget
         self.overview_tab_frames: list[QFrame] = list()
-        self.overview_table: QTableView
-        self.overview_table_frame: QFrame
         self.overview_table_button: FlipButton
         self.overview_splitter: QSplitter
 
@@ -37,16 +35,6 @@ class WidgetManager():
         self.analysis_copy_combobox: QComboBox
         self.analysis_graph_tabber: QTabWidget
         self.analysis_tree_tabber: QTabWidget
-        self.analysis_graph_frames: list[QFrame] = list()
-        self.analysis_tree_frames: list[QFrame] = list()
-        self.analysis_table_dout: QTreeView
-        self.analysis_table_dtaken: QTreeView
-        self.analysis_table_hout: QTreeView
-        self.analysis_table_hin: QTreeView
-        self.analysis_plot_dout: AnalysisPlot
-        self.analysis_plot_dtaken: AnalysisPlot
-        self.analysis_plot_hout: AnalysisPlot
-        self.analysis_plot_hin: AnalysisPlot
         self.analysis_graph_button: FlipButton
 
         self.ladder_selector: QListWidget
@@ -54,18 +42,9 @@ class WidgetManager():
         self.variant_combo: QComboBox
         self.ladder_table: QTableView
 
-        self.live_parser_table: QTableView
         self.live_parser_button: QPushButton
-        self.live_parser_curves: list
-        self.live_parser_splitter: QSplitter
-        self.live_parser_duration_label: QLabel
 
         self._global_settings: OSCRSettings = global_settings
-
-    @property
-    def analysis_table(self):
-        return (self.analysis_table_dout, self.analysis_table_dtaken, self.analysis_table_hout,
-                self.analysis_table_hin)
 
     def switch_analysis_tab(self, tab_index: int):
         """
@@ -114,18 +93,6 @@ class WidgetManager():
             self.analysis_graph_button.show()
         else:
             self.analysis_graph_button.hide()
-
-    def expand_overview_table(self):
-        """
-        Shows the overview table
-        """
-        self.overview_table_frame.show()
-
-    def collapse_overview_table(self):
-        """
-        Hides the overview table
-        """
-        self.overview_table_frame.hide()
 
     def expand_analysis_graph(self):
         """

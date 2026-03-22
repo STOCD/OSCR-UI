@@ -21,7 +21,6 @@ class AnalysisTables():
 
         self.overview_table: QTableView
         self.overview_table_frame: QFrame
-        self.analysis_tree_frames: list[QFrame] = list()
         self.damage_out_table: QTreeView
         self.damage_in_table: QTreeView
         self.heal_out_table: QTreeView
@@ -98,6 +97,18 @@ class AnalysisTables():
             else:
                 self.heal_out_table.hideColumn(i + 1)
                 self.heal_in_table.hideColumn(i + 1)
+
+    def expand_overview_table(self):
+        """
+        Shows the overview table
+        """
+        self.overview_table_frame.show()
+
+    def collapse_overview_table(self):
+        """
+        Hides the overview table
+        """
+        self.overview_table_frame.hide()
 
     def resize_tree_table(self, tree: QTreeView):
         """
