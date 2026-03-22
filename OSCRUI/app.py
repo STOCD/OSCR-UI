@@ -3,19 +3,19 @@ from pathlib import Path
 import sys
 
 from PySide6.QtWidgets import (
-        QApplication, QWidget, QLayout, QLineEdit, QFrame, QHeaderView, QListView, QListWidget,
-        QListWidgetItem, QScrollArea, QSplitter, QTabWidget, QTableView, QTreeView, QVBoxLayout,
-        QHBoxLayout, QGridLayout)
-from PySide6.QtCore import QDir, QSize, Qt, QTimer, QThread
-from PySide6.QtGui import QFontDatabase, QIcon, QIntValidator, QKeySequence, QShortcut
+    QApplication, QWidget, QLayout, QLineEdit, QFrame, QHeaderView, QScrollArea, QSplitter,
+    QTabWidget, QTableView, QTreeView, QVBoxLayout, QHBoxLayout, QGridLayout)
+from PySide6.QtCore import QDir, QSize, QTimer, QThread
+from PySide6.QtGui import (
+    QCloseEvent, QFontDatabase, QIntValidator, QKeySequence, QResizeEvent, QShortcut)
 
-from OSCR import LIVE_TABLE_HEADER, OSCR, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
+from OSCR import LIVE_TABLE_HEADER, TABLE_HEADER, TREE_HEADER, HEAL_TREE_HEADER
 from .analysisgraphs import AnalysisGraphs
 from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
 from .dialogs import DetectionInfoDialog, DialogsWrapper, UploadresultDialog
-from .iofunctions import get_asset_path, load_icon_series, load_icon, open_link
+from .iofunctions import get_asset_path, load_icon_series, load_icon
 from .liveparser import LiveParserWindow
 from .leagueconnector import OSCRLeagueConnector
 from .parserbridge import ParserBridge
@@ -24,14 +24,12 @@ from .textedit import format_path
 from .theme import AppTheme
 from .translation import init_translation, tr
 from .widgetbuilder import (
-        ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL,
-        SMAXMAX, SMAXMIN, SMINMAX, SMINMIN, SMIXMAX,
-        SCROLLOFF, SCROLLON,
-        create_annotated_slider, create_button, create_button_series, create_combo_box,
-        create_entry, create_frame, create_icon_button, create_label)
+    ABOTTOM, ACENTER, AHCENTER, ALEFT, ARIGHT, ATOP, AVCENTER, OVERTICAL, SMAXMAX, SMAXMIN,
+    SMINMAX, SMINMIN, SMIXMAX, SCROLLOFF, SCROLLON,
+    create_annotated_slider, create_button, create_button_series, create_combo_box, create_entry,
+    create_frame, create_icon_button, create_label)
 from .widgetmanager import WidgetManager
-from .widgets import (
-        AnalysisPlot, BannerLabel, FlipButton)
+from .widgets import AnalysisPlot, BannerLabel, FlipButton
 
 # only for developing; allows to terminate the qt event loop with keyboard interrupt
 # from signal import signal, SIGINT, SIG_DFL
@@ -40,56 +38,58 @@ from .widgets import (
 
 class OSCRUI():
 
-    def __init__(self, args, path, version) -> None:
+    def __init__(self, args, app_dir_path: str, version: str) -> None:
         """
         Creates new Instance of OSCR.
 
         Parameters:
+        - :param args: command line arguments, following arguments must be accessible
+            - `args.config_dir`: contains override for config dir, `str` or `None`
+        - :param app_dir_path: absolute path to install directory
         - :param version: version of the app
-        - :param theme: dict -> default theme
-        - :param args: command line arguments
-        - :param path: absolute path to install directory
-        - :param config: app configuration (!= settings these are not changed by the user)
         """
-        self.version = version
+        self.version: str = version
         self.args = args
-        self.app_dir = path
-        self.config = OSCRConfig()
+        self.app_dir: str = app_dir_path
+
+        # Setting up app base
+        self.config: OSCRConfig = OSCRConfig()
         self.config.config_dir = self.get_config_dir_path(self.args.config_dir)
         if self.config.config_dir is None:
             # TODO show error message
             sys.exit(1)
         self.settings = OSCRSettings(Path(self.config.config_dir, self.config.settings_file))
-        self.settings.store_settings()
         self.init_settings()
         self.init_config()
-        QDir.addSearchPath('assets_folder', os.path.join(path, 'assets'))
-        self.theme: AppTheme = AppTheme(self.config.ui_scale)
-        self.widgets: WidgetManager = WidgetManager(self.settings)
         init_translation(self.settings.language)
-
-        self.app, self.window = self.create_main_window()
+        QDir.addSearchPath('assets_folder', os.path.join(app_dir_path, 'assets'))
+        self.theme: AppTheme = AppTheme(self.config.ui_scale)
         self.cache_assets()
+
+        # Setting up GUI including app modules
+        self.app, self.window = self.create_main_window()
+        self.widgets: WidgetManager = WidgetManager(self.settings)
+        self.tables: AnalysisTables = AnalysisTables(self.theme, self.settings)
+        self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme, self.settings)
         self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme)
-        self.copy_shortcut = QShortcut(
-                QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
-        self.parser: ParserBridge = ParserBridge(
-            self.settings, self.config, self.widgets, self.dialogs)
         self.upload_dialog: UploadresultDialog = UploadresultDialog(self.window, self.theme)
-        self.league: OSCRLeagueConnector = OSCRLeagueConnector(
-            self.widgets, self.dialogs, self.theme, self.config, self.parser, self.upload_dialog)
+        self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme)
         self.live_parser: LiveParserWindow = LiveParserWindow(
             self.settings, self.theme, self.dialogs, self.widgets)
-        self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme)
+        self.parser: ParserBridge = ParserBridge(
+            self.settings, self.config, self.widgets, self.dialogs)
+        self.parser._tables = self.tables
+        self.parser._graphs = self.graphs
+        self.league: OSCRLeagueConnector = OSCRLeagueConnector(
+            self.widgets, self.dialogs, self.theme, self.config, self.parser, self.upload_dialog)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
             version, self.window, self.parser, self.detection_info, self.dialogs, self.widgets,
             self.league, self.theme, self.config, self.settings)
-        self.tables: AnalysisTables = AnalysisTables(self.theme, self.settings)
-        self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme, self.settings)
-        self.parser._tables = self.tables
-        self.parser._graphs = self.graphs
+        self.copy_shortcut: QShortcut = QShortcut(
+            QKeySequence.StandardKey.Copy, self.window, self.copy_analysis_table_callback)
         self.setup_main_layout()
 
+        # Showing window
         self.window.show()
         if self.settings.auto_scan:
             QTimer.singleShot(
@@ -143,8 +143,7 @@ class OSCRUI():
             'TFO-elite': 'TFO_elite.png',
             'json': 'json.svg'
         }
-        self.icons = load_icon_series(icons, self.app_dir)
-        self.theme.icons = self.icons
+        self.theme.icons = load_icon_series(icons, self.app_dir)
 
     def setup_config_dir(self, dir_path: Path) -> None | OSError:
         """
@@ -206,50 +205,12 @@ class OSCRUI():
         """
         Prepares config.
         """
-        self.current_combat_id = -1
         self.config.ui_scale = self.settings.ui_scale
-        self.config.live_parser_scale = self.settings.liveparser__window_scale
-        self.config.icon_size = round(self.config.ui_scale * 24)  # TODO remove
         self.config.templog_folder_path = self.config.config_dir / self.config.templog_folder_name
         if os.name == 'nt':
             self.config.home_dir = os.getenv('USERPROFILE') + '/'
         else:
             self.config.home_dir = os.getenv('HOME') + '/'
-
-    def init_parser(self):
-        """
-        Initializes Parser.
-        """
-        self.parser = OSCR(settings=self.parser_settings)
-        # self.parser_signals = ParserSignals()
-        self.parser_signals.analyzed_combat.connect(self.insert_combat)
-        self.parser_signals.parser_error.connect(self.show_parser_error)
-        self.parser.combat_analyzed_callback = lambda c: self.parser_signals.analyzed_combat.emit(c)
-        self.parser.error_callback = lambda e: self.parser_signals.parser_error.emit(e)
-        self.thread = None  # used for logfile analyzation
-
-    @property
-    def parser_settings(self) -> dict:
-        """
-        Returns settings relevant to the parser
-        """
-        relevant_settings = (
-            'combats_to_parse', 'seconds_between_combats',
-            'graph_resolution', 'combat_min_lines')
-        settings = {'excluded_event_ids': self.config.excluded_event_ids}
-        for setting_key in relevant_settings:
-            setting = getattr(self.settings, setting_key)
-            if setting != '':
-                settings[setting_key] = setting
-        settings['templog_folder_path'] = str(self.config.templog_folder_path.absolute())
-        return settings
-
-    @property
-    def live_parser_settings(self) -> dict:
-        """
-        Returns settings relevant to the LiveParser
-        """
-        return {'seconds_between_combats': self.settings.seconds_between_combats}
 
     @property
     def sidebar_item_width(self) -> int:
@@ -257,11 +218,9 @@ class OSCRUI():
         Width of the sidebar.
         """
         return int(
-                self.theme.opt.sidebar_item_width
-                * self.window.width()
-                * self.config.ui_scale)
+            self.theme.opt.sidebar_item_width * self.window.width() * self.config.ui_scale)
 
-    def main_window_close_callback(self, event):
+    def main_window_close_callback(self, event: QCloseEvent):
         """
         Executed when application is closed.
         """
@@ -273,15 +232,43 @@ class OSCRUI():
         self.settings.store_settings()
         event.accept()
 
-    def main_window_resize_callback(self, event):
+    def main_window_resize_callback(self, event: QResizeEvent):
         """
         Executed when application is resized.
         """
         self.widgets.sidebar_tabber.setFixedWidth(self.sidebar_item_width)
         event.accept()
 
+    def set_sto_logpath_callback(self, logpath_entry: QLineEdit):
+        """
+        Formats and stores new logpath to `sto_log_path`.
+
+        Parameters:
+        - :param logpath_entry: the entry that holds the path
+        """
+        formatted_path = format_path(logpath_entry.text())
+        self.settings.sto_log_path = formatted_path
+        logpath_entry.setText(formatted_path)
+
+    def copy_analysis_table_callback(self):
+        """
+        Copies the current selection of analysis table as tab-delimited table.
+        """
+        if self.widgets.main_tabber.currentIndex() != 1:
+            return
+        current_tab = self.widgets.analysis_tree_tabber.currentIndex()
+        self.tables.copy_analysis_table(current_tab)
+
+    def copy_analysis_callback(self):
+        """
+        Copies data from current analysis table in user-specified format.
+        """
+        copy_mode = self.widgets.analysis_copy_combobox.currentText()
+        current_tab = self.widgets.analysis_tree_tabber.currentIndex()
+        self.tables.copy_analysis_data(current_tab, copy_mode)
+
     # ----------------------------------------------------------------------------------------------
-    # GUI functions below
+    # GUI building functions below
     # ----------------------------------------------------------------------------------------------
 
     def create_main_window(self, argv=[]) -> tuple[QApplication, QWidget]:
@@ -315,7 +302,7 @@ class OSCRUI():
         """
         Sets up the main layout of the app.
         """
-        layout, main_frame = self.create_master_layout(self.window)
+        layout, main_frame = self.create_master_layout()
         self.window.setLayout(layout)
 
         margin = self.theme['defaults']['margin']
@@ -334,8 +321,8 @@ class OSCRUI():
         main_layout.addLayout(button_column, 0, 1)
         icon_size = self.theme.opt.icon_size
         left_flip_config = {
-            'icon_r': self.icons['collapse-left'], 'func_r': left.hide,
-            'icon_l': self.icons['expand-left'], 'func_l': left.show,
+            'icon_r': self.theme.icons['collapse-left'], 'func_r': left.hide,
+            'icon_l': self.theme.icons['expand-left'], 'func_l': left.show,
             'tooltip_r': tr('Collapse Sidebar'), 'tooltip_l': tr('Expand Sidebar')
         }
         sidebar_flip_button = FlipButton('', '')
@@ -347,9 +334,9 @@ class OSCRUI():
         button_column.addWidget(sidebar_flip_button, 0, 0, alignment=ATOP)
 
         graph_flip_config = {
-            'icon_r': self.icons['collapse-top'], 'tooltip_r': tr('Collapse Graph'),
+            'icon_r': self.theme.icons['collapse-top'], 'tooltip_r': tr('Collapse Graph'),
             'func_r': self.widgets.collapse_analysis_graph,
-            'icon_l': self.icons['expand-top'], 'tooltip_l': tr('Expand Graph'),
+            'icon_l': self.theme.icons['expand-top'], 'tooltip_l': tr('Expand Graph'),
             'func_l': self.widgets.expand_analysis_graph
         }
         graph_button = FlipButton('', '')
@@ -362,10 +349,10 @@ class OSCRUI():
         self.widgets.analysis_graph_button = graph_button
 
         table_flip_config = {
-            'icon_r': self.icons['collapse-bottom'], 'tooltip_r': tr('Collapse Table'),
-            'func_r': self.widgets.collapse_overview_table,
-            'icon_l': self.icons['expand-bottom'], 'tooltip_l': tr('Expand Table'),
-            'func_l': self.widgets.expand_overview_table
+            'icon_r': self.theme.icons['collapse-bottom'], 'tooltip_r': tr('Collapse Table'),
+            'func_r': self.tables.collapse_overview_table,
+            'icon_l': self.theme.icons['expand-bottom'], 'tooltip_l': tr('Expand Table'),
+            'func_l': self.tables.expand_overview_table
         }
         table_button = FlipButton('', '')
         table_button.configure(table_flip_config)
@@ -500,7 +487,7 @@ class OSCRUI():
         self.tables.overview_table = table
         table_frame.setLayout(table_layout)
         splitter.addWidget(table_frame)
-        self.widgets.overview_table_frame = table_frame
+        self.tables.overview_table_frame = table_frame
         o_frame.setLayout(layout)
         if self.settings.state__overview_splitter:
             splitter.restoreState(self.settings.state__overview_splitter)
@@ -589,14 +576,10 @@ class OSCRUI():
         dtaken_graph_frame = create_frame(self.theme)
         hout_graph_frame = create_frame(self.theme)
         hin_graph_frame = create_frame(self.theme)
-        self.widgets.analysis_graph_frames.extend(
-                (dout_graph_frame, dtaken_graph_frame, hout_graph_frame, hin_graph_frame))
         dout_tree_frame = create_frame(self.theme)
         dtaken_tree_frame = create_frame(self.theme)
         hout_tree_frame = create_frame(self.theme)
         hin_tree_frame = create_frame(self.theme)
-        self.widgets.analysis_tree_frames.extend(
-                (dout_tree_frame, dtaken_tree_frame, hout_tree_frame, hin_tree_frame))
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -659,8 +642,8 @@ class OSCRUI():
         copy_layout.setSpacing(self.theme['defaults']['csp'])
         copy_combobox = create_combo_box(self.theme)
         copy_combobox.addItems((
-                tr('Selection'), tr('Global Max One Hit'), tr('Max One Hit'), tr('Magnitude'),
-                tr('Magnitude / s')))
+            tr('Selection'), tr('Global Max One Hit'), tr('Max One Hit'), tr('Magnitude'),
+            tr('Magnitude / s')))
         copy_layout.addWidget(copy_combobox)
         self.widgets.analysis_copy_combobox = copy_combobox
         copy_button = create_icon_button(self.theme, 'copy', 'Copy Data')
@@ -685,34 +668,6 @@ class OSCRUI():
             h = splitter.height()
             splitter.setSizes((h * 0.5, h * 0.5))
 
-    def set_sto_logpath_callback(self, logpath_entry: QLineEdit):
-        """
-        Formats and stores new logpath to `sto_log_path`.
-
-        Parameters:
-        - :param logpath_entry: the entry that holds the path
-        """
-        formatted_path = format_path(logpath_entry.text())
-        self.settings.sto_log_path = formatted_path
-        logpath_entry.setText(formatted_path)
-
-    def copy_analysis_table_callback(self):
-        """
-        Copies the current selection of analysis table as tab-delimited table.
-        """
-        if self.widgets.main_tabber.currentIndex() != 1:
-            return
-        current_tab = self.widgets.analysis_tree_tabber.currentIndex()
-        self.tables.copy_analysis_table(current_tab)
-
-    def copy_analysis_callback(self):
-        """
-        Copies data from current analysis table in user-specified format.
-        """
-        copy_mode = self.widgets.analysis_copy_combobox.currentText()
-        current_tab = self.widgets.analysis_tree_tabber.currentIndex()
-        self.tables.copy_analysis_data(current_tab, copy_mode)
-
     def setup_league_standings_frame(self):
         """
         Sets up the frame housing the detailed analysis table and graph
@@ -724,9 +679,7 @@ class OSCRUI():
         layout.setSpacing(m)
 
         ladder_table = QTableView()
-        table_style = {
-                'border-style': 'solid', 'border-width': '@bw',
-                'border-color': '@bc'}
+        table_style = {'border-style': 'solid', 'border-width': '@bw', 'border-color': '@bc'}
         self.tables.style_table(ladder_table, table_style, single_row_selection=True)
         self.league.ladder_table_model.init_fonts(
             self.theme.get_font('table_header'), self.theme.get_font('table'))
@@ -757,12 +710,9 @@ class OSCRUI():
 
         l_frame.setLayout(layout)
 
-    def create_master_layout(self, parent) -> tuple[QVBoxLayout, QFrame]:
+    def create_master_layout(self) -> tuple[QVBoxLayout, QFrame]:
         """
         Creates and returns the master layout for an OSCR window.
-
-        Parameters:
-        - :param parent: parent to the layout, usually a window
 
         :return: populated QVBoxlayout and content frame QFrame
         """
@@ -895,7 +845,7 @@ class OSCRUI():
         overview_sort_combo.addItems(TABLE_HEADER)
         overview_sort_combo.setCurrentIndex(self.settings.overview_sort_column)
         overview_sort_combo.currentIndexChanged.connect(
-                lambda new_index: self.settings.set('overview_sort_column', new_index))
+            lambda new_index: self.settings.set('overview_sort_column', new_index))
         sec_1.addWidget(overview_sort_combo, 4, 1, alignment=ALEFT | AVCENTER)
 
         overview_sort_order_label = create_label(
@@ -906,14 +856,14 @@ class OSCRUI():
         overview_sort_order_combo.addItems((tr('Descending'), tr('Ascending')))
         overview_sort_order_combo.setCurrentText(self.settings.overview_sort_order)
         overview_sort_order_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.set('overview_sort_order', new_text))
+            lambda new_text: self.settings.set('overview_sort_order', new_text))
         sec_1.addWidget(overview_sort_order_combo, 5, 1, alignment=ALEFT | AVCENTER)
 
         auto_scan_label = create_label(self.theme, tr('Scan log automatically:'), 'label_subhead')
         sec_1.addWidget(auto_scan_label, 6, 0, alignment=ARIGHT)
         auto_scan_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         auto_scan_button.setStyleSheet(self.theme.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+            'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         auto_scan_button.setFont(self.theme.get_font('app', '@font'))
         auto_scan_button.r_function = lambda: self.settings.set('auto_scan', True)
         auto_scan_button.l_function = lambda: self.settings.set('auto_scan', False)
@@ -928,7 +878,7 @@ class OSCRUI():
             self.theme, self.settings.sto_log_path, style_override={'margin-top': 0})
         sto_log_path_entry.setSizePolicy(SMIXMAX)
         sto_log_path_entry.editingFinished.connect(
-                lambda: self.set_sto_logpath_callback(sto_log_path_entry))
+            lambda: self.set_sto_logpath_callback(sto_log_path_entry))
         sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
         sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
 
@@ -945,12 +895,12 @@ class OSCRUI():
         sec_1.addWidget(live_graph_active_label, 9, 0, alignment=ARIGHT)
         live_graph_active_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_graph_active_button.setStyleSheet(self.theme.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+            'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_graph_active_button.setFont(self.theme.get_font('app', '@font'))
         live_graph_active_button.r_function = (
-                lambda: self.settings.set('liveparser__graph_active', True))
+            lambda: self.settings.set('liveparser__graph_active', True))
         live_graph_active_button.l_function = (
-                lambda: self.settings.set('liveparser__graph_active', False))
+            lambda: self.settings.set('liveparser__graph_active', False))
         if self.settings.liveparser__graph_active:
             live_graph_active_button.flip()
         sec_1.addWidget(live_graph_active_button, 9, 1, alignment=ALEFT | AVCENTER)
@@ -963,7 +913,7 @@ class OSCRUI():
         live_graph_field_combo.addItems(self.config.live_graph_fields)
         live_graph_field_combo.setCurrentIndex(self.settings.liveparser__graph_field)
         live_graph_field_combo.currentIndexChanged.connect(
-                lambda new_index: self.settings.set('liveparser__graph_field', new_index))
+            lambda new_index: self.settings.set('liveparser__graph_field', new_index))
         sec_1.addWidget(live_graph_field_combo, 10, 1, alignment=ALEFT)
 
         live_name_label = create_label(self.theme, tr('LiveParser Player:'), 'label_subhead')
@@ -972,7 +922,7 @@ class OSCRUI():
         live_player_combo.addItems(('Name', 'Handle'))
         live_player_combo.setCurrentText(self.settings.liveparser__player_display)
         live_player_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.set('liveparser__player_display', new_text))
+            lambda new_text: self.settings.set('liveparser__player_display', new_text))
         sec_1.addWidget(live_player_combo, 11, 1, alignment=ALEFT)
 
         overview_tab_label = create_label(self.theme, tr('Default Overview Tab:'), 'label_subhead')
@@ -1004,12 +954,12 @@ class OSCRUI():
         sec_1.addWidget(live_enabled_label, 15, 0, alignment=ARIGHT)
         live_enabled_button = FlipButton(tr('Disabled'), tr('Enabled'), checkable=True)
         live_enabled_button.setStyleSheet(self.theme.get_style_class(
-                'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
+            'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_enabled_button.setFont(self.theme.get_font('app', '@font'))
         live_enabled_button.r_function = (
-                lambda: self.settings.set('liveparser__auto_enabled', True))
+            lambda: self.settings.set('liveparser__auto_enabled', True))
         live_enabled_button.l_function = (
-                lambda: self.settings.set('liveparser__auto_enabled', False))
+            lambda: self.settings.set('liveparser__auto_enabled', False))
         if self.settings.liveparser__auto_enabled:
             live_enabled_button.flip()
         sec_1.addWidget(live_enabled_button, 15, 1, alignment=ALEFT)
@@ -1021,7 +971,7 @@ class OSCRUI():
         result_format_combo.addItems(('Compact', 'Verbose', 'CSV'))
         result_format_combo.setCurrentText(self.settings.copy_format)
         result_format_combo.currentTextChanged.connect(
-                lambda new_text: self.settings.set('copy_format', new_text))
+            lambda new_text: self.settings.set('copy_format', new_text))
         sec_1.addWidget(result_format_combo, 16, 1, alignment=ALEFT)
 
         live_copy_label = create_label(
@@ -1031,10 +981,8 @@ class OSCRUI():
         live_copy_button.setStyleSheet(self.theme.get_style_class(
                 'QPushButton', 'toggle_button', override={'margin-top': 0, 'margin-left': 0}))
         live_copy_button.setFont(self.theme.get_font('app', '@font'))
-        live_copy_button.r_function = (
-                lambda: self.settings.set('liveparser__copy_kills', True))
-        live_copy_button.l_function = (
-                lambda: self.settings.set('liveparser__copy_kills', False))
+        live_copy_button.r_function = lambda: self.settings.set('liveparser__copy_kills', True)
+        live_copy_button.l_function = lambda: self.settings.set('liveparser__copy_kills', False)
         if self.settings.liveparser__copy_kills:
             live_copy_button.flip()
         sec_1.addWidget(live_copy_button, 17, 1, alignment=ALEFT)
@@ -1048,7 +996,7 @@ class OSCRUI():
         current_language_code = self.settings.language
         language_combo.setCurrentText(languages[language_codes.index(current_language_code)])
         language_combo.currentIndexChanged.connect(
-                lambda index: self.settings.set('language', language_codes[index]))
+            lambda index: self.settings.set('language', language_codes[index]))
         sec_1.addWidget(language_combo, 18, 1, alignment=ALEFT | AVCENTER)
         scroll_layout.addLayout(sec_1)
 
@@ -1079,7 +1027,7 @@ class OSCRUI():
                 self.theme, head, 'toggle_button', toggle=self.settings.dmg_columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
-                    lambda state, i=i: self.settings.dmg_columns.__setitem__(i, state))
+                lambda state, i=i: self.settings.dmg_columns.__setitem__(i, state))
             dmg_hider_layout.addWidget(bt, stretch=1)
         dmg_seperator = create_frame(
             self.theme, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
@@ -1102,7 +1050,7 @@ class OSCRUI():
                 self.theme, head, 'toggle_button', toggle=self.settings.heal_columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
-                    lambda state, i=i: self.settings.heal_columns.__setitem__(i, state))
+                lambda state, i=i: self.settings.heal_columns.__setitem__(i, state))
             heal_hider_layout.addWidget(bt, stretch=1)
         heal_seperator = create_frame(
             self.theme, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)
@@ -1125,7 +1073,7 @@ class OSCRUI():
                 self.theme, head, 'toggle_button', toggle=self.settings.liveparser__columns[i])
             bt.setSizePolicy(SMINMAX)
             bt.clicked[bool].connect(
-                    lambda state, i=i: self.settings.liveparser__columns.__setitem__(i, state))
+                lambda state, i=i: self.settings.liveparser__columns.__setitem__(i, state))
             live_hider_layout.addWidget(bt, stretch=1)
         live_separator = create_frame(
             self.theme, 'hr', style_override={'background-color': '@lbg'}, size_policy=SMINMIN)

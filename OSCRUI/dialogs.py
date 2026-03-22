@@ -348,8 +348,6 @@ class DialogsWrapper(QObject):
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(2 * thick)
         self._icon_label_c = create_label(self._theme, '')
-        # icon_size = self._theme.opt.default_big_icon_size * self._theme.scale
-        # icon_label.setPixmap(self.icons[icon].pixmap(icon_size))
         top_layout.addWidget(self._icon_label_c, alignment=ALEFT | AVCENTER)
         self._message_label_c = create_label(self._theme, '')
         self._message_label_c.setWordWrap(True)

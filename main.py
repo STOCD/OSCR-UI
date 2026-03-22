@@ -30,7 +30,8 @@ class Launcher():
             '--config_dir', type=str, required=False,
             help='Change configuration directory (must be readable and writable)')
         args, _ = argparser.parse_known_args()
-        exit_code = OSCRUI(args=args, path=Launcher.base_path(), version=Launcher.__version__).run()
+        exit_code = OSCRUI(
+            args=args, app_dir_path=Launcher.base_path(), version=Launcher.__version__).run()
         sys.exit(exit_code)
 
 
