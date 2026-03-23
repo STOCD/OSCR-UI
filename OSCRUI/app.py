@@ -64,10 +64,10 @@ class OSCRUI():
         init_translation(self.settings.language)
         QDir.addSearchPath('assets_folder', os.path.join(app_dir_path, 'assets'))
         self.theme: AppTheme = AppTheme(self.config.ui_scale)
-        self.cache_assets()
 
         # Setting up GUI including app modules
         self.app, self.window = self.create_main_window()
+        self.cache_assets()
         self.widgets: WidgetManager = WidgetManager(self.settings)
         self.tables: AnalysisTables = AnalysisTables(self.theme, self.settings)
         self.graphs: AnalysisGraphs = AnalysisGraphs(self.theme, self.settings)
