@@ -180,9 +180,9 @@ class OSCRLeftSidebar():
         left_layout.addLayout(combat_button_row)
         more_combats_button.clicked.connect(self._parser.analyze_log_background)
         export_button.clicked.connect(
-                lambda: self._parser.save_combat(combats_list.currentIndex().data()))
+            lambda: self._parser.save_combat(combats_list.currentIndex().data()))
         json_export_button.clicked.connect(
-                lambda: self._parser.export_combat_json(combats_list.currentIndex().data()))
+            lambda: self._parser.export_combat_json(combats_list.currentIndex().data()))
 
         sep = create_frame(self._theme, 'medium_frame')
         sep.setFixedHeight(margin)

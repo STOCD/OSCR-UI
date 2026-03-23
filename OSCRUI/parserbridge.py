@@ -233,7 +233,7 @@ class ParserBridge(QObject):
         if combat.difficulty is not None and combat.difficulty != '':
             filename += ' ' + combat.difficulty
         filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.log'
-        preset_path = Path(self._parser.log_path).parent / filename
+        preset_path = Path(self._global_settings.log_path).parent / filename
         path = browse_path(preset_path, 'Logfile (*.log);;Any File (*.*)', save=True)
         if path is not None:
             self._parser.export_combat(combat_info[0], path)
