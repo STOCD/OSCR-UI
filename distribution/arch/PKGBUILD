@@ -1,6 +1,6 @@
 # Maintainer: PsychedelicShayna <Eternal0000FF@protonmail.com>
 pkgname=oscr-ui
-pkgver=10.1.1
+pkgver=10.1.2
 pkgrel=1
 pkgdesc="OSCR-UI - Open Source Combat Reader (GUI)"
 arch=('x86_64')
@@ -9,7 +9,7 @@ license=('GPL-3.0')
 depends=('python')
 makedepends=('python' 'python-virtualenv' 'python-wheel' 'python-setuptools' 'git' 'unzip')
 source=("https://github.com/STOCD/OSCR-UI/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('6cb2790c817c1108f1ea1d4daf79d70d7aa0ec6aedeeee9065359eac5e68ca11')
+sha256sums=('739ef1349cc822f4909388a7b403b8ccc04eb577c038c76c41fd5d682b96a30b')
 
 build() {
   cd "$srcdir"
