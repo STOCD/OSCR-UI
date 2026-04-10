@@ -1,43 +1,41 @@
 import json
 import os
+from pathlib import Path
 import webbrowser
 
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QIcon
 
-# --------------------------------------------------------------------------------------------------
-# object methods
-# --------------------------------------------------------------------------------------------------
 
-
-def browse_path(self, default_path: str = None, types: str = 'Any File (*.*)', save=False) -> str:
+def browse_path(
+        preset_path: Path, types: str = 'Any File (*.*)', save: bool = False) -> Path | None:
     """
     Opens file dialog prompting the user to select a file.
 
     Parameters:
-    - :param default_path: path that the file dialog opens at
+    - :param preset_path: path that the file dialog opens at; includes default file name
     - :param types: string containing all file extensions and their respective names that are \
     allowed. \
     Format: `<name of file type> (*.<extension>);;<name of file type> (*.<extension>);; [...]` \
     Example: `Logfile (*.log);;Any File (*.*)`
     - :param save: False => open file with dialog; True => save file with dialog
-    """
-    if default_path is None or default_path == '':
-        default_path = self.config.home_dir
-    default_path = os.path.abspath(default_path)
-    if not os.path.exists(os.path.dirname(default_path)):
-        default_path = self.config.home_dir
-    if save:
-        f = QFileDialog.getSaveFileName(self.window, 'Save Log', default_path, types)[0]
-    else:
-        f = QFileDialog.getOpenFileName(self.window, 'Open Log', default_path, types)[0]
-        if not os.path.exists(f):
-            return ''
-    return f
 
-# --------------------------------------------------------------------------------------------------
-# static functions
-# --------------------------------------------------------------------------------------------------
+    :return: returns selected path; None if user aborts or tries to open not-existing file
+    """
+    if save:
+        f = QFileDialog.getSaveFileName(caption='Save Log', dir=str(preset_path), filter=types)[0]
+        if f == '':
+            return None
+        return Path(f)
+    else:
+        f = QFileDialog.getOpenFileName(caption='Open Log', dir=str(preset_path), filter=types)[0]
+        if f == '':
+            return None
+        selected_path = Path(f)
+        if selected_path.exists():
+            return selected_path
+        else:
+            return None
 
 
 def get_asset_path(asset_name: str, app_directory: str) -> str:
@@ -91,61 +89,12 @@ def open_link(link: str = ''):
         webbrowser.open(link, new=2, autoraise=True)
 
 
-def sanitize_file_name(txt, chr_set='extended') -> str:
-    """Converts txt to a valid filename.
-
-    Parameters:
-    - :param txt: The path to convert.
-    - :param chr_set:
-        - 'printable':    Any printable character except those disallowed on Windows/*nix.
-        - 'extended':     'printable' + extended ASCII character codes 128-255
-        - 'universal':    For almost *any* file system.
-    """
-    FILLER = '-'
-    MAX_LEN = 255  # Maximum length of filename is 255 bytes in Windows and some *nix flavors.
-
-    # Step 1: Remove excluded characters.
-    BLACK_LIST = set(chr(127) + r'<>:"/\|?*')
-    white_lists = {
-        'universal': {'-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'},
-        'printable': {chr(x) for x in range(32, 127)} - BLACK_LIST,     # 0-32, 127 are unprintable,
-        'extended': {chr(x) for x in range(32, 256)} - BLACK_LIST,
-    }
-    white_list = white_lists[chr_set]
-    result = ''.join(x if x in white_list else FILLER for x in txt)
-
-    # Step 2: Device names, '.', and '..' are invalid filenames in Windows.
-    DEVICE_NAMES = (
-            'CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7',
-            'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
-            'CONIN$', 'CONOUT$', '..', '.')
-    if '.' in txt:
-        name, _, ext = result.rpartition('.')
-        ext = f'.{ext}'
-    else:
-        name = result
-        ext = ''
-    if name in DEVICE_NAMES:
-        result = f'-{result}-{ext}'
-
-    # Step 3: Truncate long files while preserving the file extension.
-    if len(result) > MAX_LEN:
-        result = result[:MAX_LEN - len(ext)] + ext
-
-    # Step 4: Windows does not allow filenames to end with '.' or ' ' or begin with ' '.
-    result = result.strip()
-    while len(result) > 0 and result[-1] == '.':
-        result = result[:-1]
-
-    return result
-
-
-def save_to_json(path: str, data: dict):
+def save_to_json(path: Path, data: dict):
     """
     Saves dictionary to JSON file using the json library
 
     :param path: filepath to write the file to
     :param data: dictionary containing the data to be serialized
     """
-    with open(path, 'w') as file:
+    with path.open('w') as file:
         json.dump(data, file)

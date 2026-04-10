@@ -1,78 +1,26 @@
 from math import sqrt, frexp
+from typing import Iterable
 
 import numpy as np
-from pyqtgraph import AxisItem, BarGraphItem, PlotWidget
-from PySide6.QtCore import QObject, QRect, QSize, Qt, QThread, Signal, Slot
-from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPixmap
+from pyqtgraph import AxisItem, BarGraphItem, PlotWidget, setConfigOptions as pyqtgraph__configure
+from PySide6.QtCore import QRect, QSize, Qt, Slot
+from PySide6.QtGui import QFont, QIcon, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QLabel, QListWidget, QPushButton, QSizeGrip, QSplitter, QStyle,
-    QStyledItemDelegate, QTableView, QTabWidget, QTreeView, QWidget)
+    QFrame, QHBoxLayout, QLabel, QPushButton, QSizeGrip, QStyle, QStyledItemDelegate, QVBoxLayout,
+    QWidget)
 
-from .widgetbuilder import SMINMIN
+from .datamodels import TreeItem
+from .widgetbuilder import ACENTER, AVCENTER, SMAXMAX, SMINMIN, create_frame, create_label
+from .theme import AppTheme
+
+
+pyqtgraph__configure(antialias=True)
 
 
 ATOPLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
 ATOPRIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
 ABOTTOMLEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom
 ABOTTOMRIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom
-
-
-class WidgetStorage():
-    """
-    Class to store widgets.
-    """
-    def __init__(self):
-        self.main_menu_buttons: list[QPushButton] = list()
-        self.main_tabber: QTabWidget
-        self.main_tab_frames: list[QFrame] = list()
-        self.sidebar_tabber: QTabWidget
-        self.sidebar_tab_frames: list[QFrame] = list()
-        self.map_tabber: QTabWidget
-        self.map_tab_frames: list[QFrame] = list()
-        self.map_menu_buttons: list[QPushButton] = list()
-
-        self.log_duration_value: QLabel
-        self.player_duration_value: QLabel
-
-        self.overview_menu_buttons: list[QPushButton] = list()
-        self.overview_tabber: QTabWidget
-        self.overview_tab_frames: list[QFrame] = list()
-        self.overview_table_frame: QFrame
-        self.overview_table_button: FlipButton
-        self.overview_splitter: QSplitter
-
-        self.analysis_splitter: QSplitter
-        self.analysis_menu_buttons: list[QPushButton] = list()
-        self.analysis_copy_combobox: QComboBox
-        self.analysis_graph_tabber: QTabWidget
-        self.analysis_tree_tabber: QTabWidget
-        self.analysis_graph_frames: list[QFrame] = list()
-        self.analysis_tree_frames: list[QFrame] = list()
-        self.analysis_table_dout: QTreeView
-        self.analysis_table_dtaken: QTreeView
-        self.analysis_table_hout: QTreeView
-        self.analysis_table_hin: QTreeView
-        self.analysis_plot_dout: AnalysisPlot
-        self.analysis_plot_dtaken: AnalysisPlot
-        self.analysis_plot_hout: AnalysisPlot
-        self.analysis_plot_hin: AnalysisPlot
-        self.analysis_graph_button: FlipButton
-
-        self.ladder_selector: QListWidget
-        self.favorite_ladder_selector: QListWidget
-        self.variant_combo: QComboBox
-        self.ladder_table: QTableView
-
-        self.live_parser_table: QTableView
-        self.live_parser_button: QPushButton
-        self.live_parser_curves: list
-        self.live_parser_splitter: QSplitter
-        self.live_parser_duration_label: QLabel
-
-    @property
-    def analysis_table(self):
-        return (self.analysis_table_dout, self.analysis_table_dtaken, self.analysis_table_hout,
-                self.analysis_table_hin)
 
 
 class FlipButton(QPushButton):
@@ -199,8 +147,23 @@ class CustomPlotAxis(AxisItem):
     """
     Extending AxisItem for custom tick formatting
     """
-    def __init__(self, *args, unit: str = '', no_labels=False, compressed=False, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self, side: str, text_font: QFont, text_color: str = '#FFFFFF', unit: str = '',
+            no_labels: bool = False, compressed: bool = False):
+        """
+        Creates a new plot axis with custom tick formatting, style, spacing and units.
+
+        Parameters:
+        - :param side: side that the axis will be used for, e.g. `left`, `bottom`
+        - :param text_font: font to use for the ticks labels
+        - :param text_color: color to use for tick labels
+        - :param unit: unit to display along with the number on the tick labels
+        - :param no_labels: set to `True` to suppress creation of tick labels
+        - :param compressed: set to `True` to adjust tick label spacing to show more meaningful
+        tick labels on very small layouts
+        """
+        super().__init__(side, textPen=text_color)
+        self.setTickFont(text_font)
         self._unit = ' ' + unit
         self._no_labels = no_labels
         self._compressed = compressed
@@ -306,39 +269,153 @@ class CustomPlotAxis(AxisItem):
         return levels
 
 
-class AnalysisPlot(PlotWidget):
+class LegendPlot(QFrame):
+    """Represents a plot widget with legend below the plot area."""
+
+    def __init__(
+            self, theme: AppTheme, x_unit: str = '', y_unit: str = '', y_font: str = 'plot_widget'):
+        super().__init__()
+        self._theme: AppTheme = theme
+        self.setStyleSheet(self._theme.get_style('plot_widget'))
+        self.setSizePolicy(SMAXMAX)
+        self._plot: PlotWidget = PlotWidget()
+        left_axis = CustomPlotAxis(
+            'left', self._theme.get_font(y_font), self._theme['defaults']['fg'], y_unit)
+        bottom_axis = CustomPlotAxis(
+            'bottom', self._theme.get_font('plot_widget'), self._theme['defaults']['fg'], x_unit)
+        self._plot.setAxisItems({'left': left_axis, 'bottom': bottom_axis})
+        self._plot.setStyleSheet(self._theme.get_style('plot_widget_nullifier'))
+        self._plot.setBackground(None)
+        self._plot.setMouseEnabled(False, False)
+        self._plot.setMenuEnabled(False)
+        self._plot.hideButtons()
+        self._plot.setDefaultPadding(padding=0)
+        self._layout = QVBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(self._theme['defaults']['isp'])
+        self._layout.addWidget(self._plot)
+        self._legend: QFrame = create_frame(self._theme, style='plot_legend')
+        self._layout.addWidget(self._legend, alignment=ACENTER)
+        self.setLayout(self._layout)
+        self._plot.hide()
+
+    def set_padding_fraction(self, padding: float = 0.01):
+        """
+        Adjusts the padding of the plot view area.
+        """
+        self._plot.setDefaultPadding(padding)
+
+    def set_axis_ticks(self, side: str, tick_labels: tuple[str]):
+        self._plot.getAxis(side).setTicks(tick_labels)
+
+    def clear(self):
+        self._plot.clear()
+        QWidget().setLayout(self._legend.layout())
+        self._plot.hide()
+
+    def show_plot(self):
+        self._plot.show()
+
+    def add_item(self, item):
+        self._plot.addItem(item)
+
+    def set_x_range(self, min, max, padding):
+        self._plot.setXRange(min, max, padding)
+
+    def plot(self, x_data: tuple, y_data: tuple, pen: QPen):
+        self._plot.plot(x_data, y_data, pen=pen)
+
+    def create_legend(self, colors_and_names: Iterable[tuple[str]]) -> QFrame:
+        """
+        Creates Legend from color / name pairs and returns frame containing it.
+
+        Parameters:
+        - :param colors_and_names: Iterable containing color / name pairs : \
+        [('#9f9f00', 'Line 1'), ('#0000ff', 'Line 2'), (...), ...]
+
+        :return: frame containing the legend
+        """
+        upper_frame = create_frame(self._theme, style='plot_legend')
+        lower_frame = create_frame(self._theme, style='plot_legend')
+        frame_layout = QVBoxLayout()
+        upper_layout = QHBoxLayout()
+        lower_layout = QHBoxLayout()
+        margin = self._theme['defaults']['margin']
+        frame_layout.setContentsMargins(0, 0, 0, 0)
+        frame_layout.setSpacing(margin)
+        upper_layout.setContentsMargins(0, 0, 0, 0)
+        upper_layout.setSpacing(2 * margin)
+        lower_layout.setContentsMargins(0, 0, 0, 0)
+        lower_layout.setSpacing(2 * margin)
+        second_row = False
+        for num, (color, name) in enumerate(colors_and_names, 1):
+            legend_item = self.create_legend_item(color, name)
+            if num <= 5:
+                upper_layout.addWidget(legend_item)
+            else:
+                second_row = True
+                lower_layout.addWidget(legend_item)
+        upper_frame.setLayout(upper_layout)
+        frame_layout.addWidget(upper_frame, alignment=ACENTER)
+        if second_row:
+            lower_frame.setLayout(lower_layout)
+            frame_layout.addWidget(lower_frame, alignment=ACENTER)
+        QWidget().setLayout(self._legend.layout())
+        self._legend.setLayout(frame_layout)
+
+    def create_legend_item(self, color: str, name: str) -> QFrame:
+        """
+        Creates a colored patch next to a label inside a frame
+
+        Parameters:
+        - :param color: patch color
+        - :param name: text of the label
+
+        :return: frame containing the legend item
+        """
+        frame = create_frame(self._theme, style='plot_legend')
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(self._theme['defaults']['margin'])
+        colored_patch = QLabel()
+        colored_patch.setStyleSheet(
+            self._theme.get_style('plot_legend', {'background-color': color}))
+        patch_height = self._theme['app']['frame_thickness']
+        colored_patch.setFixedSize(2 * patch_height, patch_height)
+        layout.addWidget(colored_patch, alignment=AVCENTER)
+        label = create_label(
+                self._theme, name, 'label', {'font': self._theme['plot_legend']['font']})
+        layout.addWidget(label)
+        frame.setLayout(layout)
+        return frame
+
+
+class AnalysisPlot(LegendPlot):
     """
     PlotWidget for plotting the analysis plot.
     """
-    def __init__(self, colors: tuple, tick_color: str, tick_font: QFont, legend_layout):
+    def __init__(self, theme: AppTheme, colors: tuple[str]):
         """
         Parameters:
+        - :param theme: reference to AppTheme for styling
         - :param colors: tuple with at least 5 different colors that are used to paint the bars
-        - :param tick_color: color for the tick annotations
-        - :param tick_font: font for the tick annotations
         """
-        super().__init__()
-        self._bar_queue = list()
-        self._legend_queue = list()
-        self._bar_item_queue = list()
-        self._bar_position = 0
-        self._colors = colors
-        self._frozen = True
-        self._legend_layout = legend_layout
-        left_axis = CustomPlotAxis('left')
-        left_axis.setTickFont(tick_font)
-        left_axis.setTextPen(color=tick_color)
-        bottom_axis = CustomPlotAxis('bottom', unit='s')
-        bottom_axis.setTickFont(tick_font)
-        bottom_axis.setTextPen(color=tick_color)
-        self.setAxisItems({'left': left_axis, 'bottom': bottom_axis})
-        self.setBackground(None)
-        self.setMouseEnabled(False, False)
-        self.setMenuEnabled(False)
-        self.hideButtons()
-        self.setDefaultPadding(padding=0)
+        super().__init__(theme, x_unit='s')
+        self._theme: AppTheme = theme
+        self._bar_queue: list[BarGraphItem] = list()
+        self._legend_queue: list[QFrame] = list()
+        self._bar_item_queue: list[TreeItem] = list()
+        self._bar_position: int = 0
+        self._colors: tuple[str] = colors
+        self._frozen: bool = True
+        self._legend_layout: QHBoxLayout = QHBoxLayout()
+        margin = self._theme['defaults']['margin']
+        self._legend_layout.setContentsMargins(0, 0, 0, 0)
+        self._legend_layout.setSpacing(margin)
+        self._legend.setLayout(self._legend_layout)
+        self._plot.show()
 
-    def add_bar(self, item):
+    def add_bar(self, item: TreeItem):
         """
         Adds plot item to plot widget and removes plot item if there are more than 5 currently
         displayed.
@@ -358,30 +435,32 @@ class AnalysisPlot(PlotWidget):
         time_data = np.subtract(time_reference, bar_offset)
         brush_color = self._colors[self._bar_position]
         bars = BarGraphItem(x=time_data, width=bar_width, height=data, brush=brush_color, pen=None)
+        annotation = item.get_data(0)
+        if isinstance(annotation, tuple):
+            annotation = annotation[0] + annotation[1]
+        legend_item = self.create_legend_item(brush_color, annotation)
         if len(self._bar_queue) >= 5:
-            self.removeItem(self._bar_queue.pop(0))
+            self._plot.removeItem(self._bar_queue.pop(0))
             self._bar_item_queue.pop(0)
             legend_item_to_remove = self._legend_queue.pop(0)
             self._legend_layout.removeWidget(legend_item_to_remove)
             legend_item_to_remove.setParent(None)
         self._bar_queue.append(bars)
         self._bar_item_queue.append(item)
-        self.addItem(bars)
+        self._plot.addItem(bars)
+        self._legend_queue.append(legend_item)
+        self._legend_layout.addWidget(legend_item)
         self._bar_position += 1
         if self._bar_position >= 5:
             self._bar_position = 0
         return brush_color
 
-    def add_legend_item(self, legend_item: QFrame):
-        self._legend_queue.append(legend_item)
-        self._legend_layout.addWidget(legend_item)
-
-    def clear_plot(self):
+    def clear(self):
         """
         Removes all bars from the plot
         """
         for bar in self._bar_queue:
-            self.removeItem(bar)
+            self._plot.removeItem(bar)
         self._bar_queue = list()
         for legend_item in self._legend_queue:
             self._legend_layout.removeWidget(legend_item)
@@ -408,14 +487,6 @@ class SizeGrip(QSizeGrip):
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         super().mouseMoveEvent(event)
         event.accept()
-
-
-class LiveParserWindow(QFrame):
-    """
-    Subclass of QWidget providing two custom signals: update_table and update_graph
-    """
-    update_table = Signal(tuple)
-    update_graph = Signal(list)
 
 
 class CombatDelegate(QStyledItemDelegate):
@@ -453,66 +524,3 @@ class CombatDelegate(QStyledItemDelegate):
         return QSize(
             line_width + 2 * self.border_width + 2 * self.padding + line_height,
             line_height * 2 + 2 * self.border_width + 2.5 * self.padding)
-
-
-class ThreadObject(QObject):
-
-    result = Signal(object)
-    data = Signal(object)
-    finished = Signal()
-
-    def __init__(self, func, *args, **kwargs) -> None:
-        self._func = func
-        self._args = args
-        self._kwargs = kwargs
-        super().__init__()
-
-    @Slot()
-    def run(self):
-        res = self._func(*self._args, **self._kwargs)
-        self.result.emit(res)
-        self.finished.emit()
-
-
-def exec_in_thread(
-        self, func, *args, result=None, data=None, finished=None, **kwargs):
-    """
-    Executes function `func` in separate thread. All positional and keyword parameters not listed
-    are passed to the function. The function must take a parameter `threaded_worker` which will
-    contain the worker object holding the signals: `start` (tuple), `result` (object),
-    `update_splash` (str), `finished` (no data)
-
-    Parameters:
-    - :param func: function to execute
-    - :param *args: positional parameters passed to the function [optional]
-    - :param result: callable that is executed when signal result is emitted (takes object) \
-    [optional]
-    - :param update_splash: callable that is executed when signal update_splash is emitted \
-    (takes str) [optional]
-    - :param finished: callable that is executed after `func` returns (takes no parameters) \
-    [optional]
-    - :param start_later: set to True to defer execution of the function; makes this function \
-    return signal that can be emitted to start execution. That signal takes a tuple with \
-        additional positional parameters passed to `func` [optional]
-    - :param **kwargs: keyword parameters passed to the function [optional]
-    """
-    worker = ThreadObject(func, *args, **kwargs)
-    if result is not None:
-        worker.result.connect(result)
-    if finished is not None:
-        worker.finished.connect(finished)
-    if data is not None:
-        worker.data.connect(data)
-    thread = QThread(self.app)
-    worker.moveToThread(thread)
-    thread.started.connect(worker.run)
-    worker.finished.connect(thread.quit)
-    thread.finished.connect(worker.deleteLater)
-    thread.finished.connect(thread.deleteLater)
-    thread.worker = worker
-    thread.start(QThread.Priority.IdlePriority)
-
-
-class ParserSignals(QObject):
-    analyzed_combat = Signal(object)
-    parser_error = Signal(object)
