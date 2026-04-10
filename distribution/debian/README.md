@@ -1,5 +1,10 @@
 # debian-package / dpkg Build Reference
 
+## Build Preperation
+Before building, make sure to complete the following steps:
+- Update the version in `DEBIAN/control`.
+- Add an entry to the changelog file `changelog`.
+
 ## Building
 To build and package the app for debian-based distros using docker, run 
 `docker compose -f distribution/debian/build_deb.compose.yaml up` from the base directory of the
