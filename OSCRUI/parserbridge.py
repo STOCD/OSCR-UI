@@ -27,6 +27,8 @@ class ParserBridge(QObject):
 
     completed_combat = Signal(Combat)
     parser_error = Signal(object)
+    parser_status = Signal(str)
+    status_message = Signal(str, str)
 
     def __init__(
             self, global_settings: OSCRSettings, global_config: OSCRConfig, widgets: WidgetManager,
@@ -48,6 +50,7 @@ class ParserBridge(QObject):
         self.parser_error.connect(self.show_parser_error)
         self._parser.combat_analyzed_callback = lambda combat: self.completed_combat.emit(combat)
         self._parser.error_callback = lambda error: self.parser_error.emit(error)
+        self._parser.task_finished_callback = lambda: self.set_parser_status('ready', tr('Idle'))
         self._thread: Thread | None = None
         self.analyzed_combats: CombatModel = CombatModel()
         self.current_combat_id: int = -1
@@ -85,6 +88,27 @@ class ParserBridge(QObject):
     def current_combat(self) -> Combat:
         return self._parser.combats[self.current_combat_id]
 
+    def set_parser_status(self, status: str, message: str):
+        """
+        Notifies that parser status has changed.
+
+        Parameters:
+        - :param status: name of the status to display
+        - :param message: message describing the status
+        """
+        self.parser_status.emit(status)
+        self.status_message.emit(message, '')
+
+    def show_info(self, message: str, description: str = ''):
+        """
+        Notifies that an information message should be shown.
+
+        Parameters:
+        - :param message: short information message
+        - :param description: description of the short message
+        """
+        self.status_message.emit(message, description)
+
     def analyze_log_file(self, path: Path, hidden_path: bool = False):
         """
         Starts analyzation of current logfile.
@@ -94,12 +118,13 @@ class ParserBridge(QObject):
         - :param hidden_path: True when settings should not be updated with log path
         """
         if not path.is_file():
-            # show_message(
-            #     self, tr('Invalid Logfile'),
-            #     tr('The Logfile you are trying to open does not exist.'), 'warning')
+            self.show_info(tr('Invalid logfile'), tr('Please select an existing file to parse.'))
             return
         if self._thread is not None and self._thread.is_alive():
-            # TODO Show feedback
+            desc = tr(
+                'The parser is currently analyzing a log file, please wait for it to finish before '
+                'analyzing another log file.')
+            self.show_info(tr('Parser busy'), desc)
             return
         if not hidden_path and path != self._global_settings.log_path:
             self._global_settings.log_path = str(path)
@@ -111,6 +136,7 @@ class ParserBridge(QObject):
         self._thread = Thread(target=self._parser.analyze_log_file, kwargs={'max_combats': 1})
         self._thread.start()
 
+        self.set_parser_status('active', tr('Analyzing Logfile'))
         self._widgets.switch_main_tab(0)
         self._widgets.switch_overview_tab(self._global_settings.first_overview_tab)
 
@@ -128,7 +154,11 @@ class ParserBridge(QObject):
             self._thread = Thread(
                 target=self._parser.analyze_log_file_mp, kwargs={'max_combats': amount})
             self._thread.start()
-        # TODO feedback
+        else:
+            desc = tr(
+                'The parser is currently analyzing a log file, please wait for it to finish before '
+                'analyzing another log file.')
+            self.show_info(tr('Parser busy'), desc)
 
     def insert_combat(self, combat: Combat):
         """
@@ -147,6 +177,8 @@ class ParserBridge(QObject):
             self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
             self.show_combat(combat=combat)
             self.analyze_log_background(self._global_settings.combats_to_parse - 1)
+        if self._parser.bytes_consumed == -1:
+            self.set_parser_status('ready', tr('Idle'))
 
     def populate_analysis(self, combat: Combat):
         """
@@ -295,7 +327,7 @@ class ParserBridge(QObject):
         elif log_file.is_file():
             log_path = str(log_file)
         else:
-            # TODO feedback
+            self.show_info(tr('Invalid logfile'), tr('Please select an existing file to parse.'))
             return False
         combats = self._parser.isolate_combats(log_path)
         combat_list.set_items(combats)

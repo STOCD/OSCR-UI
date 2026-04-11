@@ -546,3 +546,37 @@ class CombatModel(QStringListModel):
 
     def rowCount(self, parent=None) -> int:
         return len(self._data)
+
+
+class StringListModel(QAbstractItemModel):
+    def __init__(self):
+        super().__init__()
+        self._data: list[str] = list()
+
+    def append(self, message: str):
+        self.beginInsertRows(QModelIndex(), len(self._data), len(self._data))
+        self._data.append(message)
+        self.endInsertRows()
+
+    def clear(self):
+        self.beginResetModel()
+        self._data.clear()
+        self.endResetModel()
+
+    def data(self, index: QModelIndex, role: int) -> str:
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self._data[index.row()]
+
+    def rowCount(self, parent: QModelIndex) -> int:
+        return len(self._data)
+
+    def columnCount(self, parent: QModelIndex) -> int:
+        return 1
+
+    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+        if self.hasIndex(row, column):
+            return self.createIndex(row, column)
+        return QModelIndex()
+
+    def parent(self, index: QModelIndex) -> QModelIndex:
+        return QModelIndex()

@@ -466,6 +466,33 @@ class AppTheme:
                 'border-style': 'none',
                 'height': 1
             },
+            # label for status bar
+            'label_status': {
+                'color': '@fg',
+                'border-style': 'none',
+                'font': '@font',
+                'margin': (-1, 0, -1, 0),
+                'qproperty-indent': '0',
+                '~QToolTip': {
+                    'background-color': '@mbg',
+                    'border-style': 'solid',
+                    'border-color': '@lbg',
+                    'border-width': '@bw',
+                    'padding': (0, 0, 0, 0),
+                    'color': '@fg',
+                    'font': 'Overpass'
+                }
+            },
+            # button for status bar
+            'statusbar_button': {
+                'color': '@fg',
+                'border-style': 'none',
+                'font': '@font',
+                'margin': (-1, 0, -1, 0),
+                ':hover': {
+                    'color': '#b0b0b0'
+                }
+            },
             # button that holds LiveParser icon
             'live_icon_button': {
                 'background': 'none',
@@ -912,6 +939,7 @@ class AppTheme:
                 'border-radius': '@br',
                 'background-color': '@bg',
                 'color': '@fg',
-                'font': ('Roboto Mono', 11, 'normal')
+                'font': ('Roboto Mono', 11, 'normal'),
+                'selection-background-color': '#80c82934'
             }
         }

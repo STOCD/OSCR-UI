@@ -20,6 +20,7 @@ from .liveparser import LiveParserWindow
 from .leagueconnector import OSCRLeagueConnector
 from .parserbridge import ParserBridge
 from .sidebar import OSCRLeftSidebar
+from .statusbar import StatusBar
 from .textedit import format_path
 from .theme import AppTheme
 from .translation import init_translation, tr
@@ -74,12 +75,15 @@ class OSCRUI():
         self.dialogs: DialogsWrapper = DialogsWrapper(self.window, self.theme)
         self.upload_dialog: UploadresultDialog = UploadresultDialog(self.window, self.theme)
         self.detection_info: DetectionInfoDialog = DetectionInfoDialog(self.window, self.theme)
+        self.status_bar: StatusBar = StatusBar(self.theme, self.window)
         self.live_parser: LiveParserWindow = LiveParserWindow(
             self.settings, self.theme, self.dialogs, self.widgets)
         self.parser: ParserBridge = ParserBridge(
             self.settings, self.config, self.widgets, self.dialogs)
         self.parser._tables = self.tables
         self.parser._graphs = self.graphs
+        self.parser.parser_status.connect(self.status_bar.parser_status)
+        self.parser.status_message.connect(self.status_bar.status_message)
         self.league: OSCRLeagueConnector = OSCRLeagueConnector(
             self.widgets, self.dialogs, self.theme, self.config, self.parser, self.upload_dialog)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
@@ -115,7 +119,9 @@ class OSCRUI():
             'expand-right': 'expand-right.svg',
             'collapse-right': 'collapse-right.svg',
             'edit': 'edit.svg',
+            'parser-active': 'parser-active.svg',
             'parser-down': 'parser-down.svg',
+            'parser-ready': 'parser-ready.svg',
             'export-parse': 'export.svg',
             'copy': 'copy.svg',
             'ladder': 'ladder.svg',
@@ -757,9 +763,10 @@ class OSCRUI():
         menu_frame.setLayout(menu_layout)
 
         w = self.theme['app']['frame_thickness']
-        main_frame = create_frame(self.theme, style_override={'margin': (0, w, w, w)})
+        main_frame = create_frame(self.theme, style_override={'margin': (0, w, 0, w)})
         main_frame.setSizePolicy(SMINMIN)
         main_layout.addWidget(main_frame)
+        main_layout.addWidget(self.status_bar)
         bg_frame.setLayout(main_layout)
 
         return layout, main_frame

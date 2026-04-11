@@ -201,7 +201,7 @@ def create_label(theme: AppTheme, text: str, style: str = 'label', style_overrid
     """
     label = QLabel()
     label.setText(text)
-    label.setStyleSheet(theme.get_style(style, style_override))
+    label.setStyleSheet(theme.get_style_class('QLabel', style, style_override))
     label.setSizePolicy(SMAXMAX)
     if 'font' in style_override:
         label.setFont(theme.get_font(style, style_override['font']))

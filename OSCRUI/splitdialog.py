@@ -176,5 +176,4 @@ class SplitDialog(QDialog):
         """
         Isolates combats and inserts them into list
         """
-        combats = self._parser.isolate_combats(self._current_log_path)
-        self._combat_model.set_items(combats)
+        self._parser.populate_split_combats_list(self._combat_model, self._current_log_path)
