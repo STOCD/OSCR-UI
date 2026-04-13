@@ -49,8 +49,7 @@ class ParserBridge(QObject):
         self.completed_combat.connect(self.insert_combat)
         self.parser_error.connect(self.show_parser_error)
         self._parser.combat_analyzed_callback = lambda combat: self.completed_combat.emit(combat)
-        self._parser.error_callback = lambda error: self.parser_error.emit(error)
-        self._parser.task_finished_callback = lambda: self.set_parser_status('ready', tr('Idle'))
+        self._parser.task_finished_callback = self.analyzation_finished
         self._thread: Thread | None = None
         self.analyzed_combats: CombatModel = CombatModel()
         self.current_combat_id: int = -1
@@ -88,16 +87,17 @@ class ParserBridge(QObject):
     def current_combat(self) -> Combat:
         return self._parser.combats[self.current_combat_id]
 
-    def set_parser_status(self, status: str, message: str):
+    def set_parser_status(self, status: str, message: str, description: str = ''):
         """
         Notifies that parser status has changed.
 
         Parameters:
         - :param status: name of the status to display
         - :param message: message describing the status
+        - :param description: long description of the status (optional)
         """
         self.parser_status.emit(status)
-        self.status_message.emit(message, '')
+        self.status_message.emit(message, description)
 
     def show_info(self, message: str, description: str = ''):
         """
@@ -108,6 +108,25 @@ class ParserBridge(QObject):
         - :param description: description of the short message
         """
         self.status_message.emit(message, description)
+
+    def analyzation_finished(self, new_combats: list[int]):
+        """
+        Adds information about new combats to log.
+
+        Parameters:
+        - :param new_combats: contains ids of combats that have been added
+        """
+        if len(new_combats) == 0:
+            desc = tr(
+                'All combats in this log file have been analyzed. To re-analyze the log file, '
+                'click the "Analyze" button.')
+            self.set_parser_status('ready', tr('All combats analyzed'), desc)
+        else:
+            details = (
+                tr('Successfully analyzed') + f' {len(new_combats)} ' + tr('new combats with ids')
+                + ' ' + ', '.join(map(str, new_combats)))
+            self.show_info(tr('Combats analyzed'), details)
+            self.set_parser_status('ready', tr('Idle'))
 
     def analyze_log_file(self, path: Path, hidden_path: bool = False):
         """
@@ -154,6 +173,7 @@ class ParserBridge(QObject):
             self._thread = Thread(
                 target=self._parser.analyze_log_file_mp, kwargs={'max_combats': amount})
             self._thread.start()
+            self.set_parser_status('active', tr('Analyzing Logfile'))
         else:
             desc = tr(
                 'The parser is currently analyzing a log file, please wait for it to finish before '
@@ -176,9 +196,8 @@ class ParserBridge(QObject):
             self.current_combat_id = 0
             self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
             self.show_combat(combat=combat)
+            self.show_info(tr('Combat analyzed'), tr('Successfully analyzed combat with id 0.'))
             self.analyze_log_background(self._global_settings.combats_to_parse - 1)
-        if self._parser.bytes_consumed == -1:
-            self.set_parser_status('ready', tr('Idle'))
 
     def populate_analysis(self, combat: Combat):
         """
