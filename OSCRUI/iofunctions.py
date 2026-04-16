@@ -89,12 +89,17 @@ def open_link(link: str = ''):
         webbrowser.open(link, new=2, autoraise=True)
 
 
-def save_to_json(path: Path, data: dict):
+def save_to_json(path: Path, data: dict) -> bool:
     """
-    Saves dictionary to JSON file using the json library
+    Saves dictionary to JSON file using the json library. Returns `True` on success, `False` on
+    failure.
 
     :param path: filepath to write the file to
     :param data: dictionary containing the data to be serialized
     """
-    with path.open('w') as file:
-        json.dump(data, file)
+    try:
+        with path.open('w') as file:
+            json.dump(data, file)
+        return True
+    except OSError:
+        return False

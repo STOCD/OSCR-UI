@@ -278,17 +278,30 @@ class ParserBridge(QObject):
         - :param combat_info: tuple of combat-identifying data (id, map, date, time, difficulty)
         """
         if combat_info is None or combat_info[0] >= len(self._parser.combats):
+            desc = tr('Please analyze a log file and select a combat before attempting to export '
+                      'a combat.')
+            self.show_info(tr('No combat selected'), desc)
             return
         combat = self._parser.combats[combat_info[0]]
         filename = combat.map
         if combat.difficulty is not None and combat.difficulty != '':
             filename += ' ' + combat.difficulty
-        filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.log'
+        combat_time = combat.start_time.strftime("%Y-%m-%d %H.%M")
+        filename += f' {combat_time}.log'
         preset_path = Path(self._global_settings.log_path).parent / filename
         path = browse_path(preset_path, 'Logfile (*.log);;Any File (*.*)', save=True)
-        if path is not None:
-            self._parser.export_combat(combat_info[0], path)
-        # TODO feedback
+        if path is None:
+            self.show_info(tr('Export cancelled'), tr('The export process was manually cancelled.'))
+        elif self._parser.export_combat(combat_info[0], path):
+            desc = (
+                tr('Combat') + f' {combat_info[0]} ({combat.map} {combat_time}) '
+                + tr('was successfully exported to') + f' "{path.name}".')
+            self.show_info(tr('Export successful'), desc)
+        else:
+            desc = (
+                tr('Exporting combat') + f' {combat_info[0]} ({combat.map} {combat_time}) '
+                + tr('failed because OSCR could not write to the specified location.'))
+            self.show_info(tr('Export failed'), desc)
 
     def export_combat_json(self, combat_info: tuple[int, str, str, str, str] | None):
         """
@@ -298,17 +311,30 @@ class ParserBridge(QObject):
         - :param combat_info: tuple of combat-identifying data (id, map, date, time, difficulty)
         """
         if combat_info is None or combat_info[0] >= len(self._parser.combats):
+            desc = tr('Please analyze a log file and select a combat before attempting to export '
+                      'a combat.')
+            self.show_info(tr('No combat selected'), desc)
             return
         combat = self._parser.combats[combat_info[0]]
         filename = combat.map
         if combat.difficulty is not None and combat.difficulty != '':
             filename += ' ' + combat.difficulty
-        filename += f' {combat.start_time.strftime("%Y-%m-%d %H.%M")}.json'
+        combat_time = combat.start_time.strftime("%Y-%m-%d %H.%M")
+        filename += f' {combat_time}.json'
         preset_path = Path(self._parser.log_path) / filename
         path = browse_path(preset_path, 'JSON File (*.json);;Any File (*.*)', save=True)
-        if path is not None:
-            save_to_json(path, combat.get_export())
-        # TODO feedback
+        if path is None:
+            self.show_info(tr('Export cancelled'), tr('The export process was manually cancelled.'))
+        elif save_to_json(path, combat.get_export()):
+            desc = (
+                tr('Combat') + f' {combat_info[0]} ({combat.map} {combat_time}) '
+                + tr('was successfully exported to') + f' "{path.name}".')
+            self.show_info(tr('Export successful'), desc)
+        else:
+            desc = (
+                tr('Exporting combat') + f' {combat_info[0]} ({combat.map} {combat_time}) '
+                + tr('failed because OSCR could not write to the specified location.'))
+            self.show_info(tr('Export failed'), desc)
 
     def trim_logfile(self, path: Path) -> bool:
         """
@@ -319,16 +345,17 @@ class ParserBridge(QObject):
 
         :return: True if successful, False if not
         """
-        # TODO feedback
-        if Path(self._parser.log_path) == path:
-            self._parser.export_combat(0, path)
+        combats = self._parser.isolate_combats(path, 1)
+        if len(combats) < 1:
+            return False
+        if oscr__extract_bytes(path, path, combats[0][5], combats[0][6]):
+            desc = tr('Log file') + f' "{path.name}" ' + tr('was successfully trimmed.')
+            self.show_info(tr('Log file trimmed'), desc)
+            return True
         else:
-            combats = self._parser.isolate_combats(path, 1)
-            if len(combats) < 1:
-                return False
-            combat = combats[0]
-            oscr__extract_bytes(path, path, combat[5], combat[6])
-        return True
+            desc = tr('Log file') + f' "{path.name}" ' + tr('could not be written to by OSCR.')
+            self.show_info(tr('Trimming failed'), desc)
+            return False
 
     def populate_split_combats_list(
             self, combat_list: CombatModel, log_file: Path | None = None) -> bool:
