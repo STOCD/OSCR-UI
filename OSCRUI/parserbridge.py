@@ -447,10 +447,17 @@ class ParserBridge(QObject):
         combat_intervals.sort(key=lambda element: element[0])
         target_path = browse_path(source_path.parent, 'Logfile (*.log);;Any File (*.*)', save=True)
         if target_path is not None:
-            oscr__compose_logfile(
+            success = oscr__compose_logfile(
                 str(source_path), str(target_path), combat_intervals,
                 str(self._global_config.templog_folder_path))
-            self._dialogs.show_message(tr('Split Logfile'), tr('Logfile has been saved.'))
+            if success:
+                desc = tr('New log file has been saved to') + f' "{target_path.name}".'
+                self.show_info(tr('Spliting successful'), desc)
+                self._dialogs.show_message(tr('Split Logfile'), desc)
+            else:
+                desc = tr('OSCR could not write to the specified location.')
+                self.show_info(tr('Splitting failed'), desc)
+                self._dialogs.show_message(tr('Split Logfile'), desc)
 
     def copy_summary_data(self):
         """
