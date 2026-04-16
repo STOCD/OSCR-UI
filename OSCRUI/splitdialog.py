@@ -43,6 +43,7 @@ class SplitDialog(QDialog):
         main_layout = QVBoxLayout()
         thick = self._theme['app']['frame_thickness']
         main_layout.setContentsMargins(thick, thick, thick, thick)
+        main_layout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetFixedSize)
         content_frame = create_frame(self._theme)
         main_layout.addWidget(content_frame)
         content_layout = QVBoxLayout()
