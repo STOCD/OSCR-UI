@@ -1,3 +1,9 @@
+oscr-ui (11.0.0-1) stable; urgency=low
+
+  * See https://github.com/STOCD/OSCR-UI/releases/tag/v11.0.0
+
+ -- Shinga  <test@example.org>  Mon, 18 Apr 2026 15:33:10 +0100
+
 oscr-ui (10.1.2-1) stable; urgency=low
 
   * See https://github.com/STOCD/OSCR-UI/releases/tag/v10.1.2

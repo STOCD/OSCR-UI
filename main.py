@@ -8,7 +8,7 @@ from OSCRUI import OSCRUI
 
 class Launcher():
 
-    __version__ = '10.1.2'
+    __version__ = '11.0.0'
 
     @staticmethod
     def base_path() -> str:
