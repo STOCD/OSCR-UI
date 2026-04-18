@@ -15,7 +15,7 @@ from .analysistables import AnalysisTables
 from .config import OSCRConfig, OSCRSettings
 from .datamodels import SortingProxy, TreeModel, TreeSelectionModel
 from .dialogs import DetectionInfoDialog, DialogsWrapper, UploadresultDialog
-from .iofunctions import get_asset_path, load_icon_series, load_icon
+from .iofunctions import browse_path, get_asset_path, load_icon_series, load_icon
 from .liveparser import LiveParserWindow
 from .leagueconnector import OSCRLeagueConnector
 from .parserbridge import ParserBridge
@@ -771,6 +771,17 @@ class OSCRUI():
         bg_frame.setLayout(main_layout)
 
         return layout, main_frame
+    
+    def browse_sto_logpath(self):
+        """
+        Prompts the user sto select a logfile and stores the resulting path.
+        """
+        current_path = Path(self.widgets.sto_log_path_entry.text()).absolute().parent
+        path = browse_path(current_path, 'Logfile (*.log);;Any File (*.*)')
+        if path is not None:
+            formatted_path = format_path(str(path))
+            self.widgets.sto_log_path_entry.setText(formatted_path)
+            self.settings.sto_log_path = formatted_path
 
     def setup_settings_frame(self):
         """
@@ -888,7 +899,8 @@ class OSCRUI():
         sto_log_path_entry.editingFinished.connect(
             lambda: self.set_sto_logpath_callback(sto_log_path_entry))
         sec_1.addWidget(sto_log_path_entry, 7, 1, alignment=AVCENTER)
-        sto_log_path_button.clicked.connect(lambda: self.browse_sto_logpath(sto_log_path_entry))
+        self.widgets.sto_log_path_entry = sto_log_path_entry
+        sto_log_path_button.clicked.connect(self.browse_sto_logpath)
 
         opacity_label = create_label(self.theme, tr('Live Parser Opacity:'), 'label_subhead')
         sec_1.addWidget(opacity_label, 8, 0, alignment=ARIGHT)

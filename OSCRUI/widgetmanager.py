@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QLabel, QListView, QListWidget, QPushButton, QSplitter, QTableView,
-    QTabWidget, QTreeView)
+    QComboBox, QFrame, QLabel, QLineEdit, QListView, QListWidget, QPushButton, QSplitter,
+    QTableView, QTabWidget)
 
-from .widgets import AnalysisPlot, FlipButton
+from .widgets import FlipButton
 from .config import OSCRSettings
 
 
@@ -43,6 +43,7 @@ class WidgetManager():
         self.ladder_table: QTableView
 
         self.live_parser_button: QPushButton
+        self.sto_log_path_entry: QLineEdit
 
         self._global_settings: OSCRSettings = global_settings
 
