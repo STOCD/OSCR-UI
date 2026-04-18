@@ -192,6 +192,12 @@ class ParserBridge(QObject):
         date = f'{combat_time.year}-{combat_time.month:02d}-{combat_time.day:02d}'
         time = f'{combat_time.hour:02d}:{combat_time.minute:02d}:{combat_time.second:02d}'
         self.analyzed_combats.insert_item((combat.id, combat.map, date, time, difficulty))
+        if len(combat.meta['broken_lines']) > 0:
+            desc = (
+                tr('The log data of combat') + f' "{combat.id}" '
+                + tr('is malformed, as such following lines were skipped (max 30):')
+                + f'\n\n{"\n".join(combat.meta['broken_lines'])}')
+            self.show_info(tr('Skipped lines'), desc)
         if combat.id == 0:
             self.current_combat_id = 0
             self._widgets.combats_list.setCurrentIndex(self.analyzed_combats.createIndex(0, 0, 0))
