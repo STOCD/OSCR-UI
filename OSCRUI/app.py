@@ -86,6 +86,7 @@ class OSCRUI():
         self.parser.status_message.connect(self.status_bar.status_message)
         self.league: OSCRLeagueConnector = OSCRLeagueConnector(
             self.widgets, self.dialogs, self.theme, self.config, self.parser, self.upload_dialog)
+        self.league.status_message.connect(self.status_bar.status_message)
         self.sidebar: OSCRLeftSidebar = OSCRLeftSidebar(
             version, self.window, self.parser, self.detection_info, self.dialogs, self.widgets,
             self.league, self.theme, self.config, self.settings)

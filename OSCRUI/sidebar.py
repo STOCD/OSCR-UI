@@ -227,9 +227,9 @@ class OSCRLeftSidebar():
         map_layout = QHBoxLayout()
         map_label = create_label(self._theme, tr('Available Maps:'), 'label_heading')
         map_layout.addWidget(map_label, alignment=ALEFT | ABOTTOM)
-        fav_add_button = create_icon_button(self._theme, 'star-plus', tr('Add to Favorites'))
+        # fav_add_button = create_icon_button(self._theme, 'star-plus', tr('Add to Favorites'))
         # fav_add_button.clicked.connect()
-        map_layout.addWidget(fav_add_button, alignment=ARIGHT)
+        # map_layout.addWidget(fav_add_button, alignment=ARIGHT)
         left_layout.addLayout(map_layout)
 
         variant_list = create_combo_box(self._theme)
@@ -248,49 +248,49 @@ class OSCRLeftSidebar():
         ladder_selector.setSizePolicy(SMIXMIN)
         ladder_selector.setCursor(Qt.CursorShape.PointingHandCursor)
         self._widgets.ladder_selector = ladder_selector
-        ladder_selector.itemClicked.connect(self._league.slot_ladder)
+        ladder_selector.itemClicked.connect(self._league.show_ladder)
         background_layout.addWidget(ladder_selector)
         left_layout.addWidget(background_frame, stretch=3)
 
-        fav_layout = QHBoxLayout()
-        favorites_label = create_label(self._theme, tr('Favorites:'), 'label_heading')
-        fav_layout.addWidget(favorites_label, alignment=ALEFT | ABOTTOM)
-        fav_remove_button = create_icon_button(self._theme, 'star-minus', tr('Add to Favorites'))
+        # fav_layout = QHBoxLayout()
+        # favorites_label = create_label(self._theme, tr('Favorites:'), 'label_heading')
+        # fav_layout.addWidget(favorites_label, alignment=ALEFT | ABOTTOM)
+        # fav_remove_button = create_icon_button(self._theme, 'star-minus', tr('Add to Favorites'))
         # fav_remove_button.clicked.connect()
-        fav_layout.addWidget(fav_remove_button, alignment=ARIGHT)
-        left_layout.addLayout(fav_layout)
+        # fav_layout.addWidget(fav_remove_button, alignment=ARIGHT)
+        # left_layout.addLayout(fav_layout)
 
-        background_frame = create_frame(self._theme, size_policy=SMINMIN, style_override={
-                'border-radius': self._theme['listbox']['border-radius']})
-        background_layout = QVBoxLayout()
-        background_layout.setContentsMargins(0, 0, 0, 0)
-        background_frame.setLayout(background_layout)
-        favorite_selector = QListWidget(background_frame)
-        favorite_selector.setStyleSheet(self._theme.get_style_class('QListWidget', 'listbox'))
-        favorite_selector.setFont(self._theme.get_font('listbox'))
-        favorite_selector.setSizePolicy(SMIXMIN)
-        favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._widgets.favorite_ladder_selector = favorite_selector
-        for favorite_ladder in self._settings.favorite_ladders:
-            if '|' not in favorite_ladder:
-                self._settings.favorite_ladders = list()
-                break
-            ladder_text, difficulty = favorite_ladder.split('|')
-            if difficulty == 'None':
-                difficulty = None
-            item = QListWidgetItem(ladder_text)
-            item.difficulty = difficulty
-            if difficulty != 'Any' and difficulty is not None:
-                icon = self._theme.icons[f'TFO-{difficulty.lower()}']
-                icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
-                item.setIcon(icon)
-            favorite_selector.addItem(item)
-        favorite_selector.itemClicked.connect(self._league.slot_ladder)
-        background_layout.addWidget(favorite_selector)
-        left_layout.addWidget(background_frame, stretch=2)
+        # background_frame = create_frame(self._theme, size_policy=SMINMIN, style_override={
+        #       'border-radius': self._theme['listbox']['border-radius']})
+        # background_layout = QVBoxLayout()
+        # background_layout.setContentsMargins(0, 0, 0, 0)
+        # background_frame.setLayout(background_layout)
+        # favorite_selector = QListWidget(background_frame)
+        # favorite_selector.setStyleSheet(self._theme.get_style_class('QListWidget', 'listbox'))
+        # favorite_selector.setFont(self._theme.get_font('listbox'))
+        # favorite_selector.setSizePolicy(SMIXMIN)
+        # favorite_selector.setCursor(Qt.CursorShape.PointingHandCursor)
+        # self._widgets.favorite_ladder_selector = favorite_selector
+        # for favorite_ladder in self._settings.favorite_ladders:
+        #     if '|' not in favorite_ladder:
+        #         self._settings.favorite_ladders = list()
+        #         break
+        #     ladder_text, difficulty = favorite_ladder.split('|')
+        #     if difficulty == 'None':
+        #         difficulty = None
+        #     item = QListWidgetItem(ladder_text)
+        #     item.difficulty = difficulty
+        #     if difficulty != 'Any' and difficulty is not None:
+        #         icon = self._theme.icons[f'TFO-{difficulty.lower()}']
+        #         icon.addPixmap(icon.pixmap(18, 24), QIcon.Mode.Selected)
+        #         item.setIcon(icon)
+        #     favorite_selector.addItem(item)
+        # favorite_selector.itemClicked.connect(self._league.show_ladder)
+        # background_layout.addWidget(favorite_selector)
+        # left_layout.addWidget(background_frame, stretch=2)
 
-        ladder_selector.itemClicked.connect(favorite_selector.clearSelection)
-        favorite_selector.itemClicked.connect(ladder_selector.clearSelection)
+        # ladder_selector.itemClicked.connect(favorite_selector.clearSelection)
+        # favorite_selector.itemClicked.connect(ladder_selector.clearSelection)
 
         parent_frame.setLayout(left_layout)
 
