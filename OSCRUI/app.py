@@ -410,7 +410,8 @@ class OSCRUI():
         self.widgets.main_menu_buttons[0].clicked.connect(lambda: self.widgets.switch_main_tab(0))
         self.widgets.main_menu_buttons[1].clicked.connect(lambda: self.widgets.switch_main_tab(1))
         self.widgets.main_menu_buttons[2].clicked.connect(lambda: self.widgets.switch_main_tab(2))
-        self.widgets.main_menu_buttons[2].clicked.connect(self.league.establish_league_connection)
+        self.widgets.main_menu_buttons[2].clicked.connect(
+            lambda: self.league.establish_league_connection())
         self.widgets.main_menu_buttons[3].clicked.connect(lambda: self.widgets.switch_main_tab(3))
         self.widgets.main_tab_frames.append(o_frame)
         self.widgets.main_tab_frames.append(a_frame)

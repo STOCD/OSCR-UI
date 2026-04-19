@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "OSCR-UI"
-#define MyAppVersion "11.0.1"
+#define MyAppVersion "11.0.2"
 #define MyAppPublisher "STOCD"
 #define MyAppURL "https://github.com/STOCD/OSCR-UI"
 #define MyAppExeName "OSCR-UI.exe"
