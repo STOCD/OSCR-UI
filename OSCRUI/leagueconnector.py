@@ -91,12 +91,12 @@ class OSCRLeagueConnector(QObject):
         self.ladder_table_sort: SortingProxy = SortingProxy()
         self.ladder_table_sort.setSourceModel(self.ladder_table_model)
 
-    def establish_league_connection(self):
+    def establish_league_connection(self, fetch_seasons: bool = True):
         """
         Connects to the league server if not already connected.
 
         Parameters:
-        - :param fetch_ladder: fetches available maps and updates map selector if true
+        - :param fetch_seasons: fetches available maps and updates map selector if true
         """
         if self._api is None:
             self._api = ApiClient()
@@ -105,9 +105,8 @@ class OSCRLeagueConnector(QObject):
             self._api_ladder = LadderApi(api_client=self._api)
             self._api_ladder_entries = LadderEntriesApi(api_client=self._api)
             self._api_combatlog = CombatlogApi(api_client=self._api)
-            self._thread = FetchThread(target=self.fetch_and_insert_maps)
-            self._thread.start()
-            self.status_message.emit(tr('Fetching seasons'), '')
+        if self._api is not None and fetch_seasons:
+            self.fetch_and_insert_maps()
 
     def handle_fetch_error(self, error: BaseException):
         """
@@ -140,6 +139,15 @@ class OSCRLeagueConnector(QObject):
         # Only populate the table once.
         if self._widgets.variant_combo.count() > 0:
             return
+        if self._thread is None or not self._thread.isRunning():
+            self._thread = FetchThread(target=self._fetch_and_insert_maps)
+            self._thread.start()
+            self.status_message.emit(tr('Fetching seasons'), '')
+
+    def _fetch_and_insert_maps(self):
+        """
+        Retrieves maps from API and inserts them into the list.
+        """
         variants = self.variants(ordering="-start_date")
         if variants is not None:
             for variant in variants:
@@ -156,13 +164,13 @@ class OSCRLeagueConnector(QObject):
         - :param combat: contains path to log file, start and end position of combat in log file
         """
         try:
-            with (TempFile(dir=str(self._config.templog_folder_path)) as temp,
+            with (TempFile(dir=str(self._config.templog_folder_path), delete=False) as temp,
                     open(combat[0], 'rb') as log_file):
                 log_file.seek(combat[1])
                 temp.write(gzip__compress(
                     log_file.read(combat[2] - combat[1])))
                 temp.flush()
-                response = self._api_combatlog.combatlog_uploadv2(file=temp.name)
+            response = self._api_combatlog.combatlog_uploadv2(file=temp.name)
             return response
         except BaseException as e:
             self.handle_fetch_error(e)
@@ -381,9 +389,11 @@ class OSCRLeagueConnector(QObject):
             current_combat = self._parser.current_combat
         except IndexError:
             return
+        self.establish_league_connection(fetch_seasons=False)
         if self._thread is not None and self._thread.isRunning():
+            self.status_message.emit(
+                tr('League busy'), tr('Please wait for the last league request to finish.'))
             return
-        self.establish_league_connection()
         combat = (current_combat.log_file, current_combat.file_pos[0], current_combat.file_pos[1])
         self._thread = FetchThread(self.upload, args=(combat,), callback=self._handle_upload)
         self._thread.start()

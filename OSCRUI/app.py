@@ -771,7 +771,7 @@ class OSCRUI():
         bg_frame.setLayout(main_layout)
 
         return layout, main_frame
-    
+
     def browse_sto_logpath(self):
         """
         Prompts the user sto select a logfile and stores the resulting path.
