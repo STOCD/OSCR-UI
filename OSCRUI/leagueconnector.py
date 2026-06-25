@@ -87,6 +87,7 @@ class OSCRLeagueConnector(QObject):
         self.current_ladder_id: int | None = None
         self.entire_ladder_loaded: bool = False
         self.pages_loaded: int = 0
+        self.current_filter_term: str = ''
         self.ladder_table_model: LeagueTableModel = LeagueTableModel(LEAGUE_TABLE_HEADER)
         self.ladder_table_sort: SortingProxy = SortingProxy()
         self.ladder_table_sort.setSourceModel(self.ladder_table_model)
@@ -192,25 +193,30 @@ class OSCRLeagueConnector(QObject):
         except BaseException as e:
             self.handle_fetch_error(e)
 
-    def ladder_entries(self, id: int, page: int = 1) -> tuple[list, list, list] | None:
+    def ladder_entries(
+            self, id: int, page: int = 1,
+            player_filter: str = '') -> tuple[list, list, list] | None:
         """
         Fetch ladder entries from server and creates table data. Returns tuple containing the table
         index, row data, list of logfile ids and whether the entire ladder was loaded if
         successful. Returns `None` if ladder entries could not be retrieved.
 
         Parameters:
-        - same as `LadderApi.ladder_list`
+        - :param id: id of the ladder from fetched ladder data
+        - :param page: number of the page to fetch with each page containing 50 entries
+        - :param player_filter: search string for filtering player name
         """
         try:
             ladder_response = self._api_ladder_entries.ladder_entries_list(
-                ladder=str(id), page=page, ordering="-data__DPS", page_size=50)
+                ladder=str(id), page=page, ordering="-data__DPS", page_size=50,
+                player__icontains=player_filter)
             table_index = list()
             table_data = list()
             logfile_ids = list()
             for entry in ladder_response.results:
                 logfile_ids.append(entry.combatlog)
                 row = entry.data
-                table_index.append(entry.rank)
+                table_index.append(entry.ladder_rank)
                 table_data.append((
                     row['name'], row['handle'], row['DPS'], row['total_damage'], row['deaths'],
                     row['combat_time'], format_datetime_str(entry.var_date), row['max_one_hit'],
@@ -288,14 +294,25 @@ class OSCRLeagueConnector(QObject):
             self.status_message.emit(
                 tr('Ladders updated'), tr('Updated ladders to match the selected season.'))
 
-    def apply_league_table_filter(self, filter_text: str):
+    def search_league_table(self):
         """
-        Sets filter to proxy model of league table
-
-        Parameters:
-        - :param filter_text: text to filter the table for
+        Queries league tables for rows of the current table containing the current search term.
         """
-        self.ladder_table_sort.name_filter = filter_text
+        if (self.current_ladder_id is None
+                or self._thread is None or self._thread.isRunning()):
+            return
+        self._thread = FetchThread(
+            self.ladder_entries, args=(self.current_ladder_id, 1, self.current_filter_term),
+            callback=self._insert_ladder_rows)
+        self._thread.start()
+        if self.current_filter_term == '':
+            self.status_message.emit(
+                tr('Retrieving Ladder'),
+                tr('Fetching rows of the current ladder.'))
+        else:
+            self.status_message.emit(
+                tr('Searching Ladder'),
+                tr('Fetching rows of the current ladder containing the search term.'))
 
     def show_ladder(self, selected_map_item: QListWidgetItem):
         """
@@ -311,7 +328,8 @@ class OSCRLeagueConnector(QObject):
             selected_ladder = self.ladder_meta[map_key]
             self.current_ladder_id = selected_ladder.id
             self._thread = FetchThread(
-                self.ladder_entries, args=(selected_ladder.id,), callback=self._insert_ladder_rows)
+                self.ladder_entries, args=(selected_ladder.id, 1, self.current_filter_term),
+                callback=self._insert_ladder_rows)
             self._thread.start()
             if selected_map_item.difficulty is None:
                 map_name = selected_map_item.text()
@@ -341,9 +359,9 @@ class OSCRLeagueConnector(QObject):
         if (self.entire_ladder_loaded or self.current_ladder_id is None
                 or self._thread is None or self._thread.isRunning()):
             return
+        fetch_args = (self.current_ladder_id, self.pages_loaded + 1, self.current_filter_term)
         self._thread = FetchThread(
-            self.ladder_entries, args=(self.current_ladder_id, self.pages_loaded + 1),
-            callback=self._extend_ladder_rows)
+            self.ladder_entries, args=fetch_args, callback=self._extend_ladder_rows)
         self._thread.start()
         self.status_message.emit(
             tr('Extending ladder'), tr('Fetching more rows of the current ladder.'))

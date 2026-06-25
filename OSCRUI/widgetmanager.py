@@ -41,6 +41,7 @@ class WidgetManager():
         self.favorite_ladder_selector: QListWidget
         self.variant_combo: QComboBox
         self.ladder_table: QTableView
+        self.ladder_search: QLineEdit
 
         self.live_parser_button: QPushButton
         self.sto_log_path_entry: QLineEdit

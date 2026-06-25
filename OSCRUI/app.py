@@ -274,6 +274,13 @@ class OSCRUI():
         current_tab = self.widgets.analysis_tree_tabber.currentIndex()
         self.tables.copy_analysis_data(current_tab, copy_mode)
 
+    def clear_league_table_filter(self):
+        """
+        Removes filter from search bar and updates league table.
+        """
+        self.widgets.ladder_search.clear()
+        self.league.search_league_table()
+
     # ----------------------------------------------------------------------------------------------
     # GUI building functions below
     # ----------------------------------------------------------------------------------------------
@@ -699,14 +706,21 @@ class OSCRUI():
         control_layout.setContentsMargins(0, 0, 0, 0)
         control_layout.setSpacing(0)
         control_layout.setColumnStretch(2, 1)
-        search_label = create_label(
-            self.theme, tr('Search:'), 'label_subhead', style_override={'margin-bottom': 0})
-        control_layout.addWidget(search_label, 0, 0, alignment=AVCENTER)
         search_bar = create_entry(
-            self.theme, placeholder=tr('name@handle'),
-            style_override={'margin-left': '@isp', 'margin-top': 0})
-        search_bar.textChanged.connect(self.league.apply_league_table_filter)
-        control_layout.addWidget(search_bar, 0, 1, alignment=AVCENTER)
+            self.theme, placeholder=tr('name@handle'), style_override={'margin-top': 0})
+        search_bar.textChanged.connect(lambda t: setattr(self.league, 'current_filter_term', t))
+        control_layout.addWidget(search_bar, 0, 0, alignment=AVCENTER)
+        self.widgets.ladder_search = search_bar
+        search_style = {
+            tr('Search'): {'callback': self.league.search_league_table},
+            tr('Clear'): {
+                'callback': self.clear_league_table_filter,
+                'style': {'margin-right': 0}
+            }
+        }
+        search_button_layout = create_button_series(
+            self.theme, search_style, 'button', seperator='•')
+        control_layout.addLayout(search_button_layout, 0, 1, alignment=AVCENTER)
         control_button_style = {
             tr('View Parse'): {'callback': self.league.download_and_view_combat},
             tr('More'): {'callback': self.league.extend_ladder, 'style': {'margin-right': 0}}
