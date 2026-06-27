@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "OSCR-UI"
 dependencies = [
-  "PySide6==6.10.2",
-  "pyqtgraph==0.13.7",
+  "PySide6==6.11.1",
+  "pyqtgraph==0.14.0",
   "numpy==2.4.2",
   "STO-OSCR==11.0.0",
   "OSCR-django-client==2025.7.19.0",
-  "pydantic==2.12.3",
+  "requests==2.34.2"
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 authors = []
 maintainers = []
 description = "Open Source Combatlog Reader"
@@ -27,7 +27,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 pyinst = [
-    "pyinstaller==6.19.0"
+    "pyinstaller==6.21.0"
 ]
 
 [project.urls]
