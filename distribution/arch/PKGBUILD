@@ -9,7 +9,7 @@ license=('GPL-3.0')
 depends=('python')
 makedepends=('python' 'python-virtualenv' 'python-wheel' 'python-setuptools' 'git' 'unzip')
 source=("https://github.com/STOCD/OSCR-UI/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('ef4f6c68d99d476fb1e73756dec31235e8c65e2d8eb2b60ffe80bf9b863aebd6')
+sha256sums=('336602c244cc99578eba5ee25bbfeeae58ccb04347b5c656c333dbe8ca69472d')
 
 build() {
   cd "$srcdir"
