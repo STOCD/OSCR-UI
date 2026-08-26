@@ -5,11 +5,11 @@ services:
     image: oscruideb
     build:
       context: ../..
-      dockerfile: distribution/debian/build_deb.Dockerfile
+      dockerfile: distribution/debian/deb_build_base.Dockerfile
     container_name: running_oscr_ui_deb_build
     volumes:
       - type: bind
-        source: ../../dist/
+        source: ../../
         target: /mnt/
         read_only: false
     command:
@@ -17,6 +17,9 @@ services:
       - -c
       - |
         cd /build
+        cd /build
+        cp -r /mnt/distribution/ /mnt/assets/ /mnt/OSCRUI/ /mnt/main.py /mnt/pyproject.toml /mnt/LICENSE /mnt/README.md ./
         distribution/build_pyinstaller.sh
         distribution/debian/package_deb.sh
-        cp dist/oscr-ui.deb /mnt/oscr-ui.deb
+        mkdir -p /mnt/dist
+        cp dist/oscr-ui.deb /mnt/dist/oscr-ui.deb
